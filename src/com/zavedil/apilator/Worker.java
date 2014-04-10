@@ -6,7 +6,7 @@ import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.List;
 
-public class EchoWorker implements Runnable {
+public class Worker implements Runnable {
 	private List queue = new LinkedList();
 	private HttpParser http_parser;
 	private int http_resp_status;
@@ -16,8 +16,7 @@ public class EchoWorker implements Runnable {
 	private String http_resp;
 	
 	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
-		//byte[] dataCopy = new byte[count];
-		//System.arraycopy(data, 0, dataCopy, 0, count);
+		int headers_ok = 1;
 		
 		try {
 			http_parser = new HttpParser(data);
@@ -25,12 +24,18 @@ public class EchoWorker implements Runnable {
 		}
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
+			http_resp_body = "There is something very, very wrong with your reauest. Or with me.";
+			headers_ok = 0;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
+			http_resp_body = "There is something very, very wrong with your reauest. Or with me.";
+			headers_ok = 0;
 		}
 
-		http_resp_body = "Lalala, some nice text!";
+		if (headers_ok == 1)
+			http_resp_body = "Lalala, some nice text!";
+		
 		http_resp_body_len = http_resp_body.length();
 		
 		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);

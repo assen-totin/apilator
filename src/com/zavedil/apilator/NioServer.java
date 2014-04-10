@@ -26,7 +26,7 @@ public class NioServer implements Runnable {
 	// The buffer into which we'll read data when it's available
 	private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
 
-	private EchoWorker worker;
+	private Worker worker;
 
 	// A list of PendingChange instances
 	private List pendingChanges = new LinkedList();
@@ -34,7 +34,7 @@ public class NioServer implements Runnable {
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 
-	public NioServer(InetAddress hostAddress, int port, EchoWorker worker) throws IOException {
+	public NioServer(InetAddress hostAddress, int port, Worker worker) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.selector = this.initSelector();
@@ -197,7 +197,7 @@ public class NioServer implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			EchoWorker worker = new EchoWorker();
+			Worker worker = new Worker();
 			new Thread(worker).start();
 			new Thread(new NioServer(null, 8080, worker)).start();
 		} catch (IOException e) {
