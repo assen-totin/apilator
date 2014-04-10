@@ -24,7 +24,8 @@ import java.text.*;
 import java.net.URLDecoder;
 
 public class HttpParser {
-  private static final String[][] HttpReplies = {{"100", "Continue"},
+	private final String HttpServerName = "Apilator Server";
+	private final String[][] HttpReplies = {{"100", "Continue"},
                                                  {"101", "Switching Protocols"},
                                                  {"200", "OK"},
                                                  {"201", "Created"},
@@ -71,15 +72,17 @@ public class HttpParser {
   private Hashtable headers, params;
   private int[] ver;
 
-  public HttpParser(InputStream is) {
-    reader = new BufferedReader(new InputStreamReader(is));
-    method = "";
-    url = "";
-    headers = new Hashtable();
-    params = new Hashtable();
-    ver = new int[2];
+ 
+  public HttpParser(byte[] data) throws UnsupportedEncodingException {
+	  method = "";
+	  url = "";
+	  headers = new Hashtable();
+	  params = new Hashtable();
+	  ver = new int[2];
+	  
+	  reader = new BufferedReader(new StringReader(new String(data, "UTF-8")));
   }
-
+  
   public int parseRequest() throws IOException {
     String initial, prms[], cmd[], temp[];
     int ret, idx, i;
@@ -216,30 +219,28 @@ public class HttpParser {
     else return 0;
   }
 
-  public static String getHttpReply(int codevalue) {
+  public String getHttpReplyHeaders(int codevalue) {
     String key, ret;
+    SimpleDateFormat format;
     int i;
 
-    ret = null;
+    ret = "HTTP " + ver[0] + "." + ver[1];
+    
     key = "" + codevalue;
     for (i=0; i<HttpReplies.length; i++) {
       if (HttpReplies[i][0].equals(key)) {
-        ret = codevalue + " " + HttpReplies[i][1];
+        ret += " " + codevalue + " " + HttpReplies[i][1] + "\n";
         break;
       }
     }
 
-    return ret;
-  }
-
-  public static String getDateHeader() {
-    SimpleDateFormat format;
-    String ret;
-
     format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
     format.setTimeZone(TimeZone.getTimeZone("GMT"));
-    ret = "Date: " + format.format(new Date()) + " GMT";
-
+    ret += "Date: " + format.format(new Date()) + " GMT\n";
+    
+    ret += "Server: " + HttpServerName + "\n";
+    
     return ret;
   }
+
 }
