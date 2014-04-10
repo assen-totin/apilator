@@ -132,7 +132,7 @@ public class HttpParser {
     else if ((method.equals("POST")) || (method.equals("PUT"))) {
     	url = cmd[1];
     	
-    	String content_type = params.get("Content-Type").toString();
+    	String content_type = params.get("content-type").toString();
     	//String content_length = params.get("Content-Type").toString();
     	
     	if (content_type.equals("application/x-www-form-urlencoded")) {
