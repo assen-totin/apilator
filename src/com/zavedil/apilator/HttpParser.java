@@ -115,11 +115,15 @@ public class HttpParser {
       method = cmd[0];
 
       idx = cmd[1].indexOf('?');
-      if (idx < 0) url = cmd[1];
+      
+      if (idx < 0) 
+    	  url = cmd[1];
       else {
         url = URLDecoder.decode(cmd[1].substring(0, idx), "ISO-8859-1");
         prms = cmd[1].substring(idx+1).split("&");
+        parseGet(prms);
 
+        /*
         params = new Hashtable();
         for (i=0; i<prms.length; i++) {
           temp = prms[i].split("=");
@@ -130,13 +134,16 @@ public class HttpParser {
                        URLDecoder.decode(temp[1], "ISO-8859-1"));
           }
           else if(temp.length == 1 && prms[i].indexOf('=') == prms[i].length()-1) {
-            // handle empty string separatedly
+            // handle empty string separately
             params.put(URLDecoder.decode(temp[0], "ISO-8859-1"), "");
           }
         }
+        */
       }
+      
       parseHeaders();
-      if (headers == null) ret = 400;
+      if (headers == null) 
+    	  ret = 400;
     }
     else if (cmd[0].equals("POST")) {
       ret = 501; // not implemented
@@ -162,6 +169,26 @@ public class HttpParser {
     return ret;
   }
 
+  private void parseGet(String prms[]) throws UnsupportedEncodingException {
+	  int i;
+	  String temp[];
+	  
+      params = new Hashtable();
+      for (i=0; i<prms.length; i++) {
+        temp = prms[i].split("=");
+        if (temp.length == 2) {
+          // we use ISO-8859-1 as temporary charset and then
+          // String.getBytes("ISO-8859-1") to get the data
+          params.put(URLDecoder.decode(temp[0], "ISO-8859-1"),
+                     URLDecoder.decode(temp[1], "ISO-8859-1"));
+        }
+        else if(temp.length == 1 && prms[i].indexOf('=') == prms[i].length()-1) {
+          // handle empty string separately
+          params.put(URLDecoder.decode(temp[0], "ISO-8859-1"), "");
+        }
+      }
+  }
+  
   private void parseHeaders() throws IOException {
     String line;
     int idx;
