@@ -70,6 +70,7 @@ public class HttpParser {
   private BufferedReader reader;
   private String method, url;
   private Hashtable headers, params;
+  private String post_data = null;
   private int[] ver;
 
  
@@ -111,9 +112,13 @@ public class HttpParser {
     }
     else ret = 400;
 
-    if (cmd[0].equals("GET") || cmd[0].equals("HEAD")) {
-      method = cmd[0];
-
+    method = cmd[0];
+    
+    parseHeaders();
+    if (headers == null) 
+  	  ret = 400;
+    
+    if (method.equals("GET") || method.equals("HEAD")) {
       idx = cmd[1].indexOf('?');
       
       if (idx < 0) 
@@ -122,38 +127,29 @@ public class HttpParser {
         url = URLDecoder.decode(cmd[1].substring(0, idx), "ISO-8859-1");
         prms = cmd[1].substring(idx+1).split("&");
         parseGet(prms);
-
-        /*
-        params = new Hashtable();
-        for (i=0; i<prms.length; i++) {
-          temp = prms[i].split("=");
-          if (temp.length == 2) {
-            // we use ISO-8859-1 as temporary charset and then
-            // String.getBytes("ISO-8859-1") to get the data
-            params.put(URLDecoder.decode(temp[0], "ISO-8859-1"),
-                       URLDecoder.decode(temp[1], "ISO-8859-1"));
-          }
-          else if(temp.length == 1 && prms[i].indexOf('=') == prms[i].length()-1) {
-            // handle empty string separately
-            params.put(URLDecoder.decode(temp[0], "ISO-8859-1"), "");
-          }
-        }
-        */
       }
-      
-      parseHeaders();
-      if (headers == null) 
-    	  ret = 400;
     }
-    else if (cmd[0].equals("POST")) {
-      ret = 501; // not implemented
+    else if ((method.equals("POST")) || (method.equals("PUT"))) {
+    	url = cmd[1];
+    	
+    	String content_type = params.get("Content-Type").toString();
+    	//String content_length = params.get("Content-Type").toString();
+    	
+    	if (content_type.equals("application/x-www-form-urlencoded")) {
+    		if (post_data.length() > 0) {
+    			prms = post_data.split("&");
+    			parseGet(prms);
+    		}
+    	}
+    	else {
+    		ret = 501; // form-multipart is not implemented
+    	}
     }
     else if (ver[0] == 1 && ver[1] >= 1) {
-      if (cmd[0].equals("OPTIONS") ||
-          cmd[0].equals("PUT") ||
-          cmd[0].equals("DELETE") ||
-          cmd[0].equals("TRACE") ||
-          cmd[0].equals("CONNECT")) {
+      if (method.equals("OPTIONS") ||
+    		  method.equals("DELETE") ||
+    		  method.equals("TRACE") ||
+    		  method.equals("CONNECT")) {
         ret = 501; // not implemented
       }
     }
@@ -189,24 +185,35 @@ public class HttpParser {
       }
   }
   
-  private void parseHeaders() throws IOException {
-    String line;
-    int idx;
-
-    // that fscking rfc822 allows multiple lines, we don't care now
-    line = reader.readLine();
-    while (!line.equals("")) {
-      idx = line.indexOf(':');
-      if (idx < 0) {
-        headers = null;
-        break;
-      }
-      else {
-        headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
-      }
-      line = reader.readLine();
-    }
-  }
+	private void parseHeaders() throws IOException {
+		String line;
+		int idx;
+		int post_flag = 0;
+	
+	    // that fscking rfc822 allows multiple lines, we don't care now
+	    line = reader.readLine();
+		while (!line.equals("")) {
+			idx = line.indexOf(':');
+			if (idx < 0) {
+				headers = null;
+				break;
+			}
+			else {
+				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
+	        	// Raise the flag for POST/PUT when we reach Content-Length
+				if (((method.equals("POST") || method.equals("PUT"))) && 
+	        		line.substring(0, idx).toLowerCase().equals("content-length")) {
+					// The next line *should* be the www-urlencoded POST/PUT data
+					post_flag = 1;
+				}
+			}
+			line = reader.readLine();
+			if (post_flag == 1) {
+				// If we have reached Content-Length and have POST/PUT, next line should be the actual data.
+				post_data = line;
+			}
+		}
+	}
 
   public String getMethod() {
     return method;
