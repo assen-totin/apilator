@@ -199,7 +199,7 @@ public class NioServer implements Runnable {
 		try {
 			EchoWorker worker = new EchoWorker();
 			new Thread(worker).start();
-			new Thread(new NioServer(null, 9090, worker)).start();
+			new Thread(new NioServer(null, 8080, worker)).start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
