@@ -12,6 +12,7 @@ public class EchoWorker implements Runnable {
 	private int http_resp_status;
 	private String http_resp_head;
 	private String http_resp_body;
+	private int http_resp_body_len;
 	private String http_resp;
 	
 	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
@@ -29,9 +30,11 @@ public class EchoWorker implements Runnable {
 			http_resp_status = 500;
 		}
 
-		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);
-		
 		http_resp_body = "Lalala, some nice text!";
+		http_resp_body_len = http_resp_body.length();
+		
+		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);
+		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
 		
 		http_resp = http_resp_head + "\n" +  http_resp_body;
 		

@@ -224,7 +224,7 @@ public class HttpParser {
     SimpleDateFormat format;
     int i;
 
-    ret = "HTTP " + ver[0] + "." + ver[1];
+    ret = "HTTP/" + ver[0] + "." + ver[1];
     
     key = "" + codevalue;
     for (i=0; i<HttpReplies.length; i++) {
@@ -239,6 +239,8 @@ public class HttpParser {
     ret += "Date: " + format.format(new Date()) + " GMT\n";
     
     ret += "Server: " + HttpServerName + "\n";
+    
+    ret += "Content-Type: text/html\n";
     
     return ret;
   }
