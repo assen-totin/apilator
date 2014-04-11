@@ -68,9 +68,8 @@ public class HttpParser {
                                                  {"505", "HTTP Version Not Supported"}};
 
 	private BufferedReader reader;
-	private String method, url, location;
+	private String method, url, location, post_data=null, boundary;
 	private Hashtable headers=null, params=null;
-	private String post_data = null;
 	private int[] ver;
 
  
@@ -130,7 +129,7 @@ public class HttpParser {
 	    	}
 		    parseLocation();
 	    }
-	    else if ((method.equals("POST")) || (method.equals("PUT"))) {
+	    else if (headers.containsKey("content-length") && (method.equals("POST") || (method.equals("PUT")))) {
 	    	url = cmd[1];
 	    	
 	    	String content_type = headers.get("content-type").toString();
@@ -143,8 +142,20 @@ public class HttpParser {
 	    			parseLocation();
 	    		}
 	    	}
+	    	else if (content_type.indexOf("multipart/form-data") > 0) {
+	    		// First, get the boundary from Content-Type
+	    		idx = content_type.indexOf("boundary=");
+	    		if (idx > 0) {
+	    			boundary = content_type.substring(idx + 9);
+	    			
+	    			// TODO: fetch the bits and pieces
+	    		}
+	    		else {
+	    			ret = 501; // No boundary in multipart/form-data ?!
+	    		}
+	    	}
 	    	else {
-	    		ret = 501; // form-multipart is not implemented
+	    		ret = 501; // WTF? POST with no proper Content-Type?
 	    	}
 	    }
 	    else if (ver[0] == 1 && ver[1] >= 1) {
