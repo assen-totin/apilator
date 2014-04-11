@@ -27,11 +27,13 @@ public class Worker implements Runnable {
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
 			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
+			http_resp_body_len = http_resp_body.length;
 			headers_ok = 0;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
 			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
+			http_resp_body_len = http_resp_body.length;
 			headers_ok = 0;
 		}
 
@@ -44,6 +46,7 @@ public class Worker implements Runnable {
 				if (static_content.getError()) {
 					http_resp_status = 404;
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
+					http_resp_body_len = http_resp_body.length;
 				}
 				else {
 					http_resp_body = static_content.getFileContent();
@@ -52,7 +55,7 @@ public class Worker implements Runnable {
 			}
 			else {
 				// We call the API here
-				// Let's sat param 'filename' has the desired filename...
+				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
 				if (params.get("filename") != null) {
 					String location = params.get("filename").toString();
@@ -73,13 +76,10 @@ public class Worker implements Runnable {
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
 					http_resp_body_len = http_resp_body.length;
 				}
-				
-				//http_resp_body = "Lalala, some nice text!".getBytes();
-				//http_resp_body_len = http_resp_body.length;
 			}
 		}
 		
-		// Prepare heders
+		// Prepare headers
 		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);
 		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
 		http_resp_head += "\n";

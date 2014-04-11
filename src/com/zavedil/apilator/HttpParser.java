@@ -118,7 +118,7 @@ public class HttpParser {
 	    if (headers == null) 
 	    	ret = 400;
 	       
-	    if (method.equals("GET") || method.equals("HEAD")) {
+	    if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE")) {
 	    	idx = cmd[1].indexOf('?');
 	      
 	    	if (idx < 0) 
@@ -149,7 +149,6 @@ public class HttpParser {
 	    }
 	    else if (ver[0] == 1 && ver[1] >= 1) {
 	    	if (method.equals("OPTIONS") ||
-	    			method.equals("DELETE") ||
 	    			method.equals("TRACE") ||
 	    			method.equals("CONNECT")) {
 	    		ret = 501; // not implemented
