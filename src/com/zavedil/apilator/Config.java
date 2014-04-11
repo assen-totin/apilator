@@ -1,7 +1,8 @@
 package com.zavedil.apilator;
 
 public class Config {
-	private static final String DocumentRoot = "/Users/assen/Desktop/L";
+	//private static final String DocumentRoot = "/Users/assen/Desktop/L";
+	private static final String DocumentRoot = "/root/Desktop/_Pics/L";
 	private static final int TcpPort = 8080;
 	
 	public static int getTcpPort() {

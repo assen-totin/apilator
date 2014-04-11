@@ -134,21 +134,12 @@ public class HttpParser {
 	    	url = cmd[1];
 	    	
 	    	String content_type = headers.get("content-type").toString();
-	    	//String content_length = headers.get("Content-Type").toString();
 	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
-	    		if (post_data.length() > 0) {
-	    			if (post_data.indexOf("&") > 0) {
-	    				prms = post_data.split("&");
-	    				System.out.println(prms.length);
-	    				System.out.println(post_data);
-	    			}
-	    			else {
-	    				prms = new String[1];
-	    				prms[0] = post_data;
-	    			}
+	    		if (post_data != null) {
+    				prms = post_data.split("&");
 	    			parseGet(prms);
-	    		    
+    		    
 	    			parseLocation();
 	    		}
 	    	}
@@ -182,7 +173,6 @@ public class HttpParser {
 		  
 		params = new Hashtable();
 		for (i=0; i<prms.length; i++) {
-			System.out.println(prms[i]);
 			temp = prms[i].split("=");
 	        if (temp.length == 2) {
 	          // we use ISO-8859-1 as temporary charset and then
@@ -202,19 +192,34 @@ public class HttpParser {
 		int idx;
 	
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
-	    //line = reader.readLine();
-		//while (!line.equals("")) {
-	    while ((line = reader.readLine()) != null) {
+	    line = reader.readLine();
+		while (!line.equals("")) {
+	    //while ((line = reader.readLine()).equals("")) {
 		//while (line != null) {
 			idx = line.indexOf(':');
 			if (idx < 0) {
 				// If we have POST/PUT, process this line as params
-				if (method.equals("POST") || method.equals("PUT")) 
-					post_data = line;
+				//if (method.equals("POST") || method.equals("PUT")) 
+				//	post_data = new String(line);
 			}
 			else
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
-			//line = reader.readLine();
+			line = reader.readLine();
+	    }
+	    
+		if (method.equals("POST") || method.equals("PUT")) {
+			if(headers.containsKey("content-length")) {
+				String content_length = headers.get("content-length").toString();
+				int content_length_int = Integer.parseInt(content_length);
+				char[] post_chars = new char[content_length_int];
+				try {
+					reader.read(post_chars, 0, content_length_int);
+					post_data = new String(post_chars);
+				}
+				catch (IOException e) {
+					;
+				}
+			}
 		}
 	}
 	
