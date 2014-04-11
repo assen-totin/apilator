@@ -85,7 +85,7 @@ public class HttpParser {
 	}
   
 	public int parseRequest() throws IOException {
-	    String initial, prms[], cmd[], temp[];
+	    String initial, prms[]=null, cmd[], temp[];
 	    int ret, idx, i;
 	
 	    ret = 200; // default is OK now
@@ -138,7 +138,15 @@ public class HttpParser {
 	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
 	    		if (post_data.length() > 0) {
-	    			prms = post_data.split("&");
+	    			if (post_data.indexOf("&") > 0) {
+	    				prms = post_data.split("&");
+	    				System.out.println(prms.length);
+	    				System.out.println(post_data);
+	    			}
+	    			else {
+	    				prms = new String[1];
+	    				prms[0] = post_data;
+	    			}
 	    			parseGet(prms);
 	    		    
 	    			parseLocation();
@@ -174,6 +182,7 @@ public class HttpParser {
 		  
 		params = new Hashtable();
 		for (i=0; i<prms.length; i++) {
+			System.out.println(prms[i]);
 			temp = prms[i].split("=");
 	        if (temp.length == 2) {
 	          // we use ISO-8859-1 as temporary charset and then
@@ -193,20 +202,19 @@ public class HttpParser {
 		int idx;
 	
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
-	    line = reader.readLine();
+	    //line = reader.readLine();
 		//while (!line.equals("")) {
-		while (line != null) {
+	    while ((line = reader.readLine()) != null) {
+		//while (line != null) {
 			idx = line.indexOf(':');
 			if (idx < 0) {
 				// If we have POST/PUT, process this line as params
 				if (method.equals("POST") || method.equals("PUT")) 
 					post_data = line;
 			}
-			else {
+			else
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
-				//System.out.println(line.substring(0, idx).toLowerCase() + ":" + line.substring(idx+1).trim());
-			}
-			line = reader.readLine();
+			//line = reader.readLine();
 		}
 	}
 	

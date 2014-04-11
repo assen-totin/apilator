@@ -29,7 +29,7 @@ public class StaticContent {
             // read fills buffer with data and returns the number of bytes read (which 
             // may be less than the buffer size, but it will never be more).
             int nRead = 0;
-            while((nRead = inputStream.read(buffer)) != -1) {            	
+            while((nRead = inputStream.read(buffer)) != -1) {  
             	byte[] newbuf = new byte[curr_len + nRead];
             	if (curr_len > 0)
             		System.arraycopy(file_content, 0, newbuf, 0, curr_len);
