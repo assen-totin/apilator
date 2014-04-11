@@ -11,9 +11,10 @@ public class Worker implements Runnable {
 	private HttpParser http_parser;
 	private int http_resp_status;
 	private String http_resp_head;
-	private String http_resp_body;
+	private int http_resp_head_len;
+	private byte[] http_resp_body;
 	private int http_resp_body_len;
-	private String http_resp;
+	private byte[] http_resp;
 	
 	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
 		int headers_ok = 1;
@@ -24,28 +25,49 @@ public class Worker implements Runnable {
 		}
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your reauest. Or with me.";
+			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
 			headers_ok = 0;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your reauest. Or with me.";
+			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
 			headers_ok = 0;
 		}
 
-		if (headers_ok == 1)
-			http_resp_body = "Lalala, some nice text!";
+		if (headers_ok == 1) {
+			if (serveStatic(http_parser.getLocation())) {
+				// Call the static content class
+				StaticContent static_content = new StaticContent(http_parser.getLocation());
+				if (static_content.getError()) {
+					http_resp_status = 404;
+					http_resp_body = "Sorry, dude. Not found.".getBytes();
+				}
+				else {
+					http_resp_body = static_content.getFileContent();
+					http_resp_body_len = static_content.getFileSize();
+				}
+			}
+			else {
+				// We call the API here
+				http_resp_body = "Lalala, some nice text!".getBytes();
+				http_resp_body_len = http_resp_body.length;
+			}
+		}
 		
-		http_resp_body_len = http_resp_body.length();
-		
+		// Prepare heders
 		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);
 		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
+		http_resp_head += "\n";
+		http_resp_head_len = http_resp_head.length();
 		
-		http_resp = http_resp_head + "\n" +  http_resp_body;
-		
-		byte[] data_resp = http_resp.getBytes();
+		// Prepare body
+		http_resp = new byte[http_resp_head_len + http_resp_body_len];
+    	System.arraycopy(http_resp_head.getBytes(), 0, http_resp, 0, http_resp_head_len);
+    	System.arraycopy(http_resp_body, 0, http_resp, http_resp_head_len, http_resp_body_len);
+	
+    	// Push response back
 		synchronized(queue) {
-			queue.add(new ServerDataEvent(server, socket, data_resp));
+			queue.add(new ServerDataEvent(server, socket, http_resp));
 			queue.notify();
 		}
 	}
@@ -69,5 +91,9 @@ public class Worker implements Runnable {
 			// Return to sender
 			dataEvent.server.send(dataEvent.socket, dataEvent.data);
 		}
+	}
+	
+	private boolean serveStatic(String location) {
+		return true;
 	}
 }
