@@ -7,10 +7,12 @@ import java.io.IOException;
 public class StaticContent {
 	private boolean error = false;
 	private int file_size = 0;
-	private byte[] file_content;
+	private byte[] file_content = null;
 	private final int chunk_size = 1000;
 	
 	public StaticContent(String location) {
+		int curr_len = 0;
+		
 		String document_root = Config.getDocumentRoot();
 		
 		// The 'location' will begin with a slash 
@@ -25,12 +27,14 @@ public class StaticContent {
             // read fills buffer with data and returns the number of bytes read (which 
             // may be less than the buffer size, but it will never be more).
             int nRead = 0;
-            while((nRead = inputStream.read(buffer)) != -1) {
-            	byte[] newbuf = new byte[file_content.length + nRead];
-            	System.arraycopy(file_content, 0, newbuf, 0, file_content.length);
-            	System.arraycopy(buffer, 0, newbuf, file_content.length, nRead);
+            while((nRead = inputStream.read(buffer)) != -1) {            	
+            	byte[] newbuf = new byte[curr_len + nRead];
+            	if (curr_len > 0)
+            		System.arraycopy(file_content, 0, newbuf, 0, curr_len);
+            	System.arraycopy(buffer, 0, newbuf, curr_len, nRead);
             	
             	file_content = newbuf;
+            	curr_len = file_content.length;
                 file_size += nRead;
             }	
 

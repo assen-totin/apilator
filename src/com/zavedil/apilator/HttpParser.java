@@ -117,9 +117,7 @@ public class HttpParser {
 	    parseHeaders();
 	    if (headers == null) 
 	    	ret = 400;
-	    
-	    parseLocation();
-	    
+	       
 	    if (method.equals("GET") || method.equals("HEAD")) {
 	    	idx = cmd[1].indexOf('?');
 	      
@@ -130,6 +128,7 @@ public class HttpParser {
 	    		prms = cmd[1].substring(idx+1).split("&");
 	    		parseGet(prms);
 	    	}
+		    parseLocation();
 	    }
 	    else if ((method.equals("POST")) || (method.equals("PUT"))) {
 	    	url = cmd[1];
@@ -141,6 +140,8 @@ public class HttpParser {
 	    		if (post_data.length() > 0) {
 	    			prms = post_data.split("&");
 	    			parseGet(prms);
+	    		    
+	    			parseLocation();
 	    		}
 	    	}
 	    	else {

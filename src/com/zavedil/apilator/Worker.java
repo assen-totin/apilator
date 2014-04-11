@@ -37,7 +37,9 @@ public class Worker implements Runnable {
 		if (headers_ok == 1) {
 			if (serveStatic(http_parser.getLocation())) {
 				// Call the static content class
-				StaticContent static_content = new StaticContent(http_parser.getLocation());
+				String location = http_parser.getLocation();
+				
+				StaticContent static_content = new StaticContent(location);
 				if (static_content.getError()) {
 					http_resp_status = 404;
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
@@ -94,6 +96,9 @@ public class Worker implements Runnable {
 	}
 	
 	private boolean serveStatic(String location) {
+		int idx = location.indexOf("/api");
+		if (idx == 0)
+			return false;
 		return true;
 	}
 }
