@@ -133,8 +133,8 @@ public class HttpParser {
 	    else if ((method.equals("POST")) || (method.equals("PUT"))) {
 	    	url = cmd[1];
 	    	
-	    	String content_type = params.get("content-type").toString();
-	    	//String content_length = params.get("Content-Type").toString();
+	    	String content_type = headers.get("content-type").toString();
+	    	//String content_length = headers.get("Content-Type").toString();
 	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
 	    		if (post_data.length() > 0) {
@@ -192,17 +192,19 @@ public class HttpParser {
 		String line=null;
 		int idx;
 	
-	    // that fscking rfc822 allows multiple lines, we don't care now	
+	    // that fscking rfc822 allows multiple lines, we don't care for now	
 	    line = reader.readLine();
-		while (!line.equals("")) {
+		//while (!line.equals("")) {
+		while (line != null) {
 			idx = line.indexOf(':');
 			if (idx < 0) {
 				// If we have POST/PUT, process this line as params
-				if (method.equals("POST") || method.equals("PUT"))
+				if (method.equals("POST") || method.equals("PUT")) 
 					post_data = line;
 			}
 			else {
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
+				//System.out.println(line.substring(0, idx).toLowerCase() + ":" + line.substring(idx+1).trim());
 			}
 			line = reader.readLine();
 		}

@@ -3,6 +3,7 @@ package com.zavedil.apilator;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.SocketChannel;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,8 +52,30 @@ public class Worker implements Runnable {
 			}
 			else {
 				// We call the API here
-				http_resp_body = "Lalala, some nice text!".getBytes();
-				http_resp_body_len = http_resp_body.length;
+				// Let's sat param 'filename' has the desired filename...
+				Hashtable params = http_parser.getParams();
+				if (params.get("filename") != null) {
+					String location = params.get("filename").toString();
+					StaticContent static_content = new StaticContent("/" + location);
+					
+					if (static_content.getError()) {
+						http_resp_status = 404;
+						http_resp_body = "Sorry, dude. Not found.".getBytes();
+						http_resp_body_len = http_resp_body.length;
+					}
+					else {
+						http_resp_body = static_content.getFileContent();
+						http_resp_body_len = static_content.getFileSize();
+					}
+				}
+				else {
+					http_resp_status = 404;
+					http_resp_body = "Sorry, dude. Not found.".getBytes();
+					http_resp_body_len = http_resp_body.length;
+				}
+				
+				//http_resp_body = "Lalala, some nice text!".getBytes();
+				//http_resp_body_len = http_resp_body.length;
 			}
 		}
 		
