@@ -129,7 +129,7 @@ public class HttpParser {
 	    	}
 		    parseLocation();
 	    }
-	    else if (headers.containsKey("content-length") && (method.equals("POST") || (method.equals("PUT")))) {
+	    else if (headers.containsKey("content-type") && (method.equals("POST") || (method.equals("PUT")))) {
 	    	url = cmd[1];
 	    	
 	    	String content_type = headers.get("content-type").toString();
@@ -143,16 +143,7 @@ public class HttpParser {
 	    		}
 	    	}
 	    	else if (content_type.indexOf("multipart/form-data") > 0) {
-	    		// First, get the boundary from Content-Type
-	    		idx = content_type.indexOf("boundary=");
-	    		if (idx > 0) {
-	    			boundary = content_type.substring(idx + 9);
-	    			
-	    			// TODO: fetch the bits and pieces
-	    		}
-	    		else {
-	    			ret = 501; // No boundary in multipart/form-data ?!
-	    		}
+	    		;
 	    	}
 	    	else {
 	    		ret = 501; // WTF? POST with no proper Content-Type?
@@ -204,8 +195,6 @@ public class HttpParser {
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
 	    line = reader.readLine();
 		while (!line.equals("")) {
-	    //while ((line = reader.readLine()).equals("")) {
-		//while (line != null) {
 			idx = line.indexOf(':');
 			if (idx < 0) {
 				// If we have POST/PUT, process this line as params
@@ -217,20 +206,82 @@ public class HttpParser {
 			line = reader.readLine();
 	    }
 	    
-		if (method.equals("POST") || method.equals("PUT")) {
-			if(headers.containsKey("content-length")) {
-				String content_length = headers.get("content-length").toString();
-				int content_length_int = Integer.parseInt(content_length);
-				char[] post_chars = new char[content_length_int];
-				try {
-					reader.read(post_chars, 0, content_length_int);
-					post_data = new String(post_chars);
-				}
-				catch (IOException e) {
-					;
-				}
-			}
+		// Additional processing of body for POTS and PUT
+		if (method.equals("POST") || method.equals("PUT"))
+			parseBody();
+	}
+	
+	private void parseBody() throws IOException {
+		String line=null, content_length=null, content_type=null;
+		int idx, content_length_int=0;
+		String temp[], temp2[], temp3[], encoding;
+		
+		if (headers.containsKey("content-length")) {
+			content_length = headers.get("content-length").toString();
+			content_length_int = Integer.parseInt(content_length);
 		}
+		else
+			return;
+			
+		if (headers.containsKey("content-type"))
+			content_type = headers.get("content-type").toString();
+		else
+			return;
+
+		if (content_type.equals("application/x-www-form-urlencoded")) {
+			char[] post_chars = new char[content_length_int];
+			reader.read(post_chars, 0, content_length_int);
+			post_data = new String(post_chars);
+		}
+    	else if (content_type.indexOf("multipart/form-data") > 0) {
+    		// First, get the boundary from Content-Type
+    		if ((idx = content_type.indexOf("boundary=")) > 0) {
+    			boundary = content_type.substring(idx + 9);
+    			
+    			while ((line = reader.readLine()) != null) {
+    				if (line.equals("")) {
+    					// Next line will be data
+    					continue;
+    				}
+
+    				if (line.indexOf(boundary) > 0) {
+    					continue;
+    				}
+
+    				if ((idx = line.indexOf(":")) > 0) {
+    					temp = line.split(":");
+    					if (temp[0].toLowerCase().equals("content-transfer-encoding")) {
+    						// TODO: save this somewhere
+    						encoding = line.substring(idx + 1).trim();
+    					}
+    					else if (temp[0].toLowerCase().equals("content-disposition")) {
+    						String right = line.substring(idx + 1).trim();
+    						temp2 = right.split("\\s");
+    						for (int i=0; i < temp2.length; i++) {
+    							if (temp2[i].indexOf("=") > 0) {
+    								temp3 = temp2[i].split("=");
+    								if (temp3[0].equals("name")) {
+    									// TODO: Field name is here
+    								}
+    								else if (temp3[0].equals("filename")) {
+    									// TODO: File name is here
+    								}
+    								else {
+    									// We don't care about this attribute
+    								}
+    							}
+    						}
+    					}
+    					else {
+    						// we con't care about this section header
+    					}
+    				}
+    				
+    			}
+    			
+    		}
+    	}
+
 	}
 	
 	private void parseLocation() {
