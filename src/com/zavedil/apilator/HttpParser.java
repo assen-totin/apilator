@@ -256,7 +256,7 @@ public class HttpParser {
     				value = null;
     			}
     			else if ((filename != null) && (name != null) && (filedata != null)) {
-    				// TODO: Decode file data
+    				// Decode file data
     				switch (encoding) {
     					case "base64": 
     						DecodeBase64 decoder_b64 = new DecodeBase64();

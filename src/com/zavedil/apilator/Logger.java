@@ -1,5 +1,9 @@
 package com.zavedil.apilator;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class Logger {
 	/**
 	 * Log levels:
@@ -15,12 +19,20 @@ public class Logger {
 	 */
 	
 	private static void log(String className, String input, int level) {
-		int current_log_level = Config.getLogLevel();
+		SimpleDateFormat format;
+		int current_log_level;
+		String line, system_name, date;
+		
+		current_log_level = Config.getLogLevel();
+		system_name = Config.getSystemName();
 		
 		if (level > current_log_level)
 			return;
 		
-		String line = className + input;
+		format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.US);
+		date = format.format(new Date());
+				
+		line = "[" +  date + "][" + system_name + "][" + className + "] " + input;
 		
 		switch (level) {
 			case 1:
