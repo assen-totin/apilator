@@ -407,7 +407,7 @@ public class HttpParser {
 		else return 0;
 	}
 
-	public String getHttpReplyHeaders(int codevalue) {
+	public String getHttpReplyHeaders(int codevalue, String mime_type) {
 		Logger.debug(className, "Entering function getHttpReplyHeaders");
 		String key, ret;
 		SimpleDateFormat format;
@@ -429,7 +429,7 @@ public class HttpParser {
     
 		ret += "Server: " + HttpServerName + "\n";
     
-		ret += "Content-Type: text/html\n";
+		ret += "Content-Type: " + mime_type + "\n";
     
 		return ret;
 	}

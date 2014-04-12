@@ -10,6 +10,7 @@ import java.util.List;
 public class Worker implements Runnable {
 	private List queue = new LinkedList();
 	private HttpParser http_parser;
+	private String mime_type = "text/plain";
 	private int http_resp_status;
 	private String http_resp_head;
 	private int http_resp_head_len;
@@ -59,6 +60,7 @@ public class Worker implements Runnable {
 				else {
 					http_resp_body = static_content.getFileContent();
 					http_resp_body_len = static_content.getFileSize();
+					mime_type = static_content.getMimeType();
 				}
 			}
 			else {
@@ -66,7 +68,6 @@ public class Worker implements Runnable {
 				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
 				if (params.containsKey("filename")) {
-					Logger.debug(className, "has key filename");
 					String location = params.get("filename").toString();
 					StaticContent static_content = new StaticContent("/" + location);
 					
@@ -78,6 +79,7 @@ public class Worker implements Runnable {
 					else {
 						http_resp_body = static_content.getFileContent();
 						http_resp_body_len = static_content.getFileSize();
+						mime_type = static_content.getMimeType();
 					}
 				}
 				else {
@@ -89,7 +91,7 @@ public class Worker implements Runnable {
 		}
 		
 		// Prepare headers
-		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status);
+		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status, mime_type);
 		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
 		http_resp_head += "\n";
 		http_resp_head_len = http_resp_head.length();

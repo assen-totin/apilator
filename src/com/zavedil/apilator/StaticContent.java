@@ -3,12 +3,16 @@ package com.zavedil.apilator;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class StaticContent {
 	private boolean error = false;
 	private int file_size = 0;
 	private byte[] file_content = null;
 	private final int chunk_size = 1000;
+	private String mime_type = "text/plain";
 	
 	public StaticContent(String location) {
 		int curr_len = 0;
@@ -40,6 +44,10 @@ public class StaticContent {
 
             // Always close files.
             inputStream.close();
+            
+            String file_name = location.substring(1);
+            Path path = FileSystems.getDefault().getPath(document_root, file_name);
+            mime_type = Files.probeContentType(path);
         }
         catch(FileNotFoundException ex) {
             error = true;			
@@ -59,5 +67,9 @@ public class StaticContent {
 	
 	public byte[] getFileContent() {
 		return file_content;
+	}
+	
+	public String getMimeType() {
+		return mime_type;
 	}
 }
