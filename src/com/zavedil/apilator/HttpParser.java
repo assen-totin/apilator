@@ -251,8 +251,12 @@ public class HttpParser {
     				// TODO: Decode file data
     				switch (encoding) {
     					case "base64": 
-    						DecodeBase64 decoder = new DecodeBase64();
-    						filedata = decoder.decode(filedata_encoded);
+    						DecodeBase64 decoder_b64 = new DecodeBase64();
+    						filedata = decoder_b64.decode(filedata_encoded);
+    						break;
+    					case "quoted-printable": 
+    						DecodeQuotedPrintable decoder_qp = new DecodeQuotedPrintable();
+    						filedata = decoder_qp.decode(filedata_encoded);
     						break;
     				}
     				
