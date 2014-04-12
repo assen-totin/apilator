@@ -72,8 +72,9 @@ public class HttpParser {
 	private Hashtable headers=null, params=null;
 	private int[] ver;
 	private String className;
+	private int header_bytes=0, received_bytes;
  
-	public HttpParser(byte[] data) throws UnsupportedEncodingException {
+	public HttpParser(byte[] data, int count) throws UnsupportedEncodingException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Entering function HttpParser");
 		method = "";
@@ -81,6 +82,7 @@ public class HttpParser {
 		headers = new Hashtable();
 		params = new Hashtable();
 		ver = new int[2];
+		received_bytes = count;
 	  
 		reader = new BufferedReader(new StringReader(new String(data, "UTF-8")));
 	}
@@ -92,7 +94,8 @@ public class HttpParser {
 	
 	    ret = 200; // default is OK now
 	    initial = reader.readLine();
-	    if (initial == null || initial.length() == 0) return 0;
+	    if (initial == null || initial.length() == 0) 
+	    	return 0;
 	    if (Character.isWhitespace(initial.charAt(0))) {
 	      	//starting whitespace, return bad request
 	    	return 400;
@@ -116,14 +119,16 @@ public class HttpParser {
 	    	return 400;
 	
 	    method = cmd[0];
-	       
+	    
+	    header_bytes += initial.length() + 2; // Don;t forget teh CRLF stripped by Java
+	    
 	    parseHeaders();
 	    
-	    if (headers == null)
+	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("host") == null) 
 	    	return 400;
 	    
-	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("Host") == null) 
-	    	return 400;
+	    if (headers == null)
+	    	return 0;
 	    
 	    if ((ver[0] == 1 && ver[1] >= 1) && 
 	    	(method.equals("OPTIONS") || method.equals("TRACE") || method.equals("CONNECT"))) 
@@ -142,16 +147,25 @@ public class HttpParser {
 	    }
 	    else if (method.equals("POST") || method.equals("PUT")) {
 			if (getHeader("content-length") == null)
-				return 400;
+				return 0;
 				
 			if (getHeader("content-type") == null)
-				return 400;
+				return 0;
+	    	
+		    // Check if we have received enough bytes from the non-blocking socket
+	    	String cl = getHeader("content-length");
+	    	Logger.debug(className, "received_bytes: " + received_bytes);
+	    	Logger.debug(className, "header_bytes: " + header_bytes);
+		    Logger.debug(className, "content-length: " + Integer.parseInt(cl));
+		    
+	    	if ((Integer.parseInt(cl) + header_bytes) > received_bytes) {
+	    		Logger.debug(className, "Not enough bytes yet, returning...");
+	    		return 0;
+	    	}
 	    	
 	    	url = cmd[1];
 	    	
 	    	String content_type = headers.get("content-type").toString();
-	    	
-	    	Logger.debug(className, content_type);
 	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
 	    		parseBodyUrlencoded();
@@ -213,10 +227,12 @@ public class HttpParser {
 		
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
 	    while (!(line = reader.readLine()).equals("")) {
+	    	header_bytes += line.length() + 2;	// Don't forget the CRLF which was stripped by Java
 			if ((idx = line.indexOf(':')) > 0)
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
 			// else we don't care about this line
 	    }
+	    header_bytes += 2; // Account for the last line of the header - the separator
 	}
 	
 	private void parseBodyUrlencoded() throws IOException {
@@ -244,7 +260,7 @@ public class HttpParser {
 		boolean read_data = false;
 				
     	while ((line = reader.readLine()) != null) {
-    		Logger.debug(className, "LINE: " + line);
+    		//Logger.debug(className, "LINE: " + line);
     		if (line.equals("")) {
     			Logger.debug(className, "Empty line!");
     			// Next line will be data 			
@@ -267,6 +283,7 @@ public class HttpParser {
     				Logger.debug(className, "Store file!");
     				Logger.debug(className, "Encoding is: " + encoding);
     				// Decode file data
+    				/*
     				switch (encoding) {
     					case "base64": 
     						DecodeBase64 decoder_b64 = new DecodeBase64();
@@ -287,7 +304,8 @@ public class HttpParser {
     				}
     				
     				params.put(name, filedata);
-    				params.put(name + "_filename", filename);
+    				params.put(name + "_fn", filename);
+    				*/
     				name = null;
     				filedata = null;
     				filename = null;
@@ -305,14 +323,14 @@ public class HttpParser {
     			}
     			else {    			
 	    			if (filedata_encoded != null) {
-	    				Logger.debug(className, "Append!");
+	    				//Logger.debug(className, "Append!");
 	    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
 	    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
 	    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
 	    		    	filedata_encoded = filedata_tmp;
 	    			}
 	    			else {
-	    				Logger.debug(className, "Store!");
+	    				//Logger.debug(className, "Store!");
 	    				filedata_encoded = line.getBytes();
 	    			}
     			}
@@ -435,8 +453,9 @@ public class HttpParser {
 	}
 	
 	private String cleanQuotes(String input) {
-		String output;
-		output = input.replaceAll("^\"|\"$", "");
+		String output = input;
+		output = output.replaceAll(";$", "");
+		output = output.replaceAll("^\"|\"$", "");
 		output = output.replaceAll("^\'|\'$", "");
 		return output;
 	}

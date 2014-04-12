@@ -13,6 +13,8 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
 public class NioServer implements Runnable {
+	private String className;
+	
 	// The host:port combination to listen on
 	private InetAddress hostAddress;
 	private int port;
@@ -24,7 +26,8 @@ public class NioServer implements Runnable {
 	private Selector selector;
 
 	// The buffer into which we'll read data when it's available
-	private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
+	//private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
+	private int byteBufSize = 8192;
 
 	private Worker worker;
 
@@ -42,6 +45,8 @@ public class NioServer implements Runnable {
 	}
 
 	public void send(SocketChannel socket, byte[] data) {
+		Logger.debug(className, "Entering function send");
+		
 		synchronized (this.pendingChanges) {
 			// Indicate we want the interest ops set changed
 			this.pendingChanges.add(new ChangeRequest(socket, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
@@ -62,6 +67,8 @@ public class NioServer implements Runnable {
 	}
 
 	public void run() {
+		className = this.getClass().getSimpleName();
+		
 		while (true) {
 			try {
 				// Process any pending changes
@@ -94,19 +101,24 @@ public class NioServer implements Runnable {
 					// Check what event is available and deal with it
 					if (key.isAcceptable()) {
 						this.accept(key);
-					} else if (key.isReadable()) {
+					} 
+					else if (key.isReadable()) {
 						this.read(key);
-					} else if (key.isWritable()) {
+					} 
+					else if (key.isWritable()) {
 						this.write(key);
 					}
 				}
-			} catch (Exception e) {
+			} 
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
 	private void accept(SelectionKey key) throws IOException {
+		Logger.debug(className, "Entering function accept");
+		
 		// For an accept to be pending the channel must be a server socket channel.
 		ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
 
@@ -117,27 +129,32 @@ public class NioServer implements Runnable {
 
 		// Register the new SocketChannel with our Selector, indicating
 		// we'd like to be notified when there's data waiting to be read
-		socketChannel.register(this.selector, SelectionKey.OP_READ);
+		socketChannel.register(this.selector, SelectionKey.OP_READ, ByteBuffer.allocate(byteBufSize));
 	}
 
 	private void read(SelectionKey key) throws IOException {
+		Logger.debug(className, "Entering function read");
+		
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
-		// Clear out our read buffer so it's ready for new data
-		this.readBuffer.clear();
+		// Allocate a new buffer for this read
+		ByteBuffer newBuffer = ByteBuffer.allocate(byteBufSize);
+		//this.readBuffer.clear();
 
 		// Attempt to read off the channel
 		int numRead;
 		try {
-			numRead = socketChannel.read(this.readBuffer);
-		} catch (IOException e) {
+			//numRead = socketChannel.read(this.readBuffer);
+			numRead = socketChannel.read(newBuffer);
+		} 
+		catch (IOException e) {
 			// The remote forcibly closed the connection, cancel
 			// the selection key and close the channel.
 			key.cancel();
 			socketChannel.close();
 			return;
 		}
-
+	
 		if (numRead == -1) {
 			// Remote entity shut the socket down cleanly. Do the
 			// same from our end and cancel the channel.
@@ -146,11 +163,28 @@ public class NioServer implements Runnable {
 			return;
 		}
 
+		// Fetch the stored buffer
+		ByteBuffer readBuffer = (ByteBuffer) key.attachment();
+		//Logger.debug(className, "Buffer position before: " + readBuffer.position());
+		
+		// See if need to expand the buffer
+		ByteBuffer tmpBuffer = ByteBuffer.allocate(readBuffer.position() + byteBufSize);
+		readBuffer.flip();
+		tmpBuffer.put(readBuffer);
+		newBuffer.flip();
+		tmpBuffer.put(newBuffer);
+		int buffer_pos = tmpBuffer.position();
+		key.attach(tmpBuffer);
+		
 		// Hand the data off to our worker thread
-		this.worker.processData(this, socketChannel, this.readBuffer.array(), numRead);
+		tmpBuffer.flip();
+		this.worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		tmpBuffer.position(buffer_pos);
 	}
 
 	private void write(SelectionKey key) throws IOException {
+		Logger.debug(className, "Entering function write");
+		
 		SocketChannel socketChannel = (SocketChannel) key.channel();
 
 		synchronized (this.pendingData) {
@@ -159,7 +193,14 @@ public class NioServer implements Runnable {
 			// Write until there's not more data ...
 			while (!queue.isEmpty()) {
 				ByteBuffer buf = (ByteBuffer) queue.get(0);
-				socketChannel.write(buf);
+				try {
+					socketChannel.write(buf);					
+				}
+				catch(IOException e) {
+					queue.remove(0);
+					System.out.println("OOOOOOPS!");
+				}
+
 				if (buf.remaining() > 0) {
 					// ... or the socket's buffer fills up
 					break;
@@ -200,7 +241,8 @@ public class NioServer implements Runnable {
 			Worker worker = new Worker();
 			new Thread(worker).start();
 			new Thread(new NioServer(null, 8080, worker)).start();
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

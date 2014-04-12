@@ -1,5 +1,7 @@
 package com.zavedil.apilator;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.SocketChannel;
@@ -19,13 +21,15 @@ public class Worker implements Runnable {
 	private byte[] http_resp;
 	private String className;
 	
-	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
+	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) throws IOException {
 		boolean headers_ok = false;
 		
 		try {
-			http_parser = new HttpParser(data);
+			http_parser = new HttpParser(data, count);
 			http_resp_status = http_parser.parseRequest();
 			
+			if (http_resp_status == 0)
+				return;
 			if (http_resp_status == 200)
 				headers_ok = true;
 			else {
@@ -37,12 +41,14 @@ public class Worker implements Runnable {
 			http_resp_status = 500;
 			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
 			http_resp_body_len = http_resp_body.length;
+			mime_type = "text/plain";
 			headers_ok = false;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
 			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
 			http_resp_body_len = http_resp_body.length;
+			mime_type = "text/plain";
 			headers_ok = false;
 		}
 	
@@ -56,6 +62,7 @@ public class Worker implements Runnable {
 					http_resp_status = 404;
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
 					http_resp_body_len = http_resp_body.length;
+					mime_type = "text/plain";
 				}
 				else {
 					http_resp_body = static_content.getFileContent();
@@ -72,28 +79,50 @@ public class Worker implements Runnable {
 				 * - mime_type (if different from default text/plain)
 				 */				
 				
-				// Let's say param 'filename' has the desired filename... and serve it statically
+				/*
 				Hashtable params = http_parser.getParams();
-				if (params.containsKey("filename")) {
-					String location = params.get("filename").toString();
-					StaticContent static_content = new StaticContent("/" + location);
+				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {
+					byte[] myfile = params.get("myfile").toString().getBytes();
+					String myfile_fn = params.get("myfile_fn").toString();
+					//FileOutputStream out = new FileOutputStream("/tmp/" + myfile_fn);
+					//out.write(myfile);
+					//out.close();
 					
-					if (static_content.getError()) {
-						http_resp_status = 404;
-						http_resp_body = "Sorry, dude. Not found.".getBytes();
-						http_resp_body_len = http_resp_body.length;
-					}
-					else {
-						http_resp_body = static_content.getFileContent();
-						http_resp_body_len = static_content.getFileSize();
-						mime_type = static_content.getMimeType();
-					}
+					http_resp_body = "Yeeeeeee!".getBytes();
+					http_resp_body_len = http_resp_body.length;
 				}
 				else {
 					http_resp_status = 404;
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
 					http_resp_body_len = http_resp_body.length;
 				}
+				*/
+				
+				// Let's say param 'filename' has the desired filename... and serve it statically
+				Hashtable params = http_parser.getParams();
+				//if (params.containsKey("filename")) {
+					//String location = params.get("filename").toString();
+					String location = "4F2C1563.jpg";
+					StaticContent static_content = new StaticContent("/" + location);
+								
+					if (static_content.getError()) {
+						http_resp_status = 404;
+						http_resp_body = "Sorry, dude. Not found.".getBytes();
+						http_resp_body_len = http_resp_body.length;
+						mime_type = "text/plain";
+					}
+					else {
+						http_resp_body = static_content.getFileContent();
+						http_resp_body_len = static_content.getFileSize();
+						mime_type = static_content.getMimeType();
+					}
+				//}
+				//else {
+				//	http_resp_status = 404;
+				//	http_resp_body = "Sorry, dude. Not found.".getBytes();
+				//	http_resp_body_len = http_resp_body.length;
+				//}
+				
 				
 				// End API call here
 			}
