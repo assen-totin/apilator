@@ -262,6 +262,10 @@ public class HttpParser {
     						Decode7Bit decoder_7b = new Decode7Bit();
     						filedata = decoder_7b.decode(filedata_encoded);
     						break;
+    					case "8bit":
+    					case "binary":
+    						filedata = filedata_encoded;
+    						break;
     				}
     				
     				params.put(name, filedata);
