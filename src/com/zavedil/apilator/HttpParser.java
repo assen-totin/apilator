@@ -71,9 +71,12 @@ public class HttpParser {
 	private String method, url, location, post_data=null, boundary;
 	private Hashtable headers=null, params=null;
 	private int[] ver;
+	private String className;
 
  
 	public HttpParser(byte[] data) throws UnsupportedEncodingException {
+		className = this.getClass().getName();
+		Logger.debug(className, "Entering function HttpParser");
 		method = "";
 		url = "";
 		headers = new Hashtable();
@@ -84,6 +87,7 @@ public class HttpParser {
 	}
   
 	public int parseRequest() throws IOException {
+		Logger.debug(className, "Entering function parseRequest");
 	    String initial, prms[]=null, cmd[], temp[];
 	    int ret, idx, i;
 	
@@ -179,6 +183,7 @@ public class HttpParser {
 	}
 
 	private void parseGet(String prms[]) throws UnsupportedEncodingException {
+		Logger.debug(className, "Entering function parseGet");
 		int i;
 		String temp[];
 		  
@@ -199,6 +204,7 @@ public class HttpParser {
 	}
   
 	private void parseHeaders() throws IOException {
+		Logger.debug(className, "Entering function parseHeaders");
 		String line=null;
 		int idx;
 	
@@ -211,6 +217,7 @@ public class HttpParser {
 	}
 	
 	private void parseBodyUrlencoded() throws IOException {
+		Logger.debug(className, "Entering function parseBodyUrlencoded");
 		String content_length_str=null;
 		int content_length_int=0;
 		char [] post_chars;
@@ -225,6 +232,7 @@ public class HttpParser {
 	
 	
 	private void parseBodyMultipart() throws IOException {
+		Logger.debug(className, "Entering function parseBodyMultipart");
 		String line=null, name=null, value=null, filename=null;
 		String temp[], temp2[], temp3[], encoding="7bit";
 		int idx;
@@ -320,6 +328,7 @@ public class HttpParser {
     }
 	
 	private void parseLocation() {
+		Logger.debug(className, "Entering function parseLocation");
 		location = url;
 		// The URL arrives stripped of any GET params, but may begin with a "http://host/..." 
 		// or just with "//location/..." 
@@ -339,10 +348,11 @@ public class HttpParser {
 	}
 
 	public String getHeader(String key) {
-		if (headers != null)
-			return (String) headers.get(key.toLowerCase());
-		else 
-			return null;
+		if (headers != null) {
+			if (headers.containsKey(key))
+				return (String) headers.get(key.toLowerCase());
+		}
+		return null;
 	}
 
 	public Hashtable getHeaders() {
@@ -374,6 +384,7 @@ public class HttpParser {
 	}
 
 	public String getHttpReplyHeaders(int codevalue) {
+		Logger.debug(className, "Entering function getHttpReplyHeaders");
 		String key, ret;
 		SimpleDateFormat format;
 		int i;

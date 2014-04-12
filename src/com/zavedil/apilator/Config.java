@@ -4,6 +4,7 @@ public class Config {
 	//private static final String DocumentRoot = "/Users/assen/Desktop/L";
 	private static final String DocumentRoot = "/root/Desktop/_Pics/L";
 	private static final int TcpPort = 8080;
+	private static final int LogLevel = 5; // LOG_TRACE
 	
 	public static int getTcpPort() {
 		return TcpPort;
@@ -13,4 +14,7 @@ public class Config {
 		return DocumentRoot;
 	}
 	
+	public static int getLogLevel() {
+		return LogLevel;
+	}
 }
