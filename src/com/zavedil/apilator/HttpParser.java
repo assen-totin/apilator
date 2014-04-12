@@ -106,18 +106,27 @@ public class HttpParser {
 	    		ver[1] = Integer.parseInt(temp[1]);
 	    	} 
 	    	catch (NumberFormatException nfe) {
-	    		ret = 400;
+	    		return 400;
 	    	}
 	    }
-	    else ret = 400;
+	    else
+	    	return 400;
 	
 	    method = cmd[0];
 	    
 	    parseHeaders();
+	    
 	    if (headers == null) 
-	    	ret = 400;
-	       
-	    if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE")) {
+	    	return 400;
+	    
+	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("Host") == null)
+	    	return 400;
+	    
+	    if (ver[0] == 1 && ver[1] >= 1) {
+	    	if (method.equals("OPTIONS") ||	method.equals("TRACE") || method.equals("CONNECT")) 
+	    		return 501; // not implemented
+	    }
+	    else if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE")) {
 	    	idx = cmd[1].indexOf('?');
 	      
 	    	if (idx < 0) 
@@ -127,44 +136,45 @@ public class HttpParser {
 	    		prms = cmd[1].substring(idx+1).split("&");
 	    		parseGet(prms);
 	    	}
-		    parseLocation();
 	    }
-	    else if (headers.containsKey("content-type") && (method.equals("POST") || (method.equals("PUT")))) {
+	    else if (method.equals("POST") || method.equals("PUT")) {
+			if (! headers.containsKey("content-length"))
+				return 400;
+				
+			if (! headers.containsKey("content-type"))
+				return 400;
+	    	
 	    	url = cmd[1];
 	    	
 	    	String content_type = headers.get("content-type").toString();
 	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
+	    		parseBodyUrlencoded();
+	    		
 	    		if (post_data != null) {
     				prms = post_data.split("&");
 	    			parseGet(prms);
-    		    
-	    			parseLocation();
 	    		}
+	    		else
+	    			return 400;
 	    	}
 	    	else if (content_type.indexOf("multipart/form-data") > 0) {
-	    		;
+	        	if ((idx = content_type.indexOf("boundary=")) > 0)
+	        		boundary = content_type.substring(idx + 9);
+	        	else
+	        		return 400;
+	        		
+	    		parseBodyMultipart();
 	    	}
-	    	else {
-	    		ret = 501; // WTF? POST with no proper Content-Type?
-	    	}
+	    	else 
+	    		return 501; // WTF? POST with no proper Content-Type?
 	    }
-	    else if (ver[0] == 1 && ver[1] >= 1) {
-	    	if (method.equals("OPTIONS") ||
-	    			method.equals("TRACE") ||
-	    			method.equals("CONNECT")) {
-	    		ret = 501; // not implemented
-	    	}
-	    }
-	    else {
+	    else 
 	      // meh not understand, bad request
-	    	ret = 400;
-	    }
-	
-	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("Host") == null) {
-	    	ret = 400;
-	    }
-	
+	    	return 400;
+		
+	    parseLocation();
+	    
 		return ret;
 	}
 
@@ -193,96 +203,109 @@ public class HttpParser {
 		int idx;
 	
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
-	    line = reader.readLine();
-		while (!line.equals("")) {
-			idx = line.indexOf(':');
-			if (idx < 0) {
-				// If we have POST/PUT, process this line as params
-				//if (method.equals("POST") || method.equals("PUT")) 
-				//	post_data = new String(line);
-			}
-			else
-				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx+1).trim());
-			line = reader.readLine();
+	    while (! ((line = reader.readLine()).equals(""))) {
+			if ((idx = line.indexOf(":")) > 0)
+				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
+			// else we don't care about this line
 	    }
-	    
-		// Additional processing of body for POTS and PUT
-		if (method.equals("POST") || method.equals("PUT"))
-			parseBody();
 	}
 	
-	private void parseBody() throws IOException {
-		String line=null, content_length=null, content_type=null;
-		int idx, content_length_int=0;
-		String temp[], temp2[], temp3[], encoding;
+	private void parseBodyUrlencoded() throws IOException {
+		String content_length_str=null;
+		int content_length_int=0;
+		char [] post_chars;
 		
-		if (headers.containsKey("content-length")) {
-			content_length = headers.get("content-length").toString();
-			content_length_int = Integer.parseInt(content_length);
-		}
-		else
-			return;
-			
-		if (headers.containsKey("content-type"))
-			content_type = headers.get("content-type").toString();
-		else
-			return;
+		content_length_str = headers.get("content-length").toString();
+		content_length_int = Integer.parseInt(content_length_str);
+		
+		post_chars = new char[content_length_int];
+		reader.read(post_chars, 0, content_length_int);
+		post_data = new String(post_chars);
+	}
+	
+	
+	private void parseBodyMultipart() throws IOException {
+		String line=null, name=null, value=null, filename=null;
+		String temp[], temp2[], temp3[], encoding="7bit";
+		int idx;
+		byte[] filedata=null, filedata_encoded=null, filedata_tmp=null;
+		boolean read_data = false;
+				
+    	while ((line = reader.readLine()) != null) {
+    		if (line.equals("")) {
+    			// Next line will be data 			
+    			read_data = true;
+    			continue;
+    		}
 
-		if (content_type.equals("application/x-www-form-urlencoded")) {
-			char[] post_chars = new char[content_length_int];
-			reader.read(post_chars, 0, content_length_int);
-			post_data = new String(post_chars);
-		}
-    	else if (content_type.indexOf("multipart/form-data") > 0) {
-    		// First, get the boundary from Content-Type
-    		if ((idx = content_type.indexOf("boundary=")) > 0) {
-    			boundary = content_type.substring(idx + 9);
-    			
-    			while ((line = reader.readLine()) != null) {
-    				if (line.equals("")) {
-    					// Next line will be data
-    					continue;
-    				}
-
-    				if (line.indexOf(boundary) > 0) {
-    					continue;
-    				}
-
-    				if ((idx = line.indexOf(":")) > 0) {
-    					temp = line.split(":");
-    					if (temp[0].toLowerCase().equals("content-transfer-encoding")) {
-    						// TODO: save this somewhere
-    						encoding = line.substring(idx + 1).trim();
-    					}
-    					else if (temp[0].toLowerCase().equals("content-disposition")) {
-    						String right = line.substring(idx + 1).trim();
-    						temp2 = right.split("\\s");
-    						for (int i=0; i < temp2.length; i++) {
-    							if (temp2[i].indexOf("=") > 0) {
-    								temp3 = temp2[i].split("=");
-    								if (temp3[0].equals("name")) {
-    									// TODO: Field name is here
-    								}
-    								else if (temp3[0].equals("filename")) {
-    									// TODO: File name is here
-    								}
-    								else {
-    									// We don't care about this attribute
-    								}
-    							}
-    						}
-    					}
-    					else {
-    						// we con't care about this section header
-    					}
+    		if (line.indexOf(boundary) > 0) {
+    			// Reached end of section - flush what we have so far
+    			read_data = false;
+    			// Regular attributes
+    			if ((filename == null) && (name != null) && (value != null)) {
+    				params.put(name, value);
+    				name = null;
+    				value = null;
+    			}
+    			else if ((filename != null) && (name != null) && (filedata != null)) {
+    				// TODO: Decode file data
+    				switch (encoding) {
+    					case "base64": 
+    						DecodeBase64 decoder = new DecodeBase64();
+    						filedata = decoder.decode(filedata_encoded);
+    						break;
     				}
     				
+    				params.put(name, filedata);
+    				params.put(name + "_filename", filename);
+    				name = null;
+    				filedata = null;
+    				filename = null;
+    				encoding = "7bit"; // Default value as per RFC 2045; other possible values "8bit", "binary", "quoted-printable", "base64"
     			}
-    			
+    			continue;
+    		}
+
+    		if (read_data) {
+    			if (filedata_encoded != null) {
+    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
+    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
+    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
+    		    	filedata_encoded = filedata_tmp;
+    			}
+    			else 
+    				filedata_encoded = line.getBytes();
+    			continue;
+    		}
+    		
+    		if ((idx = line.indexOf(":")) > 0) {
+    			temp = line.split(":");
+    			if (temp[0].toLowerCase().equals("content-transfer-encoding")) 
+    				encoding = line.substring(idx + 1).trim();
+    			else if (temp[0].toLowerCase().equals("content-disposition")) {
+    				String right = line.substring(idx + 1).trim();
+    				temp2 = right.split("\\s");
+    				for (int i=0; i < temp2.length; i++) {
+    					if (temp2[i].indexOf("=") > 0) {
+    						temp3 = temp2[i].split("=");
+    						if (temp3[0].equals("name")) {
+    							name = temp3[1];
+    							name.replaceAll("^\"|\"$", "");
+    							name.replaceAll("^\'|\'$", "");
+    						}
+    						else if (temp3[0].equals("filename")) {
+    							filename = temp3[1];
+    							filename.replaceAll("^\"|\"$", "");
+    							filename.replaceAll("^\'|\'$", "");
+    						}
+    						// else we don't care about this attribute
+    					}
+    				}
+    			}
+   				// else we con't care about this section header
     		}
     	}
-
-	}
+    }
 	
 	private void parseLocation() {
 		location = url;
