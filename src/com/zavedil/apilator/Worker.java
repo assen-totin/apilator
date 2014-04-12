@@ -64,7 +64,14 @@ public class Worker implements Runnable {
 				}
 			}
 			else {
-				// We call the API here
+				/**
+				 * We call the API here; we/it should set:
+				 * - http_resp_status (if not 200)
+				 * - http_resp_body
+				 * - http_resp_body_len
+				 * - mime_type (if different from default text/plain)
+				 */				
+				
 				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
 				if (params.containsKey("filename")) {
@@ -87,6 +94,8 @@ public class Worker implements Runnable {
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
 					http_resp_body_len = http_resp_body.length;
 				}
+				
+				// End API call here
 			}
 		}
 		
