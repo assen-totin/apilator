@@ -258,6 +258,10 @@ public class HttpParser {
     						DecodeQuotedPrintable decoder_qp = new DecodeQuotedPrintable();
     						filedata = decoder_qp.decode(filedata_encoded);
     						break;
+    					case "7bit": 
+    						Decode7Bit decoder_7b = new Decode7Bit();
+    						filedata = decoder_7b.decode(filedata_encoded);
+    						break;
     				}
     				
     				params.put(name, filedata);
@@ -285,7 +289,7 @@ public class HttpParser {
     		if ((idx = line.indexOf(":")) > 0) {
     			temp = line.split(":");
     			if (temp[0].toLowerCase().equals("content-transfer-encoding")) 
-    				encoding = line.substring(idx + 1).trim();
+    				encoding = line.substring(idx + 1).toLowerCase().trim();
     			else if (temp[0].toLowerCase().equals("content-disposition")) {
     				String right = line.substring(idx + 1).trim();
     				temp2 = right.split("\\s");
