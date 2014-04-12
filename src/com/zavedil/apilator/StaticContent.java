@@ -17,8 +17,6 @@ public class StaticContent {
 		
 		// The 'location' will begin with a slash 
 		String file = document_root + location;
-
-		System.out.println(file);
 		
 		try {
             // Use this for reading the data.
@@ -44,7 +42,6 @@ public class StaticContent {
             inputStream.close();
         }
         catch(FileNotFoundException ex) {
-System.out.println("FileNotFoundException");
             error = true;			
         }
         catch(IOException ex) {

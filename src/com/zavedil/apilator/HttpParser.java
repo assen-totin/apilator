@@ -151,6 +151,8 @@ public class HttpParser {
 	    	
 	    	String content_type = headers.get("content-type").toString();
 	    	
+	    	Logger.debug(className, content_type);
+	    	
 	    	if (content_type.equals("application/x-www-form-urlencoded")) {
 	    		parseBodyUrlencoded();
 	    		
@@ -161,12 +163,12 @@ public class HttpParser {
 	    		else
 	    			return 400;
 	    	}
-	    	else if (content_type.indexOf("multipart/form-data") > 0) {
+	    	else if (content_type.indexOf("multipart/form-data") != -1) {
 	        	if ((idx = content_type.indexOf("boundary=")) > 0)
 	        		boundary = content_type.substring(idx + 9);
 	        	else
 	        		return 400;
-	        		
+
 	    		parseBodyMultipart();
 	    	}
 	    	else 
@@ -176,6 +178,9 @@ public class HttpParser {
 	    	return 400;
 		
 	    parseLocation();
+	    
+	    //String filenm = params.get("filename").toString();
+		//Logger.debug(className, "filename: " + filenm);
 	    
 		return ret;
 	}
@@ -231,6 +236,7 @@ public class HttpParser {
 	
 	private void parseBodyMultipart() throws IOException {
 		Logger.debug(className, "Entering function parseBodyMultipart");
+		Logger.debug(className, "Boundary is: " + boundary);
 		String line=null, name=null, value=null, filename=null;
 		String temp[], temp2[], temp3[], encoding="7bit";
 		int idx;
@@ -238,22 +244,28 @@ public class HttpParser {
 		boolean read_data = false;
 				
     	while ((line = reader.readLine()) != null) {
+    		Logger.debug(className, "LINE: " + line);
     		if (line.equals("")) {
+    			Logger.debug(className, "Empty line!");
     			// Next line will be data 			
     			read_data = true;
     			continue;
     		}
 
-    		if (line.indexOf(boundary) > 0) {
+    		if (line.indexOf(boundary) != -1) {
+    			Logger.debug(className, "Boundary line!");
     			// Reached end of section - flush what we have so far
     			read_data = false;
     			// Regular attributes
     			if ((filename == null) && (name != null) && (value != null)) {
+    				Logger.debug(className, "Store regular! " + name + ":" + value);
     				params.put(name, value);
     				name = null;
     				value = null;
     			}
     			else if ((filename != null) && (name != null) && (filedata != null)) {
+    				Logger.debug(className, "Store file!");
+    				Logger.debug(className, "Encoding is: " + encoding);
     				// Decode file data
     				switch (encoding) {
     					case "base64": 
@@ -285,36 +297,50 @@ public class HttpParser {
     		}
 
     		if (read_data) {
-    			if (filedata_encoded != null) {
-    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
-    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
-    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
-    		    	filedata_encoded = filedata_tmp;
+    			Logger.debug(className, "Read data!");
+    			if (filename == null) {
+    				Logger.debug(className, "Storing plain!");
+    				// Store plain as this should be unencoded
+    				value = line;
     			}
-    			else 
-    				filedata_encoded = line.getBytes();
-    			continue;
+    			else {    			
+	    			if (filedata_encoded != null) {
+	    				Logger.debug(className, "Append!");
+	    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
+	    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
+	    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
+	    		    	filedata_encoded = filedata_tmp;
+	    			}
+	    			else {
+	    				Logger.debug(className, "Store!");
+	    				filedata_encoded = line.getBytes();
+	    			}
+    			}
+    			
+	    		continue;
     		}
     		
     		if ((idx = line.indexOf(":")) > 0) {
+    			Logger.debug(className, "Attribute line!");
     			temp = line.split(":");
-    			if (temp[0].toLowerCase().equals("content-transfer-encoding")) 
+    			if (temp[0].toLowerCase().equals("content-transfer-encoding")) {
+    				Logger.debug(className, "Encoding attribute!");
     				encoding = line.substring(idx + 1).toLowerCase().trim();
+    			}
     			else if (temp[0].toLowerCase().equals("content-disposition")) {
+    				Logger.debug(className, "Disposition attribute!");
     				String right = line.substring(idx + 1).trim();
     				temp2 = right.split("\\s");
     				for (int i=0; i < temp2.length; i++) {
     					if (temp2[i].indexOf("=") > 0) {
     						temp3 = temp2[i].split("=");
     						if (temp3[0].equals("name")) {
-    							name = temp3[1];
-    							name.replaceAll("^\"|\"$", "");
-    							name.replaceAll("^\'|\'$", "");
+    							name = cleanQuotes(temp3[1]);
+    							Logger.debug(className, "Name element: " + name);
     						}
     						else if (temp3[0].equals("filename")) {
-    							filename = temp3[1];
-    							filename.replaceAll("^\"|\"$", "");
-    							filename.replaceAll("^\'|\'$", "");
+    							filename = cleanQuotes(temp3[1]);
+    							Logger.debug(className, "Filename element: " + filename);
     						}
     						// else we don't care about this attribute
     					}
@@ -406,5 +432,12 @@ public class HttpParser {
 		ret += "Content-Type: text/html\n";
     
 		return ret;
+	}
+	
+	private String cleanQuotes(String input) {
+		String output;
+		output = input.replaceAll("^\"|\"$", "");
+		output = output.replaceAll("^\'|\'$", "");
+		return output;
 	}
 }

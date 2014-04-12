@@ -24,7 +24,7 @@ public class Worker implements Runnable {
 		try {
 			http_parser = new HttpParser(data);
 			http_resp_status = http_parser.parseRequest();
-
+			
 			if (http_resp_status == 200)
 				headers_ok = true;
 			else {
@@ -65,7 +65,8 @@ public class Worker implements Runnable {
 				// We call the API here
 				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
-				if (params.get("filename") != null) {
+				if (params.containsKey("filename")) {
+					Logger.debug(className, "has key filename");
 					String location = params.get("filename").toString();
 					StaticContent static_content = new StaticContent("/" + location);
 					
