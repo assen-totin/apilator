@@ -72,10 +72,9 @@ public class HttpParser {
 	private Hashtable headers=null, params=null;
 	private int[] ver;
 	private String className;
-
  
 	public HttpParser(byte[] data) throws UnsupportedEncodingException {
-		className = this.getClass().getName();
+		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Entering function HttpParser");
 		method = "";
 		url = "";
@@ -117,22 +116,22 @@ public class HttpParser {
 	    	return 400;
 	
 	    method = cmd[0];
-	    
+	       
 	    parseHeaders();
 	    
-	    if (headers == null) 
+	    if (headers == null)
 	    	return 400;
 	    
-	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("Host") == null)
+	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("Host") == null) 
 	    	return 400;
 	    
-	    if (ver[0] == 1 && ver[1] >= 1) {
-	    	if (method.equals("OPTIONS") ||	method.equals("TRACE") || method.equals("CONNECT")) 
+	    if ((ver[0] == 1 && ver[1] >= 1) && 
+	    	(method.equals("OPTIONS") || method.equals("TRACE") || method.equals("CONNECT"))) 
 	    		return 501; // not implemented
-	    }
+	    
 	    else if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE")) {
 	    	idx = cmd[1].indexOf('?');
-	      
+	          	
 	    	if (idx < 0) 
 	    		url = cmd[1];
 	    	else {
@@ -142,10 +141,10 @@ public class HttpParser {
 	    	}
 	    }
 	    else if (method.equals("POST") || method.equals("PUT")) {
-			if (! headers.containsKey("content-length"))
+			if (getHeader("content-length") == null)
 				return 400;
 				
-			if (! headers.containsKey("content-type"))
+			if (getHeader("content-type") == null)
 				return 400;
 	    	
 	    	url = cmd[1];
@@ -174,7 +173,6 @@ public class HttpParser {
 	    		return 501; // WTF? POST with no proper Content-Type?
 	    }
 	    else 
-	      // meh not understand, bad request
 	    	return 400;
 		
 	    parseLocation();
@@ -207,10 +205,10 @@ public class HttpParser {
 		Logger.debug(className, "Entering function parseHeaders");
 		String line=null;
 		int idx;
-	
+		
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
-	    while (! ((line = reader.readLine()).equals(""))) {
-			if ((idx = line.indexOf(":")) > 0)
+	    while (!(line = reader.readLine()).equals("")) {
+			if ((idx = line.indexOf(':')) > 0)
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
 			// else we don't care about this line
 	    }
@@ -330,13 +328,12 @@ public class HttpParser {
 	private void parseLocation() {
 		Logger.debug(className, "Entering function parseLocation");
 		location = url;
+		int idx;
 		// The URL arrives stripped of any GET params, but may begin with a "http://host/..." 
 		// or just with "//location/..." 
 		// We need to strip those. 
-		int idx = url.indexOf("//");
-		if (idx != -1) {
-			location = url.substring(idx+1).trim();
-		}
+		if ((idx = url.indexOf("//")) > 0) 
+			location = url.substring(idx + 1).trim();
 	}
 
 	public String getMethod() {
@@ -349,8 +346,9 @@ public class HttpParser {
 
 	public String getHeader(String key) {
 		if (headers != null) {
-			if (headers.containsKey(key))
+			if (headers.containsKey(key.toLowerCase())) {
 				return (String) headers.get(key.toLowerCase());
+			}
 		}
 		return null;
 	}

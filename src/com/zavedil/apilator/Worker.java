@@ -16,28 +16,36 @@ public class Worker implements Runnable {
 	private byte[] http_resp_body;
 	private int http_resp_body_len;
 	private byte[] http_resp;
+	private String className;
 	
 	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
-		int headers_ok = 1;
+		boolean headers_ok = false;
 		
 		try {
 			http_parser = new HttpParser(data);
 			http_resp_status = http_parser.parseRequest();
+
+			if (http_resp_status == 200)
+				headers_ok = true;
+			else {
+				http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
+				http_resp_body_len = http_resp_body.length;
+			}
 		}
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
+			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
 			http_resp_body_len = http_resp_body.length;
-			headers_ok = 0;
+			headers_ok = false;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your reauest. Or with me.".getBytes();
+			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
 			http_resp_body_len = http_resp_body.length;
-			headers_ok = 0;
+			headers_ok = false;
 		}
-
-		if (headers_ok == 1) {
+	
+		if (headers_ok) {
 			if (serveStatic(http_parser.getLocation())) {
 				// Call the static content class
 				String location = http_parser.getLocation();
@@ -99,6 +107,7 @@ public class Worker implements Runnable {
 	
 	public void run() {
 		ServerDataEvent dataEvent;
+		className = this.getClass().getSimpleName();
 		
 		while(true) {
 			// Wait for data to become available
