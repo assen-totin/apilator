@@ -23,7 +23,7 @@ public class Worker implements Runnable {
 	private byte[] http_resp;
 	private String className;
 	
-	public void processData(NioServer server, SocketChannel socket, byte[] data, int count) throws IOException {
+	public void processData(Server server, SocketChannel socket, byte[] data, int count) throws IOException {
 		boolean headers_ok = false;
 		
 		try {

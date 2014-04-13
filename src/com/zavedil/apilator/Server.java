@@ -12,7 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
-public class NioServer implements Runnable {
+public class Server implements Runnable {
 	private String className;
 	
 	// The host:port combination to listen on
@@ -37,7 +37,7 @@ public class NioServer implements Runnable {
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 
-	public NioServer(InetAddress hostAddress, int port, Worker worker) throws IOException {
+	public Server(InetAddress hostAddress, int port, Worker worker) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.selector = this.initSelector();
@@ -49,7 +49,7 @@ public class NioServer implements Runnable {
 		
 		synchronized (this.pendingChanges) {
 			// Indicate we want the interest ops set changed
-			this.pendingChanges.add(new ChangeRequest(socket, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+			this.pendingChanges.add(new ServerChangeRequest(socket, ServerChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 
 			// And queue the data we want written
 			synchronized (this.pendingData) {
@@ -75,9 +75,9 @@ public class NioServer implements Runnable {
 				synchronized (this.pendingChanges) {
 					Iterator changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						ChangeRequest change = (ChangeRequest) changes.next();
+						ServerChangeRequest change = (ServerChangeRequest) changes.next();
 						switch (change.type) {
-						case ChangeRequest.CHANGEOPS:
+						case ServerChangeRequest.CHANGEOPS:
 							SelectionKey key = change.socket.keyFor(this.selector);
 							key.interestOps(change.ops);
 						}
@@ -139,7 +139,6 @@ public class NioServer implements Runnable {
 
 		// Allocate a new buffer for this read
 		ByteBuffer newBuffer = ByteBuffer.allocate(byteBufSize);
-		//this.readBuffer.clear();
 
 		// Attempt to read off the channel
 		int numRead;
@@ -165,7 +164,6 @@ public class NioServer implements Runnable {
 
 		// Fetch the stored buffer
 		ByteBuffer readBuffer = (ByteBuffer) key.attachment();
-		//Logger.debug(className, "Buffer position before: " + readBuffer.position());
 		
 		// See if need to expand the buffer
 		ByteBuffer tmpBuffer = ByteBuffer.allocate(readBuffer.position() + byteBufSize);
@@ -198,7 +196,7 @@ public class NioServer implements Runnable {
 				}
 				catch(IOException e) {
 					queue.remove(0);
-					System.out.println("OOOOOOPS!");
+					Logger.error(className, "OOOPS while writing back to socket! This should not happen.");
 				}
 
 				if (buf.remaining() > 0) {
@@ -213,6 +211,9 @@ public class NioServer implements Runnable {
 				// in writing on this socket. Switch back to waiting for
 				// data.
 				key.interestOps(SelectionKey.OP_READ);
+				
+				// Remove the attachment.
+				key.attachment();
 			}
 		}
 	}
@@ -240,7 +241,7 @@ public class NioServer implements Runnable {
 		try {
 			Worker worker = new Worker();
 			new Thread(worker).start();
-			new Thread(new NioServer(null, 8080, worker)).start();
+			new Thread(new Server(null, 8080, worker)).start();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
