@@ -263,21 +263,30 @@ public class HttpParser {
 		String encoding="binary"; // RFC 2045 says this should be 7bit, but FF and Chrome default to binary
 		int idx, body_bytes=0;
 		byte[] filedata=null, filedata_encoded=null, filedata_tmp=null;
-		boolean read_data = false;
+		boolean read_data=false, count_body_bytes=true;
 				
     	while ((line = reader.readLine()) != null) {
-    		body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped
-    		Logger.debug(className, "Got line! body_bytes: " + body_bytes);
+    		//if(count_body_bytes)
+    		//	body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped
+    		Logger.debug(className, "Got line!");
     		
     		if (line.equals("")) {
     			Logger.debug(className, "Empty line!");
+        		if(count_body_bytes) {
+        			body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped
+        			Logger.debug(className, "body_bytes now is: " + body_bytes);
+        		}
+
     			// Next line will be data
     			if (filename == null) {
     				Logger.debug(className, "Reading text data next!");
     				// Regular field: store plain as this should be unencoded, single-line
     				Logger.debug(className, "Storing plain!");
     				value = reader.readLine();
-    				body_bytes += value.length() + 2;
+    				if(count_body_bytes) {
+    					body_bytes += value.length() + 2;
+    					Logger.debug(className, "body_bytes now is: " + body_bytes);
+    				}
     			}
     			else if (read_data) {
     				Logger.debug(className, "Reading binary data next!");
@@ -296,11 +305,30 @@ public class HttpParser {
         			int offset = decoder.indexOf(binary_tmp, boundary.getBytes());
         			Logger.debug(className, "offset_bytes : " + offset);
         			if (offset > -1) {
-        				filedata_encoded = new byte[offset];
-        				System.arraycopy(request, header_bytes + body_bytes, filedata_encoded, 0, offset);
+        				filedata_tmp = new byte[offset];
+        				System.arraycopy(request, header_bytes + body_bytes, filedata_tmp, 0, offset);       				 
+        				
+        				// The offset may include a trailing CRLF plus part of the boundary prefix, so remove them
+        				int offset2 = decoder.indexOfLast(filedata_tmp, "\r\n".getBytes());
+        				Logger.debug(className, "offset2_bytes : " + offset2);
+        				
+        				if (offset2 > -1) {
+        					filedata_encoded = new byte[offset2];
+        					System.arraycopy(filedata_tmp, 0, filedata_encoded, 0, offset2);
+        					body_bytes += offset2 + 2; // Don't forget the CR/LF that was stripped
+        				}
+        				else {
+        					filedata_encoded = filedata_tmp;
+        					body_bytes += offset;
+        				}
+        				
+        				Logger.debug(className, "body_bytes now is: " + body_bytes);
         			}
+        			else
+        				Logger.warning(className, "Could not extract uploaded file with name: " + filename);
+        			
         			read_data = false;
-        			body_bytes += offset;
+        			count_body_bytes = false;
     			}
     			
     			continue;
@@ -309,6 +337,11 @@ public class HttpParser {
     		if (line.indexOf(boundary) != -1) {
     			Logger.debug(className, "Boundary line!");
     			read_data = true;
+    			count_body_bytes = true;
+    			if(count_body_bytes) {
+    				body_bytes += line.length() + 2;
+    				Logger.debug(className, "body_bytes now is: " + body_bytes);
+    			}
     			// Reached end of section - flush what we have so far
     			// Regular attributes
     			if ((filename == null) && (name != null) && (value != null)) {
@@ -354,6 +387,11 @@ public class HttpParser {
     		
     		if ((idx = line.indexOf(":")) > 0) {
     			Logger.debug(className, "Attribute line!");
+    			if(count_body_bytes) {
+    				body_bytes += line.length() + 2;
+    				Logger.debug(className, "body_bytes now is: " + body_bytes);
+    			}
+    			
     			temp = line.split(":");
     			if (temp[0].toLowerCase().equals("content-transfer-encoding")) {
     				Logger.debug(className, "Encoding attribute!");
@@ -381,6 +419,7 @@ public class HttpParser {
    				// else we con't care about this section header
     		}
     	}
+    	Logger.debug(className, "TOTAL! body_bytes: " + body_bytes);
     }
 	
 	private void parseLocation() {

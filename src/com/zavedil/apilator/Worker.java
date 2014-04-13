@@ -88,6 +88,12 @@ public class Worker implements Runnable {
 					FileOutputStream fout = new FileOutputStream("/tmp/" + myfile_fn);
 					fout.write(myfile);
 					fout.close();
+
+					byte[] myfile2 = (byte []) params.get("myfile2");
+					String myfile2_fn = params.get("myfile2_fn").toString();
+					FileOutputStream fout2 = new FileOutputStream("/tmp/" + myfile2_fn);
+					fout2.write(myfile2);
+					fout2.close();
 					
 					http_resp_body = "Yeeeeeee!".getBytes();
 					http_resp_body_len = http_resp_body.length;
