@@ -8,7 +8,7 @@ public class DecodeBinary {
     /**
      * Finds the first occurrence of the pattern in the text.
      */
-    public int indexOf(byte[] data, byte[] pattern) {
+    public int indexOf(byte[] data, byte[] pattern) {   	
         int[] failure = computeFailure(pattern);
 
         int j = 0;

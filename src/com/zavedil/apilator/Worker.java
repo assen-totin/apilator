@@ -1,8 +1,10 @@
 package com.zavedil.apilator;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.SocketChannel;
 import java.util.Hashtable;
@@ -80,12 +82,12 @@ public class Worker implements Runnable {
 				 */				
 				
 				Hashtable params = http_parser.getParams();
-				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {
-					byte[] myfile = params.get("myfile").toString().getBytes();
+				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {			
+					byte[] myfile = (byte []) params.get("myfile");
 					String myfile_fn = params.get("myfile_fn").toString();
-					FileOutputStream out = new FileOutputStream("/tmp/" + myfile_fn);
-					out.write(myfile);
-					out.close();
+					FileOutputStream fout = new FileOutputStream("/tmp/" + myfile_fn);
+					fout.write(myfile);
+					fout.close();
 					
 					http_resp_body = "Yeeeeeee!".getBytes();
 					http_resp_body_len = http_resp_body.length;

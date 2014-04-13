@@ -100,13 +100,16 @@ public class HttpParser {
 	
 	    ret = 200; // default is OK now
 	    initial = reader.readLine();
+
 	    if (initial == null || initial.length() == 0) 
 	    	return 0;
 	    if (Character.isWhitespace(initial.charAt(0))) {
 	      	//starting whitespace, return bad request
 	    	return 400;
 	    }
-	
+
+	    header_bytes += initial.length() + 2; // Don't forget the CRLF stripped by Java
+	    
 	    cmd = initial.split("\\s");
 	    if (cmd.length != 3)
 	    	return 400;
@@ -125,8 +128,6 @@ public class HttpParser {
 	    	return 400;
 	
 	    method = cmd[0];
-	    
-	    header_bytes += initial.length() + 2; // Don;t forget teh CRLF stripped by Java
 	    
 	    parseHeaders();
 	    
@@ -265,8 +266,8 @@ public class HttpParser {
 		boolean read_data = false;
 				
     	while ((line = reader.readLine()) != null) {
-    		body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped;
-    		//Logger.debug(className, "LINE: " + line);
+    		body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped
+    		Logger.debug(className, "Got line! body_bytes: " + body_bytes);
     		
     		if (line.equals("")) {
     			Logger.debug(className, "Empty line!");
@@ -276,47 +277,30 @@ public class HttpParser {
     				// Regular field: store plain as this should be unencoded, single-line
     				Logger.debug(className, "Storing plain!");
     				value = reader.readLine();
+    				body_bytes += value.length() + 2;
     			}
     			else if (read_data) {
-    				   				
     				Logger.debug(className, "Reading binary data next!");
     				Logger.debug(className, "header_bytes : " + header_bytes);
     				Logger.debug(className, "body_bytes : " + body_bytes);
-    				// We are past a boundary and have a file upload
-    				//if (encoding.equals("binary") || encoding.equals("8bit")) {
-    					// Read binary data from the original array from current offset up to next boundary
-        				byte[] binary_tmp = new byte[content_length];       				
-        				System.arraycopy(request, header_bytes + body_bytes, binary_tmp, 0, content_length - (header_bytes + body_bytes));
+
+    				byte[] binary_tmp = new byte[content_length];       				
+        			System.arraycopy(request, header_bytes + body_bytes, binary_tmp, 0, content_length - body_bytes);
         				
-        				DecodeBinary decoder = new DecodeBinary();       				
+        			DecodeBinary decoder = new DecodeBinary();       				
         				
-        				int offset = decoder.indexOf(binary_tmp, boundary.getBytes());
-        				Logger.debug(className, "offset_bytes : " + offset);
-        				if (offset > -1) {
-        					filedata_encoded = new byte[offset];
-        					System.arraycopy(request, header_bytes + body_bytes, filedata_encoded, 0, offset);
-        				}
-        				read_data = false;
-        				body_bytes += offset;
-    				//}
-    				//else {
-    				//	
-    				//}
-    				
-    				/*  				
-	    			if (filedata_encoded != null) {
-	    				//Logger.debug(className, "Append!");
-	    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
-	    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
-	    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
-	    		    	filedata_encoded = filedata_tmp;
-	    			}
-	    			else {
-	    				//Logger.debug(className, "Store!");
-	    				filedata_encoded = line.getBytes();
-	    			}
-	    			*/
+    				FileOutputStream out = new FileOutputStream("/tmp/blah");
+    				out.write(binary_tmp);
+    				out.close();
         				
+        			int offset = decoder.indexOf(binary_tmp, boundary.getBytes());
+        			Logger.debug(className, "offset_bytes : " + offset);
+        			if (offset > -1) {
+        				filedata_encoded = new byte[offset];
+        				System.arraycopy(request, header_bytes + body_bytes, filedata_encoded, 0, offset);
+        			}
+        			read_data = false;
+        			body_bytes += offset;
     			}
     			
     			continue;
@@ -333,7 +317,7 @@ public class HttpParser {
     				name = null;
     				value = null;
     			}
-    			else if ((filename != null) && (name != null) && (filedata != null)) {
+    			else if ((filename != null) && (name != null) && (filedata_encoded != null)) {
     				Logger.debug(className, "Store file!");
     				Logger.debug(className, "Encoding is: " + encoding);
     				// Decode file data
