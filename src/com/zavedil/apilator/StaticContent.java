@@ -13,8 +13,12 @@ public class StaticContent {
 	private byte[] file_content = null;
 	private final int chunk_size = 1000;
 	private String mime_type = "text/plain";
+	private String className;
 	
 	public StaticContent(String location) {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Entering function StaticContent");
+		
 		int curr_len = 0;
 		
 		String document_root = Config.getDocumentRoot();
@@ -33,8 +37,10 @@ public class StaticContent {
             int nRead = 0;
             while((nRead = inputStream.read(buffer)) != -1) {  
             	byte[] newbuf = new byte[curr_len + nRead];
+            	
             	if (curr_len > 0)
             		System.arraycopy(file_content, 0, newbuf, 0, curr_len);
+            	
             	System.arraycopy(buffer, 0, newbuf, curr_len, nRead);
             	
             	file_content = newbuf;

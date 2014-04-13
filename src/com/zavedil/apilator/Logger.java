@@ -2,6 +2,7 @@ package com.zavedil.apilator;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.Locale;
 
 public class Logger {
@@ -18,21 +19,33 @@ public class Logger {
 	 * 
 	 */
 	
+	private static final Hashtable<Integer,String> ErrorLevels = new Hashtable<Integer,String>() {{
+			put(0, "NONE");
+			put(1, "CRITICAL");
+			put(2, "ERROR");
+			put(3, "WARNING");
+			put(4, "NOTICE");
+			put(5, "TRACE");
+			put(6, "DEBUG");
+	}};
+		
 	private static void log(String className, String input, int level) {
 		SimpleDateFormat format;
 		int current_log_level;
-		String line, system_name, date;
+		String line, system_name, level_name, date;
 		
 		current_log_level = Config.getLogLevel();
-		system_name = Config.getSystemName();
+		//system_name = Config.getSystemName();
 		
 		if (level > current_log_level)
 			return;
+
+		level_name = ErrorLevels.get(level);
 		
 		format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.US);
 		date = format.format(new Date());
 				
-		line = "[" +  date + "][" + system_name + "][" + className + "] " + input;
+		line = "[" +  date + "][" + level_name + "][" + className + "] " + input;
 		
 		switch (level) {
 			case 1:

@@ -79,14 +79,13 @@ public class Worker implements Runnable {
 				 * - mime_type (if different from default text/plain)
 				 */				
 				
-				/*
 				Hashtable params = http_parser.getParams();
 				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {
 					byte[] myfile = params.get("myfile").toString().getBytes();
 					String myfile_fn = params.get("myfile_fn").toString();
-					//FileOutputStream out = new FileOutputStream("/tmp/" + myfile_fn);
-					//out.write(myfile);
-					//out.close();
+					FileOutputStream out = new FileOutputStream("/tmp/" + myfile_fn);
+					out.write(myfile);
+					out.close();
 					
 					http_resp_body = "Yeeeeeee!".getBytes();
 					http_resp_body_len = http_resp_body.length;
@@ -96,8 +95,8 @@ public class Worker implements Runnable {
 					http_resp_body = "Sorry, dude. Not found.".getBytes();
 					http_resp_body_len = http_resp_body.length;
 				}
-				*/
-				
+			
+				/*
 				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
 				//if (params.containsKey("filename")) {
@@ -122,7 +121,7 @@ public class Worker implements Runnable {
 				//	http_resp_body = "Sorry, dude. Not found.".getBytes();
 				//	http_resp_body_len = http_resp_body.length;
 				//}
-				
+				*/
 				
 				// End API call here
 			}

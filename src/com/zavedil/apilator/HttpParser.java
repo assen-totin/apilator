@@ -68,11 +68,13 @@ public class HttpParser {
                                                  {"505", "HTTP Version Not Supported"}};
 
 	private BufferedReader reader;
+	//private DataInputStream binary_reader;
+	private byte[] request=null;
 	private String method, url, location, post_data=null, boundary;
 	private Hashtable headers=null, params=null;
 	private int[] ver;
 	private String className;
-	private int header_bytes=0, received_bytes;
+	private int header_bytes=0, received_bytes=0, content_length=0;
  
 	public HttpParser(byte[] data, int count) throws UnsupportedEncodingException {
 		className = this.getClass().getSimpleName();
@@ -84,6 +86,10 @@ public class HttpParser {
 		ver = new int[2];
 		received_bytes = count;
 	  
+		request = new byte[data.length];
+		System.arraycopy(data, 0, request, 0, data.length);
+		//binary_reader= new DataInputStream(new ByteArrayInputStream(request));
+		
 		reader = new BufferedReader(new StringReader(new String(data, "UTF-8")));
 	}
   
@@ -154,11 +160,12 @@ public class HttpParser {
 	    	
 		    // Check if we have received enough bytes from the non-blocking socket
 	    	String cl = getHeader("content-length");
+	    	content_length = Integer.parseInt(cl);
 	    	Logger.debug(className, "received_bytes: " + received_bytes);
 	    	Logger.debug(className, "header_bytes: " + header_bytes);
-		    Logger.debug(className, "content-length: " + Integer.parseInt(cl));
+		    Logger.debug(className, "content-length: " + content_length);
 		    
-	    	if ((Integer.parseInt(cl) + header_bytes) > received_bytes) {
+	    	if ((content_length + header_bytes) > received_bytes) {
 	    		Logger.debug(className, "Not enough bytes yet, returning...");
 	    		return 0;
 	    	}
@@ -192,9 +199,6 @@ public class HttpParser {
 	    	return 400;
 		
 	    parseLocation();
-	    
-	    //String filenm = params.get("filename").toString();
-		//Logger.debug(className, "filename: " + filenm);
 	    
 		return ret;
 	}
@@ -254,24 +258,74 @@ public class HttpParser {
 		Logger.debug(className, "Entering function parseBodyMultipart");
 		Logger.debug(className, "Boundary is: " + boundary);
 		String line=null, name=null, value=null, filename=null;
-		String temp[], temp2[], temp3[], encoding="7bit";
-		int idx;
+		String temp[], temp2[], temp3[];
+		String encoding="binary"; // RFC 2045 says this should be 7bit, but FF and Chrome default to binary
+		int idx, body_bytes=0;
 		byte[] filedata=null, filedata_encoded=null, filedata_tmp=null;
 		boolean read_data = false;
 				
     	while ((line = reader.readLine()) != null) {
+    		body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped;
     		//Logger.debug(className, "LINE: " + line);
+    		
     		if (line.equals("")) {
     			Logger.debug(className, "Empty line!");
-    			// Next line will be data 			
-    			read_data = true;
+    			// Next line will be data
+    			if (filename == null) {
+    				Logger.debug(className, "Reading text data next!");
+    				// Regular field: store plain as this should be unencoded, single-line
+    				Logger.debug(className, "Storing plain!");
+    				value = reader.readLine();
+    			}
+    			else if (read_data) {
+    				   				
+    				Logger.debug(className, "Reading binary data next!");
+    				Logger.debug(className, "header_bytes : " + header_bytes);
+    				Logger.debug(className, "body_bytes : " + body_bytes);
+    				// We are past a boundary and have a file upload
+    				//if (encoding.equals("binary") || encoding.equals("8bit")) {
+    					// Read binary data from the original array from current offset up to next boundary
+        				byte[] binary_tmp = new byte[content_length];       				
+        				System.arraycopy(request, header_bytes + body_bytes, binary_tmp, 0, content_length - (header_bytes + body_bytes));
+        				
+        				DecodeBinary decoder = new DecodeBinary();       				
+        				
+        				int offset = decoder.indexOf(binary_tmp, boundary.getBytes());
+        				Logger.debug(className, "offset_bytes : " + offset);
+        				if (offset > -1) {
+        					filedata_encoded = new byte[offset];
+        					System.arraycopy(request, header_bytes + body_bytes, filedata_encoded, 0, offset);
+        				}
+        				read_data = false;
+        				body_bytes += offset;
+    				//}
+    				//else {
+    				//	
+    				//}
+    				
+    				/*  				
+	    			if (filedata_encoded != null) {
+	    				//Logger.debug(className, "Append!");
+	    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
+	    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
+	    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
+	    		    	filedata_encoded = filedata_tmp;
+	    			}
+	    			else {
+	    				//Logger.debug(className, "Store!");
+	    				filedata_encoded = line.getBytes();
+	    			}
+	    			*/
+        				
+    			}
+    			
     			continue;
     		}
 
     		if (line.indexOf(boundary) != -1) {
     			Logger.debug(className, "Boundary line!");
+    			read_data = true;
     			// Reached end of section - flush what we have so far
-    			read_data = false;
     			// Regular attributes
     			if ((filename == null) && (name != null) && (value != null)) {
     				Logger.debug(className, "Store regular! " + name + ":" + value);
@@ -283,7 +337,7 @@ public class HttpParser {
     				Logger.debug(className, "Store file!");
     				Logger.debug(className, "Encoding is: " + encoding);
     				// Decode file data
-    				/*
+    				
     				switch (encoding) {
     					case "base64": 
     						DecodeBase64 decoder_b64 = new DecodeBase64();
@@ -305,37 +359,13 @@ public class HttpParser {
     				
     				params.put(name, filedata);
     				params.put(name + "_fn", filename);
-    				*/
+
     				name = null;
     				filedata = null;
     				filename = null;
-    				encoding = "7bit"; // Default value as per RFC 2045; other possible values "8bit", "binary", "quoted-printable", "base64"
+    				encoding = "binary";
     			}
     			continue;
-    		}
-
-    		if (read_data) {
-    			Logger.debug(className, "Read data!");
-    			if (filename == null) {
-    				Logger.debug(className, "Storing plain!");
-    				// Store plain as this should be unencoded
-    				value = line;
-    			}
-    			else {    			
-	    			if (filedata_encoded != null) {
-	    				//Logger.debug(className, "Append!");
-	    				filedata_tmp = new byte[filedata_encoded.length + line.getBytes().length];
-	    		    	System.arraycopy(filedata_encoded, 0, filedata_tmp, 0, filedata_encoded.length);
-	    		    	System.arraycopy(line.getBytes(), 0, filedata_tmp, filedata_encoded.length, line.getBytes().length);
-	    		    	filedata_encoded = filedata_tmp;
-	    			}
-	    			else {
-	    				//Logger.debug(className, "Store!");
-	    				filedata_encoded = line.getBytes();
-	    			}
-    			}
-    			
-	    		continue;
     		}
     		
     		if ((idx = line.indexOf(":")) > 0) {
