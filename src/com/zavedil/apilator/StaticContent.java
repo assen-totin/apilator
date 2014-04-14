@@ -2,6 +2,23 @@ package com.zavedil.apilator;
 
 /**
  * A class to serve static content.
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
 import java.io.FileInputStream;
@@ -23,20 +40,14 @@ public class StaticContent {
 		
 		final int chunk_size = 1000;
 		int curr_len = 0;
-		
 		String document_root = Config.getDocumentRoot();
-		
-		// The 'location' will begin with a slash 
-		String file = document_root + location;
+		String file = document_root + location;				// The 'location' will begin with a slash 
 		
 		try {
-            // Use this for reading the data.
             byte[] buffer = new byte[chunk_size];
 
             FileInputStream inputStream = new FileInputStream(file);
 
-            // read() fills buffer with data and returns the number of bytes read  
-            // (which may be less than the buffer size, but it will never be more).
             int nRead = 0;
             while((nRead = inputStream.read(buffer)) != -1) {  
             	byte[] newbuf = new byte[curr_len + nRead];
@@ -50,7 +61,6 @@ public class StaticContent {
             	curr_len = output_data.length;
             }
 
-            // Always close files.
             inputStream.close();
             
             String file_name = location.substring(1);
@@ -67,16 +77,24 @@ public class StaticContent {
 	
 	/**
 	 * Getter for HTTP status code
-	 * @return
+	 * @return int HTTP status code
 	 */
 	public int getOutputHttpStatus() {
 		return output_http_status;
 	}
 	
+	/**
+	 * Getter for output data
+	 * @return byte[] Output data
+	 */
 	public byte[] getOutputData() {
 		return output_data;
 	}
 	
+	/**
+	 * Getter for MIME type of the output data
+	 * @return String MIME type
+	 */
 	public String getOutputMimeType() {
 		return output_http_mime_type;
 	}

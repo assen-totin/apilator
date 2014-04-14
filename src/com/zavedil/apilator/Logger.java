@@ -1,5 +1,26 @@
 package com.zavedil.apilator;
 
+/**
+ * Logger class
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -10,7 +31,6 @@ import java.util.Locale;
 public class Logger {
 	/**
 	 * Log levels:
-	 * 
 	 * 0 - LOG_NONE - never log anything: don't ever use!
 	 * 1 - LOG_CRITICAL - log critical events: app cannot run due to external reasons
 	 * 2 - LOG_ERROR - log errors: app cannot run due to internal reasons
@@ -18,10 +38,7 @@ public class Logger {
 	 * 4 - LOG_NOTICE - log notices: normal operation events outside main loop (start-up, shutdown)
 	 * 5 - LOG_TRACE -  log traces: normal operation events inside main loop
 	 * 6 - LOG_DEBUG - log all messages
-	 * 
 	 */
-	
-	// Log levels
 	private static final Hashtable<Integer,String> ErrorLevels = new Hashtable<Integer,String>() {{
 			put(0, "NONE");
 			put(1, "CRITICAL");
@@ -32,6 +49,14 @@ public class Logger {
 			put(6, "DEBUG");
 	}};
 	
+	/**
+	 * Method for writing to the access log.
+	 * @param host String The IP address of the remote host
+	 * @param username String The username of the logged user (we don't handle HTTP authentication, so it is always "-")
+	 * @param request String The first line of the HTTP request (Method, URL, protocol)
+	 * @param http_resp_status int HTTP status code returned to the client
+	 * @param http_resp_body_len int NUmber of bytes in the HTTP body returned to the client
+	 */
 	public static void log_access(String host, String username, String request, int http_resp_status, int http_resp_body_len) {
 		SimpleDateFormat format;
 		String line, date, ident="-", space=" ";
@@ -56,9 +81,9 @@ public class Logger {
 	
 	/**
 	 * Actual logging function for events
-	 * @param className The name of the class in which the event occurred
-	 * @param input Log message
-	 * @param level Event level
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 * @param level int Event logging level
 	 */
 	private static void log_event(String className, String input, int level) {
 		SimpleDateFormat format;
@@ -87,37 +112,65 @@ public class Logger {
 		}
 	}
 	
-	// Public function for level LOG_NONE
+	/**
+	 * Public function to log with level LOG_NONE
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void none(String className, String input) {
 		log_event(className, input, 0);
 	}
 
-	// Public function for level LOG_CRITICAL
+	/**
+	 * Public function to log with level LOG_CRITICAL
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void critical(String className, String input) {
 		log_event(className, input, 1);
 	}
 
-	// Public function for level LOG_ERROR
+	/**
+	 * Public function to log with level LOG_ERROR
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void error(String className, String input) {
 		log_event(className, input, 2);
 	}
 
-	// Public function for level LOG_WARNING
+	/**
+	 * Public function to log with level LOG_WARNING
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void warning(String className, String input) {
 		log_event(className, input, 3);
 	}
 
-	// Public function for level LOG_NOTICE
+	/**
+	 * Public function to log with level LOG_NOTICE
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void notice(String className, String input) {
 		log_event(className, input, 4);
 	}
 
-	// Public function for level LOG_TRACE
+	/**
+	 * Public function to log with level LOG_TRACE
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void trace(String className, String input) {
 		log_event(className, input, 5);
 	}
 
-	// Public function for level LOG_DEBUG
+	/**
+	 * Public function to log with level LOG_DEBUG
+	 * @param className String The name of the class in which the event occurred
+	 * @param input String Log message
+	 */
 	public static void debug(String className, String input) {
 		log_event(className, input, 6);
 	}

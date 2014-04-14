@@ -1,23 +1,37 @@
 package com.zavedil.apilator;
 
-import java.util.Hashtable;
-
 /**
  * API base class. 
  * Extend it from the class which corresponds to an API entry point. 
- * 
  * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
+import java.util.Hashtable;
 
 public abstract class Api {
 	// Input data
-	protected final Hashtable input_params;			// Input data (key/values from HTTP request)
+	protected final Hashtable input_params;					// Input data (key/values from HTTP request)
 	
 	// Output data
-	protected byte[] output_data=null;					// Output data
-	protected int output_http_status=200; 			// Output HTTP status from processing the request (optional)
-	protected String output_mime_type="text/plain";	// Output MIME type (optional)
+	protected byte[] output_data=null;						// Output data
+	protected int output_http_status=200; 					// Output HTTP status from processing the request (optional)
+	protected String output_mime_type="application/json";	// Output MIME type (optional)
 	
 	/**
 	 * Constructor method
