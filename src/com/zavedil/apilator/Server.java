@@ -1,5 +1,28 @@
 package com.zavedil.apilator;
 
+/**
+ * TCP server class using NIO.
+ * @author James Greenfield nio@flat502.com
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Original copyright (C) James Greenfield.
+ * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -37,6 +60,7 @@ public class Server implements Runnable {
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 
+	// Declare the server
 	public Server(InetAddress hostAddress, int port, ServerWorker worker) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
@@ -44,6 +68,11 @@ public class Server implements Runnable {
 		this.worker = worker;
 	}
 
+	/**
+	 * Method to send data (reponse) to the remote client
+	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
+	 * @param data byte[] The data to send
+	 */
 	public void send(SocketChannel socket, byte[] data) {
 		Logger.debug(className, "Entering function send");
 		
@@ -66,6 +95,9 @@ public class Server implements Runnable {
 		this.selector.wakeup();
 	}
 
+	/**
+	 * The main loop for the server
+	 */
 	public void run() {
 		className = this.getClass().getSimpleName();
 		
@@ -116,6 +148,11 @@ public class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * Method to accept a new inbound connection
+	 * @param key SelectionKey The key, associated with the connection
+	 * @throws IOException
+	 */
 	private void accept(SelectionKey key) throws IOException {
 		Logger.debug(className, "Entering function accept");
 		
@@ -132,6 +169,11 @@ public class Server implements Runnable {
 		socketChannel.register(this.selector, SelectionKey.OP_READ, ByteBuffer.allocate(byteBufSize));
 	}
 
+	/**
+	 * Method to read data form an incoming connection
+	 * @param key  SelectionKey The key, associated with the connection
+	 * @throws IOException
+	 */
 	private void read(SelectionKey key) throws IOException {
 		Logger.debug(className, "Entering function read");
 		
@@ -180,6 +222,11 @@ public class Server implements Runnable {
 		tmpBuffer.position(buffer_pos);
 	}
 
+	/**
+	 * Method to write data (response) to a connection 
+	 * @param key  SelectionKey The key, associated with the connection
+	 * @throws IOException
+	 */
 	private void write(SelectionKey key) throws IOException {
 		Logger.debug(className, "Entering function write");
 		
@@ -218,6 +265,11 @@ public class Server implements Runnable {
 		}
 	}
 
+	/**
+	 * Selector initialisation method
+	 * @return Selector The socket selector to use 
+	 * @throws IOException
+	 */
 	private Selector initSelector() throws IOException {
 		// Create a new selector
 		Selector socketSelector = SelectorProvider.provider().openSelector();
@@ -237,6 +289,10 @@ public class Server implements Runnable {
 		return socketSelector;
 	}
 
+	/**
+	 * Main entry point for the server
+	 * @param args String[] Command-line arguments, if any
+	 */
 	public static void main(String[] args) {
 		try {
 			ServerWorker worker = new ServerWorker();

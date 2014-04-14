@@ -1,5 +1,28 @@
 package com.zavedil.apilator;
 
+/**
+ * Worker class for the NIO TCP server.
+ * @author James Greenfield nio@flat502.com
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Original copyright (C) James Greenfield.
+ * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -16,6 +39,14 @@ public class ServerWorker implements Runnable {
 	private final String ERROR_MGS_500="There is something very, very wrong with your request. Or with me.";
 	private final String ERROR_MGS_404="Sorry, dude. Not found.";
 	
+	/**
+	 * Main function to be called when packet(s) arrive over a SocketChannel
+	 * @param server Server The server which originated the packets 
+	 * @param socketChannel SocketChannel The SocketChannel (NIO socket) which originated the packets
+	 * @param data byte[] The data from the packets
+	 * @param count int The number of bytes received
+	 * @throws IOException
+	 */
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
 		String headers=null, output_mime_type="text/plain";
@@ -168,9 +199,7 @@ public class ServerWorker implements Runnable {
 					output_data = ERROR_MGS_404.getBytes();
 				}
 				*/
-				
-				// End API call here
-			}
+			} // End API call here
 		}
 		
 		// Prepare body
@@ -199,6 +228,9 @@ public class ServerWorker implements Runnable {
 		}
 	}
 	
+	/**
+	 * The main loop of the worker thread
+	 */
 	public void run() {
 		ServerDataEvent dataEvent;
 		className = this.getClass().getSimpleName();
@@ -221,6 +253,11 @@ public class ServerWorker implements Runnable {
 		}
 	}
 	
+	/**
+	 * Helper method to check whether the worker should serve a static content or call the API
+	 * @param location String The local part of the original URL
+	 * @return boolean TRUE if the worker should serve static content, FALSE if the worker should call the API
+	 */
 	private boolean serveStatic(String location) {
 		int idx = location.indexOf("/api");
 		if (idx == 0)
@@ -228,6 +265,11 @@ public class ServerWorker implements Runnable {
 		return true;
 	}
 	
+	/**
+	 * Helper method to derive the name of the API endpoint from the original URL
+	 * @param location String The local part of the original URL
+	 * @return String The name of the API endpoint
+	 */
 	private String getEndpoint(String location) {
 		String[] parts = location.split("/");
 		return parts[1];
