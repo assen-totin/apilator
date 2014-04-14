@@ -6,7 +6,6 @@ package com.zavedil.apilator;
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Original copyright (C) 2004  Juho Vaha-Herttua.
- * 
  * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
  * 
  * This program is free software; you can redistribute it and/or

@@ -1,8 +1,32 @@
 package com.zavedil.apilator;
 
-import java.util.Arrays;
+/** 
+ * Class implementing Base64 decoding.
+ * @author Mikael Grev base64@miginfocom.com
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Original work by Copyright (c) 2004, Mikael Grev, MiG InfoCom AB. (base64 @ miginfocom . com)
+ * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
+ */ 
+ 
+// ORIGINAL NOTICE AND LICENSE FOLLOW
 
-/** A very fast and memory efficient class to encode and decode to and from BASE64 in full accordance
+/**
+ * A very fast and memory efficient class to encode and decode to and from BASE64 in full accordance
  * with RFC 2045.<br><br>
  * On Windows XP sp1 with 1.4.2_04 and later ;), this encoder and decoder is about 10 times faster
  * on small arrays (10 - 1000 bytes) and 2-3 times as fast on larger arrays (10000 - 1000000 bytes)
@@ -70,6 +94,8 @@ import java.util.Arrays;
  *         Time: 11:31:11
  */
 
+import java.util.Arrays;
+
 public class HttpDecodeBase64 {
 	private final char[] CA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
 	private final int[] IA = new int[256];
@@ -80,15 +106,10 @@ public class HttpDecodeBase64 {
 		IA['='] = 0;
 	}
 
-	// ****************************************************************************************
-	// *  byte[] version
-	// ****************************************************************************************
-
-	/** Decodes a BASE64 encoded byte array. All illegal characters will be ignored and can handle both arrays with
-	 * and without line separators.
-	 * @param sArr The source array. Length 0 will return an empty array. <code>null</code> will throw an exception.
-	 * @return The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters
-	 * (including '=') isn't divideable by 4. (I.e. definitely corrupted).
+	/** 
+	 * Decodes a BASE64 encoded byte array. All illegal characters will be ignored and can handle both arrays with and without line separators.
+	 * @param sArr byte[] The source array. Length 0 will return an empty array. <code>null</code> will throw an exception.
+	 * @return byte[] The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters (including '=') isn't divideable by 4. (I.e. definitely corrupted).
 	 */
 	public final byte[] decode(byte[] sArr)	{
 		// Check special case
@@ -137,17 +158,12 @@ public class HttpDecodeBase64 {
 		return dArr;
 	}
 
-	// ****************************************************************************************
-	// * String version
-	// ****************************************************************************************
-
-	/** Decodes a BASE64 encoded <code>String</code>. All illegal characters will be ignored and can handle both strings with
-	 * and without line separators.<br>
+	/** 
+	 * Decodes a BASE64 encoded <code>String</code>. All illegal characters will be ignored and can handle both strings with and without line separators.<br>
+	 * @param str String The source string. <code>null</code> or length 0 will return an empty array.
+	 * @return byte[] The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters (including '=') isn't divideable by 4.  (I.e. definitely corrupted).
 	 * <b>Note!</b> It can be up to about 2x the speed to call <code>decode(str.toCharArray())</code> instead. That
 	 * will create a temporary array though. This version will use <code>str.charAt(i)</code> to iterate the string.
-	 * @param str The source string. <code>null</code> or length 0 will return an empty array.
-	 * @return The decoded array of bytes. May be of length 0. Will be <code>null</code> if the legal characters
-	 * (including '=') isn't divideable by 4.  (I.e. definitely corrupted).
 	 */
 	public final byte[] decode(String str) {
 		// Check special case

@@ -1,14 +1,36 @@
 package com.zavedil.apilator;
 
 /**
- * Knuth-Morris-Pratt Algorithm for Pattern Matching
+ * Class implementing Knuth-Morris-Pratt Algorithm for Pattern Matching
+ * @author unknown
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Original author and date of work unknown.
+ * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
  */
 
 public class HttpDecodeBinary {
-    /**
-     * Finds the first occurrence of the pattern in the text.
-     */
-    public int indexOf(byte[] data, byte[] pattern) {   	
+	/**
+	 * Finds the first occurrence of the pattern in the text
+	 * @param data byte[] The haystack
+	 * @param pattern byte[] The needle
+	 * @return int The starting position (offset) of teh first occurrence of the needle in the haystack
+	 */
+	public int indexOf(byte[] data, byte[] pattern) {   	
         int[] failure = computeFailure(pattern);
 
         int j = 0;
@@ -26,11 +48,12 @@ public class HttpDecodeBinary {
         return -1;
     }
 
-    /**
-     * Computes the failure function using a boot-strapping process,
-     * where the pattern is matched against itself.
-     */
-    private int[] computeFailure(byte[] pattern) {
+	/**
+	 * Computes the failure function using a boot-strapping process, where the pattern is matched against itself.
+	 * @param pattern The needle
+	 * @return int[] A map, specifying the occurrence count for each byte in the needle.
+	 */
+	private int[] computeFailure(byte[] pattern) {
         int[] failure = new int[pattern.length];
 
         int j = 0;
@@ -47,10 +70,13 @@ public class HttpDecodeBinary {
         return failure;
     }
     
-    /**
-     * Find indexOf of the last occurrence of the pattern
-     */
-    public int indexOfLast(byte[] data, byte[] pattern) {
+	/**
+	 * Same as indexOf(), but seek the last occurrence of the pattern
+	 * @param data The haystak
+	 * @param pattern The needle
+	 * @return
+	 */
+	public int indexOfLast(byte[] data, byte[] pattern) {
     	boolean flag = true;
     	int idx=0;
     	

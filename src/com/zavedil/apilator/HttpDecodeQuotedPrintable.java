@@ -1,8 +1,18 @@
 package com.zavedil.apilator;
 
-/*
+/**
+ * Class implementing decoding from Quoted-Printable.
+ * @author Funambol Inc.
+ * @author Assen Totin assen.totin@gmail.com
+ * 
+ * Original work of Copyright (C) 2003 - 2007 Funambol, Inc.
+ * Modified by the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
+ */
+
+// ORIGINAL LICENSE FOLLOWS
+
+/**
  * Funambol is a mobile platform developed by Funambol, Inc.
- * Copyright (C) 2003 - 2007 Funambol, Inc.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -37,23 +47,15 @@ package com.zavedil.apilator;
 
 import java.io.UnsupportedEncodingException;
 
-/**
- * A class containing static methods to perform decoding from <b>quoted
- * printable</b> content transfer encoding and to encode into
- */
 public class HttpDecodeQuotedPrintable {
 	private byte HT = 0x09; // \t
 	private byte LF = 0x0A; // \n
 	private byte CR = 0x0D; // \r
 
 	/**
-	 * A method to decode quoted printable encoded data. It overrides the same
-	 * input byte array to save memory. Can be done because the result is surely
-     * smaller than the input.
-     * 
-     * @param qp
-     *            a byte array to decode.
-     * @return the length of the decoded array.
+	 * A method to decode quoted printable encoded data using the same array.
+     * @param qp byte[] Input byte array to decode.
+     * @return byte[] The decoded array.
      */
 	public byte[] decode(byte[] qp) {
 		final int qplen = qp.length;
@@ -90,21 +92,29 @@ public class HttpDecodeQuotedPrintable {
 		return qp;
 	}
 
+	/**
+	 * Method to check if a byte is valid hexadecimal number.
+	 * @param b byte The byte to check
+	 * @return boolean TRUE if the byte is a valid hexadecimal number, FALSE otherwise.
+	 */
 	private boolean isHexDigit(final byte b) {
 		return ((b >= 0x30 && b <= 0x39) || (b >= 0x41 && b <= 0x46));
 	}
 
+	/**
+	 * Method to convert a byte
+	 * @param b byte The byte to convert
+	 * @return byte The converted value
+	 */
 	private byte getHexValue(final byte b) {
 		return (byte) Character.digit((char) b, 16);
 	}
 
 	/**
-     * 
-     * @param qp
-     *            Byte array to decode
-     * @param enc
-     *            The character encoding of the decoded string
-     * @return The decoded string.
+     * A wrapper method for decoding to a String with a specified encoding; uses decode().
+     * @param qp byte[] Byte array to decode
+     * @param enc String The character encoding of the decoded string
+     * @return String The decoded string.
      */
 	public String decode(byte[] qp, final String enc) {
 		qp = decode(qp);
