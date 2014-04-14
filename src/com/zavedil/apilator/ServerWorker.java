@@ -16,7 +16,7 @@ public class ServerWorker implements Runnable {
 	
 	public void processData(Server server, SocketChannel socket, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
-		String http_resp_head=null, mime_type="text/plain";
+		String http_resp_head=null, http_resp_mime_type="text/plain";
 		int http_resp_status, http_resp_head_len=0, http_resp_body_len=0;
 		byte[] http_resp_body=null, http_resp;
 		
@@ -37,13 +37,13 @@ public class ServerWorker implements Runnable {
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
 			http_resp_body = ERROR_MGS_500.getBytes();
-			mime_type = "text/plain";
+			http_resp_mime_type = "text/plain";
 			headers_ok = false;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
 			http_resp_body = ERROR_MGS_500.getBytes();
-			mime_type = "text/plain";
+			http_resp_mime_type = "text/plain";
 			headers_ok = false;
 		}
 	
@@ -56,11 +56,11 @@ public class ServerWorker implements Runnable {
 				if (static_content.getError()) {
 					http_resp_status = 404;
 					http_resp_body = ERROR_MGS_404.getBytes();
-					mime_type = "text/plain";
+					http_resp_mime_type = "text/plain";
 				}
 				else {
 					http_resp_body = static_content.getFileContent();
-					mime_type = static_content.getMimeType();
+					http_resp_mime_type = static_content.getMimeType();
 				}
 			}
 			else {
@@ -69,8 +69,33 @@ public class ServerWorker implements Runnable {
 				 * - http_resp_status (if not 200)
 				 * - http_resp_body
 				 * - http_resp_body_len (if not set, it will be calculated later as http_resp_body.length)
-				 * - mime_type (if different from default text/plain)
+				 * - http_resp_mime_type (if different from default text/plain)
 				 */				
+				
+				/*
+				// API calling example:
+				Hashtable params = http_parser.getParams();
+				ApiEndpointExample api_endpoint_example = new ApiEndpointExample(params);
+				String method = http_parser.getMethod();
+				switch (method) {
+					case "GET":
+				 		api_endpoint_example.get();
+				 		break;
+				 	case "POST":
+				 		api_endpoint_example.post();
+				 		break;
+				 	case "PUT":
+				 		api_endpoint_example.put();
+				 		break;
+				 	case "DELETE":
+				 		api_endpoint_example.delete();
+				 		break;
+				}
+				http_resp_body = api_endpoint_example.getOutput();
+				http_resp_body_len = api_endpoint_example.getOutputLen();
+				http_resp_mime_type = api_endpoint_example.getOutputMimeType();
+				http_resp_status = api_endpoint_example.getOutputHttpStatus();
+				*/
 				
 				Hashtable params = http_parser.getParams();
 				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {			
@@ -105,12 +130,12 @@ public class ServerWorker implements Runnable {
 						http_resp_status = 404;
 						http_resp_body = ERROR_MGS_404.getBytes();
 						http_resp_body_len = http_resp_body.length;
-						mime_type = "text/plain";
+						http_resp_mime_type = "text/plain";
 					}
 					else {
 						http_resp_body = static_content.getFileContent();
 						http_resp_body_len = static_content.getFileSize();
-						mime_type = static_content.getMimeType();
+						http_resp_mime_type = static_content.getMimeType();
 					}
 				}
 				else {
@@ -125,7 +150,7 @@ public class ServerWorker implements Runnable {
 		}
 		
 		// Prepare headers
-		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status, mime_type);
+		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status, http_resp_mime_type);
 		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
 		http_resp_head += "\n";
 		http_resp_head_len = http_resp_head.length();
