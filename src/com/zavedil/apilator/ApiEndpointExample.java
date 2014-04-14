@@ -1,5 +1,7 @@
 package com.zavedil.apilator;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Hashtable;
 import com.eclipsesource.json.JsonObject;
 
@@ -26,11 +28,14 @@ import com.eclipsesource.json.JsonObject;
  */
 
 public class ApiEndpointExample extends Api {
+	private final String className;
+	
 	/**
 	 * Constructor method
 	 */
 	public ApiEndpointExample(Hashtable params) {
 		super(params);
+		className = this.getClass().getSimpleName();
 	}
 	
 	/**
@@ -38,7 +43,9 @@ public class ApiEndpointExample extends Api {
 	 */
 	@Override
 	public void get() {
+		Logger.debug(className, "Entering function get.");
 		super.get();
+		
 		// Add your code below
 		
 	}
@@ -48,8 +55,26 @@ public class ApiEndpointExample extends Api {
 	 */
 	@Override
 	public void post() {
+		Logger.debug(className, "Entering function get.");
 		super.post();
+		
 		// Add your code below
+		
+		if (input_params.containsKey("myfile") && input_params.containsKey("myfile_fn")) {			
+			byte[] myfile = (byte []) input_params.get("myfile");
+			String myfile_fn = input_params.get("myfile_fn").toString();
+			try {
+				FileOutputStream fout = new FileOutputStream("/tmp/" + myfile_fn);
+				fout.write(myfile);
+				fout.close();
+				
+			} 
+			catch (IOException e) {
+				output_http_status = 500;
+			}
+		}
+		else
+			output_http_status = 404;
 		
 	}
 	
@@ -58,7 +83,9 @@ public class ApiEndpointExample extends Api {
 	 */
 	@Override
 	public void put() {
+		Logger.debug(className, "Entering function get.");
 		super.put();
+		
 		// Add your code below
 
 	}
@@ -68,7 +95,9 @@ public class ApiEndpointExample extends Api {
 	 */
 	@Override
 	public void delete() {
+		Logger.debug(className, "Entering function get.");
 		super.delete();
+		
 		// Add your code below
 
 	}

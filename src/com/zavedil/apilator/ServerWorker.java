@@ -36,8 +36,6 @@ import java.util.List;
 public class ServerWorker implements Runnable {
 	private List queue = new LinkedList();
 	private String className;
-	private final String ERROR_MGS_500="There is something very, very wrong with your request. Or with me.";
-	private final String ERROR_MGS_404="Sorry, dude. Not found.";
 	
 	/**
 	 * Main function to be called when packet(s) arrive over a SocketChannel
@@ -64,17 +62,9 @@ public class ServerWorker implements Runnable {
 				return;
 			else if (output_http_status == 200)
 				headers_ok = true;
-			else
-				output_data = ERROR_MGS_500.getBytes();
-		}
-		catch (UnsupportedEncodingException e) {
-			output_http_status = 500;
-			output_data = ERROR_MGS_500.getBytes();
-			headers_ok = false;
 		}
 		catch (IOException e) {
 			output_http_status = 500;
-			output_data = ERROR_MGS_500.getBytes();
 			headers_ok = false;
 		}
 		
@@ -89,8 +79,6 @@ public class ServerWorker implements Runnable {
 					output_data = static_content.getOutputData();
 					output_mime_type = static_content.getOutputMimeType();
 				}
-				else 
-					output_data = ERROR_MGS_404.getBytes();
 			}
 			
 			else {
@@ -101,109 +89,40 @@ public class ServerWorker implements Runnable {
 				 * - output_data_len (if not set, it will be calculated later as output_data.length)
 				 * - output_mime_type (if different from default text/plain)
 				 */				
-				
-				/*
-				// API calling example:
-				Hashtable params = http_parser.getParams();
-				ApiEndpointExample api_endpoint_example = new ApiEndpointExample(params);
-				String method = http_parser.getMethod();
-				switch (method) {
-					case "GET":
-				 		api_endpoint_example.get();
-				 		break;
-				 	case "POST":
-				 		api_endpoint_example.post();
-				 		break;
-				 	case "PUT":
-				 		api_endpoint_example.put();
-				 		break;
-				 	case "DELETE":
-				 		api_endpoint_example.delete();
-				 		break;
-				}
-				output_data = api_endpoint_example.getOutputData();
-				output_mime_type = api_endpoint_example.getOutputMimeType();
-				output_http_status = api_endpoint_example.getOutputHttpStatus();
-				*/
-				
-				/*
-				// API call example using reflection
+							
+				// API call using reflection
 				Hashtable params = http_parser.getParams();
 				String endpoint = getEndpoint(location);
 				try {
-					Class api_class = Class.forName(endpoint);
+					Class api_class = Class.forName(getPackageName() + "." + endpoint);
 					Constructor api_constr = api_class.getConstructor(Hashtable.class);
 					Object api_obj = api_constr.newInstance(params);
 					
 					String method = http_parser.getMethod();
-					Method api_method = api_obj.getClass().getMethod(method.toLowerCase(), (Class<?>) null);
-					api_method.invoke(api_obj, (Object) null);
+					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
+					api_method.invoke(api_obj);
 					
-					Method api_method_get_output = api_obj.getClass().getMethod("getOutputData", (Class<?>) null);
-					output_data = (byte[]) api_method_get_output.invoke(api_obj, (Object) null);
-								
-					Method api_method_get_http_status = api_obj.getClass().getMethod("getOutputHttpStatus", (Class<?>) null);
-					output_http_status = (int) api_method_get_http_status.invoke(api_obj, (Object) null);
+					Method api_method_get_http_status = api_obj.getClass().getMethod("getOutputHttpStatus");
+					output_http_status = (int) api_method_get_http_status.invoke(api_obj);
 					
-					Method api_method_get_mime_type = api_obj.getClass().getMethod("getOutputMimeType", (Class<?>) null);
-					output_mime_type = (String) api_method_get_mime_type.invoke(api_obj, (Object) null);
-				}
-				catch (ClassNotFoundException e) {
-					output_http_status = 404;
-					output_data = ERROR_MGS_404.getBytes();
-				}
-				*/
-				
-				
-				Hashtable params = http_parser.getParams();
-				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {			
-					byte[] myfile = (byte []) params.get("myfile");
-					String myfile_fn = params.get("myfile_fn").toString();
-					FileOutputStream fout = new FileOutputStream("/tmp/" + myfile_fn);
-					fout.write(myfile);
-					fout.close();
-
-					byte[] myfile2 = (byte []) params.get("myfile2");
-					String myfile2_fn = params.get("myfile2_fn").toString();
-					FileOutputStream fout2 = new FileOutputStream("/tmp/" + myfile2_fn);
-					fout2.write(myfile2);
-					fout2.close();
-					
-					output_data = "Yeeeeeee!".getBytes();
-				}
-				else {
-					output_http_status = 404;
-					output_data = ERROR_MGS_404.getBytes();
-				}
-			
-				/*
-				// Let's say param 'filename' has the desired filename... and serve it statically
-				Hashtable params = http_parser.getParams();
-				if (params.containsKey("filename")) {
-					//String location = params.get("filename").toString();
-					String location = "4F2C1563.jpg";
-					StaticContent static_content = new StaticContent("/" + location);
-								
-					if (static_content.getError()) {
-						output_http_status = 404;
-						output_data = ERROR_MGS_404.getBytes();
-					}
-					else {
-						output_data = static_content.getFileContent();
-						output_data_len = static_content.getFileSize();
-						output_mime_type = static_content.getMimeType();
+					if (output_http_status == 200) {
+						Method api_method_get_output = api_obj.getClass().getMethod("getOutputData");
+						output_data = (byte[]) api_method_get_output.invoke(api_obj);
+						
+						Method api_method_get_mime_type = api_obj.getClass().getMethod("getOutputMimeType");
+						output_mime_type = (String) api_method_get_mime_type.invoke(api_obj);						
 					}
 				}
-				else {
+				catch (Exception e) {
 					output_http_status = 404;
-					output_data = ERROR_MGS_404.getBytes();
 				}
-				*/
 			} // End API call here
 		}
 		
 		// Prepare body
-		output_data_len = output_data.length;
+		if (output_data == null)
+			output_data = http_parser.getHttpMessageForCode(output_http_status).getBytes();
+		output_data_len = output_data.length;		
 		
 		// Log the request
 		// Note: we don't handle authentication, hence user is always "-"
@@ -272,6 +191,12 @@ public class ServerWorker implements Runnable {
 	 */
 	private String getEndpoint(String location) {
 		String[] parts = location.split("/");
+		return parts[2];
+	}
+	
+	private String getPackageName() {
+		String[] parts = this.getClass().getPackage().toString().split(" ");
 		return parts[1];
 	}
+	
 }
