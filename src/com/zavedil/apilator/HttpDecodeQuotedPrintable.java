@@ -41,7 +41,7 @@ import java.io.UnsupportedEncodingException;
  * A class containing static methods to perform decoding from <b>quoted
  * printable</b> content transfer encoding and to encode into
  */
-public class DecodeQuotedPrintable {
+public class HttpDecodeQuotedPrintable {
 	private byte HT = 0x09; // \t
 	private byte LF = 0x0A; // \n
 	private byte CR = 0x0D; // \r

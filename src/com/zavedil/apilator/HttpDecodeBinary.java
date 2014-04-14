@@ -4,7 +4,7 @@ package com.zavedil.apilator;
  * Knuth-Morris-Pratt Algorithm for Pattern Matching
  */
 
-public class DecodeBinary {
+public class HttpDecodeBinary {
     /**
      * Finds the first occurrence of the pattern in the text.
      */

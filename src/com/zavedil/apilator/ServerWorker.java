@@ -11,7 +11,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Worker implements Runnable {
+public class ServerWorker implements Runnable {
 	private List queue = new LinkedList();
 	private HttpParser http_parser;
 	private String mime_type = "text/plain";

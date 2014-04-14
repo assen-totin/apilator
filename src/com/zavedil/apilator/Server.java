@@ -29,7 +29,7 @@ public class Server implements Runnable {
 	//private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
 	private int byteBufSize = 8192;
 
-	private Worker worker;
+	private ServerWorker worker;
 
 	// A list of PendingChange instances
 	private List pendingChanges = new LinkedList();
@@ -37,7 +37,7 @@ public class Server implements Runnable {
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 
-	public Server(InetAddress hostAddress, int port, Worker worker) throws IOException {
+	public Server(InetAddress hostAddress, int port, ServerWorker worker) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.selector = this.initSelector();
@@ -239,7 +239,7 @@ public class Server implements Runnable {
 
 	public static void main(String[] args) {
 		try {
-			Worker worker = new Worker();
+			ServerWorker worker = new ServerWorker();
 			new Thread(worker).start();
 			new Thread(new Server(null, 8080, worker)).start();
 		} 

@@ -1,6 +1,6 @@
 package com.zavedil.apilator;
 
-public class Decode7Bit {
+public class HttpDecode7Bit {
     /**
      *
      * @param hex to be decoded

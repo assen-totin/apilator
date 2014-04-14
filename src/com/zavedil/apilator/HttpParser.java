@@ -296,7 +296,7 @@ public class HttpParser {
     				byte[] binary_tmp = new byte[content_length];       				
         			System.arraycopy(request, header_bytes + body_bytes, binary_tmp, 0, content_length - body_bytes);
         				
-        			DecodeBinary decoder = new DecodeBinary();       				
+        			HttpDecodeBinary decoder = new HttpDecodeBinary();       				
         				
     				FileOutputStream out = new FileOutputStream("/tmp/blah");
     				out.write(binary_tmp);
@@ -357,15 +357,15 @@ public class HttpParser {
     				
     				switch (encoding) {
     					case "base64": 
-    						DecodeBase64 decoder_b64 = new DecodeBase64();
+    						HttpDecodeBase64 decoder_b64 = new HttpDecodeBase64();
     						filedata = decoder_b64.decode(filedata_encoded);
     						break;
     					case "quoted-printable": 
-    						DecodeQuotedPrintable decoder_qp = new DecodeQuotedPrintable();
+    						HttpDecodeQuotedPrintable decoder_qp = new HttpDecodeQuotedPrintable();
     						filedata = decoder_qp.decode(filedata_encoded);
     						break;
     					case "7bit": 
-    						Decode7Bit decoder_7b = new Decode7Bit();
+    						HttpDecode7Bit decoder_7b = new HttpDecode7Bit();
     						filedata = decoder_7b.decode(filedata_encoded);
     						break;
     					case "8bit":

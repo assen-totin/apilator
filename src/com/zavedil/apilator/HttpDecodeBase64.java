@@ -70,7 +70,7 @@ import java.util.Arrays;
  *         Time: 11:31:11
  */
 
-public class DecodeBase64 {
+public class HttpDecodeBase64 {
 	private final char[] CA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
 	private final int[] IA = new int[256];
 	{
