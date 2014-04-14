@@ -15,8 +15,7 @@ public abstract class Api {
 	protected final Hashtable input_params;			// Input data (key/values from HTTP request)
 	
 	// Output data
-	protected byte[] output=null;					// Output data
-	protected int output_len=0;						// Output data size in bytes (optional)
+	protected byte[] output_data=null;					// Output data
 	protected int output_http_status=200; 			// Output HTTP status from processing the request (optional)
 	protected String output_mime_type="text/plain";	// Output MIME type (optional)
 	
@@ -58,22 +57,17 @@ public abstract class Api {
 	/**
 	 * Getter for 'output' property
 	 */
-	public byte[] getOutput() {
-		return output;
+	public byte[] getOutputData() {
+		return output_data;
 	}
 	
-	/**
-	 * Getter for 'output_len' property
-	 */
-	public int getOutputLen() {
-		return output_len;
-	}
 	/**
 	 * Getter for 'output_http_status' property
 	 */
 	public int getOutputHttpStatus() {
 		return output_http_status;
 	}
+
 	/**
 	 * Getter for 'output_mime_type' property
 	 */

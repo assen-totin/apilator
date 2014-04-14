@@ -18,57 +18,57 @@ public class ServerWorker implements Runnable {
 	
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
-		String http_resp_head=null, http_resp_mime_type="text/plain";
-		int http_resp_status, http_resp_head_len=0, http_resp_body_len=0;
-		byte[] http_resp_body=null, http_resp;
+		String headers=null, output_mime_type="text/plain";
+		int headers_len=0, output_http_status=0, output_data_len=0;
+		byte[] output_data=null, response;
 		
 		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
 		
 		try {
 			http_parser = new HttpParser(data, count);
-			http_resp_status = http_parser.parseRequest();
+			output_http_status = http_parser.parseRequest();
 			
-			if (http_resp_status == 0)
+			if (output_http_status == 0)
 				return;
-			else if (http_resp_status == 200)
+			else if (output_http_status == 200)
 				headers_ok = true;
 			else
-				http_resp_body = ERROR_MGS_500.getBytes();
+				output_data = ERROR_MGS_500.getBytes();
 		}
 		catch (UnsupportedEncodingException e) {
-			http_resp_status = 500;
-			http_resp_body = ERROR_MGS_500.getBytes();
+			output_http_status = 500;
+			output_data = ERROR_MGS_500.getBytes();
 			headers_ok = false;
 		}
 		catch (IOException e) {
-			http_resp_status = 500;
-			http_resp_body = ERROR_MGS_500.getBytes();
+			output_http_status = 500;
+			output_data = ERROR_MGS_500.getBytes();
 			headers_ok = false;
 		}
 		
 		if (headers_ok) {
 			String location = http_parser.getLocation();
+			
 			if (serveStatic(location)) {
 				// Call the static content class
-				
 				StaticContent static_content = new StaticContent(location);
-				if (static_content.getError()) {
-					http_resp_status = 404;
-					http_resp_body = ERROR_MGS_404.getBytes();
+				output_http_status = static_content.getOutputHttpStatus();
+				if (output_http_status == 200) {
+					output_data = static_content.getOutputData();
+					output_mime_type = static_content.getOutputMimeType();
 				}
-				else {
-					http_resp_body = static_content.getFileContent();
-					http_resp_mime_type = static_content.getMimeType();
-				}
+				else 
+					output_data = ERROR_MGS_404.getBytes();
 			}
+			
 			else {
 				/**
 				 * We call the API here; we/it should set:
-				 * - http_resp_status (if not 200)
-				 * - http_resp_body
-				 * - http_resp_body_len (if not set, it will be calculated later as http_resp_body.length)
-				 * - http_resp_mime_type (if different from default text/plain)
+				 * - output_http_status (if not 200)
+				 * - output_data
+				 * - output_data_len (if not set, it will be calculated later as output_data.length)
+				 * - output_mime_type (if different from default text/plain)
 				 */				
 				
 				/*
@@ -90,10 +90,9 @@ public class ServerWorker implements Runnable {
 				 		api_endpoint_example.delete();
 				 		break;
 				}
-				http_resp_body = api_endpoint_example.getOutput();
-				http_resp_body_len = api_endpoint_example.getOutputLen();
-				http_resp_mime_type = api_endpoint_example.getOutputMimeType();
-				http_resp_status = api_endpoint_example.getOutputHttpStatus();
+				output_data = api_endpoint_example.getOutputData();
+				output_mime_type = api_endpoint_example.getOutputMimeType();
+				output_http_status = api_endpoint_example.getOutputHttpStatus();
 				*/
 				
 				/*
@@ -109,21 +108,18 @@ public class ServerWorker implements Runnable {
 					Method api_method = api_obj.getClass().getMethod(method.toLowerCase(), (Class<?>) null);
 					api_method.invoke(api_obj, (Object) null);
 					
-					Method api_method_get_output = api_obj.getClass().getMethod("getOutput", (Class<?>) null);
-					http_resp_body = (byte[]) api_method_get_output.invoke(api_obj, (Object) null);
-					
-					Method api_method_get_output_len = api_obj.getClass().getMethod("getOutputLen", (Class<?>) null);
-					http_resp_body_len = (int) api_method_get_output_len.invoke(api_obj, (Object) null);
-					
+					Method api_method_get_output = api_obj.getClass().getMethod("getOutputData", (Class<?>) null);
+					output_data = (byte[]) api_method_get_output.invoke(api_obj, (Object) null);
+								
 					Method api_method_get_http_status = api_obj.getClass().getMethod("getOutputHttpStatus", (Class<?>) null);
-					http_resp_status = (int) api_method_get_http_status.invoke(api_obj, (Object) null);
+					output_http_status = (int) api_method_get_http_status.invoke(api_obj, (Object) null);
 					
 					Method api_method_get_mime_type = api_obj.getClass().getMethod("getOutputMimeType", (Class<?>) null);
-					http_resp_mime_type = (String) api_method_get_mime_type.invoke(api_obj, (Object) null);
+					output_mime_type = (String) api_method_get_mime_type.invoke(api_obj, (Object) null);
 				}
 				catch (ClassNotFoundException e) {
-					http_resp_status = 404;
-					http_resp_body = ERROR_MGS_404.getBytes();
+					output_http_status = 404;
+					output_data = ERROR_MGS_404.getBytes();
 				}
 				*/
 				
@@ -142,11 +138,11 @@ public class ServerWorker implements Runnable {
 					fout2.write(myfile2);
 					fout2.close();
 					
-					http_resp_body = "Yeeeeeee!".getBytes();
+					output_data = "Yeeeeeee!".getBytes();
 				}
 				else {
-					http_resp_status = 404;
-					http_resp_body = ERROR_MGS_404.getBytes();
+					output_http_status = 404;
+					output_data = ERROR_MGS_404.getBytes();
 				}
 			
 				/*
@@ -158,18 +154,18 @@ public class ServerWorker implements Runnable {
 					StaticContent static_content = new StaticContent("/" + location);
 								
 					if (static_content.getError()) {
-						http_resp_status = 404;
-						http_resp_body = ERROR_MGS_404.getBytes();
+						output_http_status = 404;
+						output_data = ERROR_MGS_404.getBytes();
 					}
 					else {
-						http_resp_body = static_content.getFileContent();
-						http_resp_body_len = static_content.getFileSize();
-						http_resp_mime_type = static_content.getMimeType();
+						output_data = static_content.getFileContent();
+						output_data_len = static_content.getFileSize();
+						output_mime_type = static_content.getMimeType();
 					}
 				}
 				else {
-					http_resp_status = 404;
-					http_resp_body = ERROR_MGS_404.getBytes();
+					output_http_status = 404;
+					output_data = ERROR_MGS_404.getBytes();
 				}
 				*/
 				
@@ -177,29 +173,28 @@ public class ServerWorker implements Runnable {
 			}
 		}
 		
+		// Prepare body
+		output_data_len = output_data.length;
+		
 		// Log the request
 		// Note: we don't handle authentication, hence user is always "-"
 		// Who's there?
-		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), http_resp_status, http_resp_body_len);
+		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), output_http_status, output_data_len);
 		
 		// Prepare headers
-		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status, http_resp_mime_type);
-		http_resp_head += "Content-Length: " + http_resp_body_len + "\n";
-		http_resp_head += "\n";
-		http_resp_head_len = http_resp_head.length();
-		
-		// Prepare body
-		if (http_resp_body_len == 0)
-			http_resp_body_len = http_resp_body.length;
-		
+		headers = http_parser.getHttpReplyHeaders(output_http_status, output_mime_type);
+		headers += "Content-Length: " + output_data_len + "\n";
+		headers += "\n";
+		headers_len = headers.length();
+			
 		// Combine headers and body
-		http_resp = new byte[http_resp_head_len + http_resp_body_len];
-    	System.arraycopy(http_resp_head.getBytes(), 0, http_resp, 0, http_resp_head_len);
-    	System.arraycopy(http_resp_body, 0, http_resp, http_resp_head_len, http_resp_body_len);
+		response = new byte[headers_len + output_data_len];
+    	System.arraycopy(headers.getBytes(), 0, response, 0, headers_len);
+    	System.arraycopy(output_data, 0, response, headers_len, output_data_len);
 	
     	// Push response back
 		synchronized(queue) {
-			queue.add(new ServerDataEvent(server, socketChannel, http_resp));
+			queue.add(new ServerDataEvent(server, socketChannel, response));
 			queue.notify();
 		}
 	}
