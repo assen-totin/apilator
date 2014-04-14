@@ -1,10 +1,7 @@
 package com.zavedil.apilator;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.channels.SocketChannel;
 import java.util.Hashtable;
@@ -13,17 +10,17 @@ import java.util.List;
 
 public class ServerWorker implements Runnable {
 	private List queue = new LinkedList();
-	private HttpParser http_parser;
-	private String mime_type = "text/plain";
-	private int http_resp_status;
-	private String http_resp_head;
-	private int http_resp_head_len;
-	private byte[] http_resp_body;
-	private int http_resp_body_len;
-	private byte[] http_resp;
 	private String className;
+	private final String ERROR_MGS_500="There is something very, very wrong with your request. Or with me.";
+	private final String ERROR_MGS_404="Sorry, dude. Not found.";
 	
 	public void processData(Server server, SocketChannel socket, byte[] data, int count) throws IOException {
+		HttpParser http_parser=null;
+		String http_resp_head=null, mime_type="text/plain";
+		int http_resp_status, http_resp_head_len=0, http_resp_body_len=0;
+		byte[] http_resp_body=null, http_resp;
+		
+		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
 		
 		try {
@@ -32,24 +29,20 @@ public class ServerWorker implements Runnable {
 			
 			if (http_resp_status == 0)
 				return;
-			if (http_resp_status == 200)
+			else if (http_resp_status == 200)
 				headers_ok = true;
-			else {
-				http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
-				http_resp_body_len = http_resp_body.length;
-			}
+			else
+				http_resp_body = ERROR_MGS_500.getBytes();
 		}
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
-			http_resp_body_len = http_resp_body.length;
+			http_resp_body = ERROR_MGS_500.getBytes();
 			mime_type = "text/plain";
 			headers_ok = false;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
-			http_resp_body = "There is something very, very wrong with your request. Or with me.".getBytes();
-			http_resp_body_len = http_resp_body.length;
+			http_resp_body = ERROR_MGS_500.getBytes();
 			mime_type = "text/plain";
 			headers_ok = false;
 		}
@@ -62,13 +55,11 @@ public class ServerWorker implements Runnable {
 				StaticContent static_content = new StaticContent(location);
 				if (static_content.getError()) {
 					http_resp_status = 404;
-					http_resp_body = "Sorry, dude. Not found.".getBytes();
-					http_resp_body_len = http_resp_body.length;
+					http_resp_body = ERROR_MGS_404.getBytes();
 					mime_type = "text/plain";
 				}
 				else {
 					http_resp_body = static_content.getFileContent();
-					http_resp_body_len = static_content.getFileSize();
 					mime_type = static_content.getMimeType();
 				}
 			}
@@ -77,7 +68,7 @@ public class ServerWorker implements Runnable {
 				 * We call the API here; we/it should set:
 				 * - http_resp_status (if not 200)
 				 * - http_resp_body
-				 * - http_resp_body_len
+				 * - http_resp_body_len (if not set, it will be calculated later as http_resp_body.length)
 				 * - mime_type (if different from default text/plain)
 				 */				
 				
@@ -96,25 +87,23 @@ public class ServerWorker implements Runnable {
 					fout2.close();
 					
 					http_resp_body = "Yeeeeeee!".getBytes();
-					http_resp_body_len = http_resp_body.length;
 				}
 				else {
 					http_resp_status = 404;
-					http_resp_body = "Sorry, dude. Not found.".getBytes();
-					http_resp_body_len = http_resp_body.length;
+					http_resp_body = ERROR_MGS_404.getBytes();
 				}
 			
 				/*
 				// Let's say param 'filename' has the desired filename... and serve it statically
 				Hashtable params = http_parser.getParams();
-				//if (params.containsKey("filename")) {
+				if (params.containsKey("filename")) {
 					//String location = params.get("filename").toString();
 					String location = "4F2C1563.jpg";
 					StaticContent static_content = new StaticContent("/" + location);
 								
 					if (static_content.getError()) {
 						http_resp_status = 404;
-						http_resp_body = "Sorry, dude. Not found.".getBytes();
+						http_resp_body = ERROR_MGS_404.getBytes();
 						http_resp_body_len = http_resp_body.length;
 						mime_type = "text/plain";
 					}
@@ -123,12 +112,12 @@ public class ServerWorker implements Runnable {
 						http_resp_body_len = static_content.getFileSize();
 						mime_type = static_content.getMimeType();
 					}
-				//}
-				//else {
-				//	http_resp_status = 404;
-				//	http_resp_body = "Sorry, dude. Not found.".getBytes();
-				//	http_resp_body_len = http_resp_body.length;
-				//}
+				}
+				else {
+					http_resp_status = 404;
+					http_resp_body = ERROR_MGS_404.getBytes();
+					http_resp_body_len = http_resp_body.length;
+				}
 				*/
 				
 				// End API call here
@@ -142,6 +131,10 @@ public class ServerWorker implements Runnable {
 		http_resp_head_len = http_resp_head.length();
 		
 		// Prepare body
+		if (http_resp_body_len == 0)
+			http_resp_body_len = http_resp_body.length;
+		
+		// Combine headers and body
 		http_resp = new byte[http_resp_head_len + http_resp_body_len];
     	System.arraycopy(http_resp_head.getBytes(), 0, http_resp, 0, http_resp_head_len);
     	System.arraycopy(http_resp_body, 0, http_resp, http_resp_head_len, http_resp_body_len);
