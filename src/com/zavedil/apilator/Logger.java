@@ -1,5 +1,7 @@
 package com.zavedil.apilator;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
@@ -19,6 +21,7 @@ public class Logger {
 	 * 
 	 */
 	
+	// Log levels
 	private static final Hashtable<Integer,String> ErrorLevels = new Hashtable<Integer,String>() {{
 			put(0, "NONE");
 			put(1, "CRITICAL");
@@ -28,8 +31,36 @@ public class Logger {
 			put(5, "TRACE");
 			put(6, "DEBUG");
 	}};
+	
+	public static void log_access(String host, String username, String request, int http_resp_status, int http_resp_body_len) {
+		SimpleDateFormat format;
+		String line, date, ident="-", space=" ";
 		
-	private static void log(String className, String input, int level) {
+		format = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", Locale.US);
+		date = format.format(new Date());
+				
+		if (username.length() == 0)
+			username = "-";
+		
+		line = host + space + ident + space + username + space + "[" +  date + "]" + space + request + space + http_resp_status + space + http_resp_body_len + "\n";
+
+		try {
+			FileOutputStream fout = new FileOutputStream(Config.getAccessLog());
+			fout.write(line.getBytes());
+			fout.close();
+		}
+		catch ( IOException e) {
+			System.err.println("Unable to write to access log file: " + Config.getAccessLog());
+		}
+	}
+	
+	/**
+	 * Actual logging function for events
+	 * @param className The name of the class in which the event occurred
+	 * @param input Log message
+	 * @param level Event level
+	 */
+	private static void log_event(String className, String input, int level) {
 		SimpleDateFormat format;
 		int current_log_level;
 		String line, system_name, level_name, date;
@@ -56,32 +87,38 @@ public class Logger {
 		}
 	}
 	
+	// Public function for level LOG_NONE
 	public static void none(String className, String input) {
-		log(className, input, 0);
+		log_event(className, input, 0);
 	}
-	
+
+	// Public function for level LOG_CRITICAL
 	public static void critical(String className, String input) {
-		log(className, input, 1);
+		log_event(className, input, 1);
 	}
 
+	// Public function for level LOG_ERROR
 	public static void error(String className, String input) {
-		log(className, input, 2);
+		log_event(className, input, 2);
 	}
 
+	// Public function for level LOG_WARNING
 	public static void warning(String className, String input) {
-		log(className, input, 3);
+		log_event(className, input, 3);
 	}
 
+	// Public function for level LOG_NOTICE
 	public static void notice(String className, String input) {
-		log(className, input, 4);
+		log_event(className, input, 4);
 	}
 
+	// Public function for level LOG_TRACE
 	public static void trace(String className, String input) {
-		log(className, input, 5);
+		log_event(className, input, 5);
 	}
 
+	// Public function for level LOG_DEBUG
 	public static void debug(String className, String input) {
-		log(className, input, 6);
+		log_event(className, input, 6);
 	}
-
 }

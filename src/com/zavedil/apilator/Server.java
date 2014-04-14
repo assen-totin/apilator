@@ -136,7 +136,7 @@ public class Server implements Runnable {
 		Logger.debug(className, "Entering function read");
 		
 		SocketChannel socketChannel = (SocketChannel) key.channel();
-
+		
 		// Allocate a new buffer for this read
 		ByteBuffer newBuffer = ByteBuffer.allocate(byteBufSize);
 

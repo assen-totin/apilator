@@ -3,6 +3,8 @@ package com.zavedil.apilator;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.nio.channels.SocketChannel;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -14,7 +16,7 @@ public class ServerWorker implements Runnable {
 	private final String ERROR_MGS_500="There is something very, very wrong with your request. Or with me.";
 	private final String ERROR_MGS_404="Sorry, dude. Not found.";
 	
-	public void processData(Server server, SocketChannel socket, byte[] data, int count) throws IOException {
+	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
 		String http_resp_head=null, http_resp_mime_type="text/plain";
 		int http_resp_status, http_resp_head_len=0, http_resp_body_len=0;
@@ -37,26 +39,23 @@ public class ServerWorker implements Runnable {
 		catch (UnsupportedEncodingException e) {
 			http_resp_status = 500;
 			http_resp_body = ERROR_MGS_500.getBytes();
-			http_resp_mime_type = "text/plain";
 			headers_ok = false;
 		}
 		catch (IOException e) {
 			http_resp_status = 500;
 			http_resp_body = ERROR_MGS_500.getBytes();
-			http_resp_mime_type = "text/plain";
 			headers_ok = false;
 		}
-	
+		
 		if (headers_ok) {
-			if (serveStatic(http_parser.getLocation())) {
+			String location = http_parser.getLocation();
+			if (serveStatic(location)) {
 				// Call the static content class
-				String location = http_parser.getLocation();
 				
 				StaticContent static_content = new StaticContent(location);
 				if (static_content.getError()) {
 					http_resp_status = 404;
 					http_resp_body = ERROR_MGS_404.getBytes();
-					http_resp_mime_type = "text/plain";
 				}
 				else {
 					http_resp_body = static_content.getFileContent();
@@ -97,6 +96,38 @@ public class ServerWorker implements Runnable {
 				http_resp_status = api_endpoint_example.getOutputHttpStatus();
 				*/
 				
+				/*
+				// API call example using reflection
+				Hashtable params = http_parser.getParams();
+				String endpoint = getEndpoint(location);
+				try {
+					Class api_class = Class.forName(endpoint);
+					Constructor api_constr = api_class.getConstructor(Hashtable.class);
+					Object api_obj = api_constr.newInstance(params);
+					
+					String method = http_parser.getMethod();
+					Method api_method = api_obj.getClass().getMethod(method.toLowerCase(), (Class<?>) null);
+					api_method.invoke(api_obj, (Object) null);
+					
+					Method api_method_get_output = api_obj.getClass().getMethod("getOutput", (Class<?>) null);
+					http_resp_body = (byte[]) api_method_get_output.invoke(api_obj, (Object) null);
+					
+					Method api_method_get_output_len = api_obj.getClass().getMethod("getOutputLen", (Class<?>) null);
+					http_resp_body_len = (int) api_method_get_output_len.invoke(api_obj, (Object) null);
+					
+					Method api_method_get_http_status = api_obj.getClass().getMethod("getOutputHttpStatus", (Class<?>) null);
+					http_resp_status = (int) api_method_get_http_status.invoke(api_obj, (Object) null);
+					
+					Method api_method_get_mime_type = api_obj.getClass().getMethod("getOutputMimeType", (Class<?>) null);
+					http_resp_mime_type = (String) api_method_get_mime_type.invoke(api_obj, (Object) null);
+				}
+				catch (ClassNotFoundException e) {
+					http_resp_status = 404;
+					http_resp_body = ERROR_MGS_404.getBytes();
+				}
+				*/
+				
+				
 				Hashtable params = http_parser.getParams();
 				if (params.containsKey("myfile") && params.containsKey("myfile_fn")) {			
 					byte[] myfile = (byte []) params.get("myfile");
@@ -129,8 +160,6 @@ public class ServerWorker implements Runnable {
 					if (static_content.getError()) {
 						http_resp_status = 404;
 						http_resp_body = ERROR_MGS_404.getBytes();
-						http_resp_body_len = http_resp_body.length;
-						http_resp_mime_type = "text/plain";
 					}
 					else {
 						http_resp_body = static_content.getFileContent();
@@ -141,13 +170,17 @@ public class ServerWorker implements Runnable {
 				else {
 					http_resp_status = 404;
 					http_resp_body = ERROR_MGS_404.getBytes();
-					http_resp_body_len = http_resp_body.length;
 				}
 				*/
 				
 				// End API call here
 			}
 		}
+		
+		// Log the request
+		// Note: we don't handle authentication, hence user is always "-"
+		// Who's there?
+		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), http_resp_status, http_resp_body_len);
 		
 		// Prepare headers
 		http_resp_head = http_parser.getHttpReplyHeaders(http_resp_status, http_resp_mime_type);
@@ -166,7 +199,7 @@ public class ServerWorker implements Runnable {
 	
     	// Push response back
 		synchronized(queue) {
-			queue.add(new ServerDataEvent(server, socket, http_resp));
+			queue.add(new ServerDataEvent(server, socketChannel, http_resp));
 			queue.notify();
 		}
 	}
@@ -198,5 +231,10 @@ public class ServerWorker implements Runnable {
 		if (idx == 0)
 			return false;
 		return true;
+	}
+	
+	private String getEndpoint(String location) {
+		String[] parts = location.split("/");
+		return parts[1];
 	}
 }

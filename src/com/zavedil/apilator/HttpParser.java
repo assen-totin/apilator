@@ -70,7 +70,7 @@ public class HttpParser {
 	private BufferedReader reader;
 	//private DataInputStream binary_reader;
 	private byte[] request=null;
-	private String method, url, location, post_data=null, boundary;
+	private String first_line, method, url, location, post_data=null, boundary;
 	private Hashtable headers=null, params=null;
 	private int[] ver;
 	private String className;
@@ -95,22 +95,22 @@ public class HttpParser {
   
 	public int parseRequest() throws IOException {
 		Logger.debug(className, "Entering function parseRequest");
-	    String initial, prms[]=null, cmd[], temp[];
+	    String prms[]=null, cmd[], temp[];
 	    int ret, idx, i;
 	
 	    ret = 200; // default is OK now
-	    initial = reader.readLine();
+	    first_line = reader.readLine();
 
-	    if (initial == null || initial.length() == 0) 
+	    if (first_line == null || first_line.length() == 0) 
 	    	return 0;
-	    if (Character.isWhitespace(initial.charAt(0))) {
+	    if (Character.isWhitespace(first_line.charAt(0))) {
 	      	//starting whitespace, return bad request
 	    	return 400;
 	    }
 
-	    header_bytes += initial.length() + 2; // Don't forget the CRLF stripped by Java
+	    header_bytes += first_line.length() + 2; // Don't forget the CRLF stripped by Java
 	    
-	    cmd = initial.split("\\s");
+	    cmd = first_line.split("\\s");
 	    if (cmd.length != 3)
 	    	return 400;
 	
@@ -470,6 +470,10 @@ public class HttpParser {
 		return ver[0] + "." + ver[1];
 	}
 
+	public String getFirstLine() {
+		return first_line;
+	}
+	
 	public int compareVersion(int major, int minor) {
 		if (major < ver[0]) return -1;
 		else if (major > ver[0]) return 1;

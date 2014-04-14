@@ -1,9 +1,10 @@
 package com.zavedil.apilator;
 
 import java.util.Hashtable;
+import com.eclipsesource.json.JsonObject;
 
 /**
- * Example API class. 
+ * Example API Endpoint class. 
  * Use as skeleton for actual development. 
  * 
  * @author Assen Totin assen.totin@gmail.com
@@ -24,7 +25,7 @@ public class ApiEndpointExample extends Api {
 	public void get() {
 		super.get();
 		// Add your code below
-
+		
 	}
 	
 	/**

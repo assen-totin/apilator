@@ -12,7 +12,7 @@ import java.util.Hashtable;
 
 public abstract class Api {
 	// Input data
-	private final Hashtable input_params;		// Input data (key/values from HTTP request)
+	protected final Hashtable input_params;			// Input data (key/values from HTTP request)
 	
 	// Output data
 	protected byte[] output=null;					// Output data
