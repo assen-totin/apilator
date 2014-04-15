@@ -38,13 +38,20 @@ public class SessionItem implements java.io.Serializable {
 	// Session ID for this object
 	private final String session_id;
 	
-	public SessionItem() {
+	public SessionItem(String sess_id) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		
 		// Creation timestamp
 		created = (int) System.currentTimeMillis()/1000;
-		session_id = Session.getNewSessionId();
+		
+		if (sess_id == null)
+			sess_id = Session.getNewSessionId();
+		session_id = sess_id;
+	}
+	
+	public SessionItem() {
+		this(null);
 	}
 	
 	/**
@@ -73,5 +80,36 @@ public class SessionItem implements java.io.Serializable {
 	public void del(String key) {
 		session_item.remove(key);
 		updated = (int) System.currentTimeMillis()/1000;
+	}
+	
+	/**
+	 * Update the internal timestamp of the item
+	 */
+	public void update() {
+		updated = (int) System.currentTimeMillis()/1000;
+	}
+
+	/**
+	 * Getter for session_id property
+	 * @return int The value of the session_id property
+	 */
+	public String getSessionId() {
+		return session_id;
+	}
+	
+	/**
+	 * Getter for action property
+	 * @return int The value of the action property
+	 */
+	public int getAction() {
+		return action;
+	}
+	
+	/**
+	 * Set action
+	 * @param act int The ID of the action to set
+	 */
+	public void setAction(int act) {
+		action = act;
 	}
 }

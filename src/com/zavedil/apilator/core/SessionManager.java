@@ -1,6 +1,9 @@
 package com.zavedil.apilator.core;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -29,7 +32,8 @@ import java.net.MulticastSocket;
 
 public class SessionManager implements Runnable {
 	private final String className;
-	public static final int ACTION_UPDATE = 1;	// Used when multicasting an update
+	public final int MAX_PACKET_SIZE= 1500;		// Ethernet payload
+	public static final int ACTION_STORE = 1;	// Used when multicasting an update
 	public static final int ACTION_DELETE = 2;	// Used when multicasting a deletion
 	public static final int ACTION_WHOHAS = 3;	// Used when asking for the value of the specified key
 	public static final int ACTION_ISAT = 4;	// Used when sending a reply to WHO HAS
@@ -46,9 +50,49 @@ public class SessionManager implements Runnable {
 	public void run() {
 		Logger.trace(className, "Running new as a new thread.");
 		
-		//TODO: Add multicast listener code here
-    }
+		InetAddress multicast_group;
+		MulticastSocket multicast_socket;
+		DatagramPacket packet;
+		byte[] receive_buffer;
 		
+		try {
+			multicast_group = InetAddress.getByName(Config.SessionManagerIp);
+			multicast_socket = new MulticastSocket(Config.SessionManagerPort);
+			multicast_socket.joinGroup(multicast_group);
+			receive_buffer = new byte[MAX_PACKET_SIZE];
+			packet = new DatagramPacket(receive_buffer, receive_buffer.length); 
+			
+			while (true) {
+				// Read and unserialize packets
+				multicast_socket.receive(packet);
+				InputStream is = new ByteArrayInputStream(packet.getData());
+				ObjectInputStream ois = new ObjectInputStream(is);
+				SessionItem obj = (SessionItem)ois.readObject();	
+				processObject(obj);
+			} 
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Unable to process multicast packet");
+		}
+		catch (ClassNotFoundException e) {
+			Logger.warning(className, "Unable to process inbound multicast packet");
+		}
+    }
+	
+	private void processObject(SessionItem obj) {
+		switch(obj.getAction()) {
+			case ACTION_STORE:
+				put(obj.getSessionId(), obj);
+				break;
+			case ACTION_DELETE:
+				del(obj.getSessionId());
+				break;
+			case ACTION_WHOHAS:
+				//TODO: send back the requested object (via Unicast?) 
+				break;
+		}
+	}
+	
 	/**
 	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
 	 * @param key String Session ID, used as key
@@ -56,6 +100,14 @@ public class SessionManager implements Runnable {
 	 */
 	private void put(String key, Object value) {
 		SessionStorage.put(key, value);
+	}
+	
+	/**
+	 * Delete the specified item
+	 * @param key String Session ID, used as key
+	 */
+	private void del(String key) {
+		SessionStorage.del(key);
 	}
 	
 	/*
@@ -76,11 +128,7 @@ public class SessionManager implements Runnable {
 	/*
 		try {
 			 String msg = "Hello";
-			 
-			 InetAddress multicast_group = InetAddress.getByName(Config.SessionManagerIp);
-			 MulticastSocket multicast_socket = new MulticastSocket(Config.SessionManagerPort);
-			 multicast_socket.joinGroup(multicast_group);
-			 
+		 
 			 multicast_socket_out = new ObjectOutputStream(multicast_socket.getOutputStream());
 			 multicast_socket_out.writeObject(x);
 			 
