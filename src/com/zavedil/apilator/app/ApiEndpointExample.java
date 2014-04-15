@@ -28,6 +28,37 @@ import com.zavedil.apilator.core.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/*
+// Example code to get a new session ID:
+// The session ID will be generated as byte array (for faster storage and retrieval)
+byte[] session_id = Session.getNewSessionId();
+// To convert the session ID as string:
+String session_id_s = Session.sessionIdToString(session_id);
+// To convert the session ID as byte array
+byte[] session_id_b = Session.sessionIdToBytes(session_id_s);
+*/
+
+/*
+//Example code to save an uploaded file:
+//if the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
+if (input_data.containsKey("myfile") && input_data.containsKey("myfile_fn")) {			
+	byte[] myfile = (byte []) input_data.get("myfile");
+	String myfile_fn = input_data.get("myfile_fn").toString();
+	String dir = "/tmp";
+	try {
+		FileOutputStream fout = new FileOutputStream(dir + "/" + myfile_fn);
+		fout.write(myfile);
+		fout.close();
+	} 
+	catch (IOException e) {
+		output_http_status = 500;
+	}
+}
+else
+	output_http_status = 404;
+*/
+
+
 public class ApiEndpointExample extends Api {
 	private final String className;
 	
@@ -60,22 +91,6 @@ public class ApiEndpointExample extends Api {
 		super.post();
 		
 		// Add your code below
-		
-		if (input_params.containsKey("myfile") && input_params.containsKey("myfile_fn")) {			
-			byte[] myfile = (byte []) input_params.get("myfile");
-			String myfile_fn = input_params.get("myfile_fn").toString();
-			try {
-				FileOutputStream fout = new FileOutputStream("/tmp/" + myfile_fn);
-				fout.write(myfile);
-				fout.close();
-				
-			} 
-			catch (IOException e) {
-				output_http_status = 500;
-			}
-		}
-		else
-			output_http_status = 404;
 		
 	}
 	
