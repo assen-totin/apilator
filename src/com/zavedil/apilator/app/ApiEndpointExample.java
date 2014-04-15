@@ -76,8 +76,9 @@ public class ApiEndpointExample extends Api {
 		
 		// Add your code below
 		String session_id = Session.getNewSessionId();
-		//task.session_storage.put();
-		
+		SessionItem session_item = new SessionItem();
+		session_item.put("some_key", "some_value");
+		SessionStorage.put(session_id, session_item);
 	}
 	
 	/**

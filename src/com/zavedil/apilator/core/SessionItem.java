@@ -1,8 +1,11 @@
 package com.zavedil.apilator.core;
 
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Session storage class. 
- * Defines a local session storage.
+ * Session item class. 
+ * Describes an object stored in the Session Storage against a partifular Session ID.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
@@ -22,29 +25,31 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import java.util.concurrent.ConcurrentHashMap;
-
-public class SessionStorage {
-	// Create initial storage for 1000 sessions, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<String, Object> storage = new ConcurrentHashMap<String, Object>(1000, 0.9f, 1);	
+public class SessionItem {
+	private final String className;
+	HashMap<String, Object> session_item = null;
+	
+	public SessionItem() {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
+	}
 	
 	/**
 	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void put(String key, Object value) {
-		storage.put(key, value);
-		
-		//TODO: send network multicast update
+	public void put(String key, Object value) {
+		session_item.put(key, value);
 	}
+	
 	
 	/**
 	 * Retrieve an object based on the session ID (or null if key does not exists)
 	 * @param key String The key to search for.
 	 * @return Object The Object found in the storage or null if not found.
 	 */
-	public static Object get(String key) {
-		return storage.get(key);
+	public Object get(String key) {
+		return session_item.get(key);
 	}
 }

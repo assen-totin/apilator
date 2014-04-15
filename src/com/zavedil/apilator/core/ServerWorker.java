@@ -34,18 +34,14 @@ import java.util.List;
 public class ServerWorker implements Runnable {
 	private List queue = new LinkedList();
 	private final String className;
-	private Thread session_storage;
 	
 	/**
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerWorker(Thread sst) {
+	public ServerWorker() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		
-		// Store the handler to the session storage thread
-		session_storage = sst;
 	}
 	
 	/**

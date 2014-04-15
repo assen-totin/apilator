@@ -296,12 +296,12 @@ public class Server implements Runnable {
 	public static void main(String[] args) {
 		try {		
 			// Start the session storage manager thread
-			SessionStorage session_storage = new SessionStorage();
-			Thread session_storage_t = new Thread(session_storage);
-			session_storage_t.start();
+			SessionManager session_manager = new SessionManager();
+			Thread session_manager_t = new Thread(session_manager);
+			session_manager_t.start();
 			
 			// Start one worker
-			ServerWorker worker = new ServerWorker(session_storage_t);
+			ServerWorker worker = new ServerWorker();
 			new Thread(worker).start();
 			
 			// Start the server
