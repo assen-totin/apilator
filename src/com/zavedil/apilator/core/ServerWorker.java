@@ -1,4 +1,4 @@
-package com.zavedil.apilator;
+package com.zavedil.apilator.core;
 
 /**
  * Worker class for the NIO TCP server.

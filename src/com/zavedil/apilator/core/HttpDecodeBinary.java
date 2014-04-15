@@ -1,4 +1,4 @@
-package com.zavedil.apilator;
+package com.zavedil.apilator.core;
 
 /**
  * Class implementing Knuth-Morris-Pratt Algorithm for Pattern Matching

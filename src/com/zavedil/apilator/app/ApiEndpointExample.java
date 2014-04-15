@@ -1,9 +1,10 @@
-package com.zavedil.apilator;
+package com.zavedil.apilator.app;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Hashtable;
 import com.eclipsesource.json.JsonObject;
+import com.zavedil.apilator.core.*;
 
 /**
  * Example API Endpoint class. 

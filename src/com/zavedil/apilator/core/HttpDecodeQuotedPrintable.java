@@ -1,4 +1,4 @@
-package com.zavedil.apilator;
+package com.zavedil.apilator.core;
 
 /**
  * Class implementing decoding from Quoted-Printable.
