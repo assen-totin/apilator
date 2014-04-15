@@ -28,29 +28,50 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionItem implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 	private final String className;
-	HashMap<String, Object> session_item = null;
+	private HashMap<String, Object> session_item = null;
+	// Action will be set when sending the object over the network
+	private int action = 0;
+	// UNIX timestamps of creation, update and TTL
+	private final int created;
+	private int updated=0;
+	private int ttl=0;
+	// Session ID for this object
+	private final String session_id;
 	
 	public SessionItem() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
+		
+		// Creation timestamp
+		created = (int) System.currentTimeMillis()/1000;
+		session_id = Session.getNewSessionId();
 	}
 	
 	/**
-	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
-	 * @param key String Session ID, used as key
-	 * @param value Object The Object to store associated with the key
+	 * Store a key and a value in this object. If key exists, record will be updated
+	 * @param key String Key
+	 * @param value Object Value
 	 */
 	public void put(String key, Object value) {
 		session_item.put(key, value);
+		updated = (int) System.currentTimeMillis()/1000;
 	}
 	
-	
 	/**
-	 * Retrieve an object based on the session ID (or null if key does not exists)
+	 * Retrieve a value from this object based on its key (or null if key does not exists)
 	 * @param key String The key to search for.
-	 * @return Object The Object found in the storage or null if not found.
+	 * @return Object The value found in the storage or null if key not found.
 	 */
 	public Object get(String key) {
 		return session_item.get(key);
+	}
+	
+	/**
+	 * Remove a key/value pair
+	 * @param key The key to remove
+	 */
+	public void del(String key) {
+		session_item.remove(key);
+		updated = (int) System.currentTimeMillis()/1000;
 	}
 }

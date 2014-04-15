@@ -47,4 +47,8 @@ public class SessionStorage {
 	public static Object get(String key) {
 		return storage.get(key);
 	}
+	
+	public static void del(String key) {
+		storage.remove(key);
+	}
 }
