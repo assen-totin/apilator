@@ -24,6 +24,9 @@ package com.zavedil.apilator.core;
 
 public class SessionManager implements Runnable {
 	private final String className;
+	public static final int MSG_UPDATE = 1;		// Used when multicasting an update
+	public static final int MSG_WHOHAS = 2;		// Used when asking for key
+	public static final int MSG_ISAT = 3;		// Used when sending a reply to WHO HAS	
 	
 	public SessionManager() {
 		className = this.getClass().getSimpleName();

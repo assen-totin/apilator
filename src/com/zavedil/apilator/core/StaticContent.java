@@ -40,7 +40,7 @@ public class StaticContent {
 		
 		final int chunk_size = 1000;
 		int curr_len = 0;
-		String document_root = Config.getDocumentRoot();
+		String document_root = Config.DocumentRoot;
 		String file = document_root + location;				// The 'location' will begin with a slash 
 		
 		try {

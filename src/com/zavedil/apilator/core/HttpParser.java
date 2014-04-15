@@ -98,7 +98,7 @@ public class HttpParser {
 		params = new Hashtable();
 		ver = new int[2];		
 		received_bytes = count;
-		HttpServerName = Config.getSystemName();
+		HttpServerName = Config.SystemName;
 		
 		request = new byte[data.length];
 		System.arraycopy(data, 0, request, 0, data.length);

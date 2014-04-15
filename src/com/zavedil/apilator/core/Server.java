@@ -305,7 +305,7 @@ public class Server implements Runnable {
 			new Thread(worker).start();
 			
 			// Start the server
-			new Thread(new Server(null, 8080, worker)).start();
+			new Thread(new Server(null, Config.TcpPort, worker)).start();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();

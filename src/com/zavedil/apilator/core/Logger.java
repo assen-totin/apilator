@@ -70,12 +70,12 @@ public class Logger {
 		line = host + space + ident + space + username + space + "[" +  date + "]" + space + request + space + http_resp_status + space + http_resp_body_len + "\n";
 
 		try {
-			FileOutputStream fout = new FileOutputStream(Config.getAccessLog());
+			FileOutputStream fout = new FileOutputStream(Config.AccessLog);
 			fout.write(line.getBytes());
 			fout.close();
 		}
 		catch ( IOException e) {
-			System.err.println("Unable to write to access log file: " + Config.getAccessLog());
+			System.err.println("Unable to write to access log file: " + Config.AccessLog);
 		}
 	}
 	
@@ -90,7 +90,7 @@ public class Logger {
 		int current_log_level;
 		String line, system_name, level_name, date;
 		
-		current_log_level = Config.getLogLevel();
+		current_log_level = Config.LogLevel;
 		//system_name = Config.getSystemName();
 		
 		if (level > current_log_level)
