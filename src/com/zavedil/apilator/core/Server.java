@@ -266,7 +266,7 @@ public class Server implements Runnable {
 	}
 
 	/**
-	 * Selector initialisation method
+	 * Selector initialization method
 	 * @return Selector The socket selector to use 
 	 * @throws IOException
 	 */
@@ -294,9 +294,17 @@ public class Server implements Runnable {
 	 * @param args String[] Command-line arguments, if any
 	 */
 	public static void main(String[] args) {
-		try {
-			ServerWorker worker = new ServerWorker();
+		try {		
+			// Start the session storage manager thread
+			SessionStorage session_storage = new SessionStorage();
+			Thread session_storage_t = new Thread(session_storage);
+			session_storage_t.start();
+			
+			// Start one worker
+			ServerWorker worker = new ServerWorker(session_storage_t);
 			new Thread(worker).start();
+			
+			// Start the server
 			new Thread(new Server(null, 8080, worker)).start();
 		} 
 		catch (IOException e) {

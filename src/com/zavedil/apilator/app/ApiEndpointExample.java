@@ -3,6 +3,7 @@ package com.zavedil.apilator.app;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Hashtable;
+
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
 
@@ -30,20 +31,15 @@ import com.zavedil.apilator.core.*;
 
 /*
 // Example code to get a new session ID:
-// The session ID will be generated as byte array (for faster storage and retrieval)
-byte[] session_id = Session.getNewSessionId();
-// To convert the session ID as string:
-String session_id_s = Session.sessionIdToString(session_id);
-// To convert the session ID as byte array
-byte[] session_id_b = Session.sessionIdToBytes(session_id_s);
+String session_id = Session.getNewSessionId();
 */
 
 /*
 //Example code to save an uploaded file:
 //if the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
-if (input_data.containsKey("myfile") && input_data.containsKey("myfile_fn")) {			
-	byte[] myfile = (byte []) input_data.get("myfile");
-	String myfile_fn = input_data.get("myfile_fn").toString();
+if (task.http_input.containsKey("myfile") && task.http_input.containsKey("myfile_fn")) {			
+	byte[] myfile = (byte []) http_input.get("myfile");
+	String myfile_fn = http_input.get("myfile_fn").toString();
 	String dir = "/tmp";
 	try {
 		FileOutputStream fout = new FileOutputStream(dir + "/" + myfile_fn);
@@ -65,8 +61,8 @@ public class ApiEndpointExample extends Api {
 	/**
 	 * Constructor method
 	 */
-	public ApiEndpointExample(Hashtable params) {
-		super(params);
+	public ApiEndpointExample(ApiTask api_task) {
+		super(api_task);
 		className = this.getClass().getSimpleName();
 	}
 	
@@ -79,6 +75,8 @@ public class ApiEndpointExample extends Api {
 		super.get();
 		
 		// Add your code below
+		String session_id = Session.getNewSessionId();
+		//task.session_storage.put();
 		
 	}
 	

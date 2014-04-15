@@ -26,7 +26,7 @@ import java.util.Hashtable;
 
 public abstract class Api {
 	// Input data
-	protected final Hashtable input_data;					// Input data (key/values from HTTP request)
+	protected final ApiTask task;							// Input data 
 	
 	// Output data
 	protected byte[] output_data=null;						// Output data
@@ -36,8 +36,8 @@ public abstract class Api {
 	/**
 	 * Constructor method
 	 */
-	protected Api(Hashtable params) {
-		input_data = params;
+	protected Api(ApiTask api_task) {
+		task = api_task;
 	}
 	
 	/**

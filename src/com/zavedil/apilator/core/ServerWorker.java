@@ -23,9 +23,7 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.nio.channels.SocketChannel;
@@ -35,7 +33,20 @@ import java.util.List;
 
 public class ServerWorker implements Runnable {
 	private List queue = new LinkedList();
-	private String className;
+	private final String className;
+	private Thread session_storage;
+	
+	/**
+	 * Constructor. 
+	 * @param sst Thread Handler to the thread that manages the session storage
+	 */
+	public ServerWorker(Thread sst) {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
+		
+		// Store the handler to the session storage thread
+		session_storage = sst;
+	}
 	
 	/**
 	 * Main function to be called when packet(s) arrive over a SocketChannel
@@ -86,17 +97,19 @@ public class ServerWorker implements Runnable {
 				 * We call the API here; we/it should set:
 				 * - output_http_status (if not 200)
 				 * - output_data
-				 * - output_data_len (if not set, it will be calculated later as output_data.length)
 				 * - output_mime_type (if different from default text/plain)
 				 */				
-							
+				
+				// Construct new task
+				ApiTask api_task = new ApiTask();
+				api_task.http_input = http_parser.getParams();;
+				
 				// API call using reflection
-				Hashtable params = http_parser.getParams();
 				String endpoint = getEndpoint(location);
 				try {
 					Class api_class = Class.forName(getPackageName() + "." + endpoint);
 					Constructor api_constr = api_class.getConstructor(Hashtable.class);
-					Object api_obj = api_constr.newInstance(params);
+					Object api_obj = api_constr.newInstance(api_task);
 					
 					String method = http_parser.getMethod();
 					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
@@ -151,8 +164,8 @@ public class ServerWorker implements Runnable {
 	 * The main loop of the worker thread
 	 */
 	public void run() {
+		Logger.trace(className, "Running new as a new thread.");
 		ServerDataEvent dataEvent;
-		className = this.getClass().getSimpleName();
 		
 		while(true) {
 			// Wait for data to become available
