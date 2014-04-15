@@ -1,5 +1,10 @@
 package com.zavedil.apilator.core;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+
 /**
  * Session manager class. 
  * Updates the local session storage from network.
@@ -50,5 +55,21 @@ public class SessionManager implements Runnable {
 	 */
 	private void put(String key, Object value) {
 		SessionStorage.put(key, value);
-	}	
+	}
+	
+	/*
+		try {
+			 String msg = "Hello";
+			 
+			 InetAddress multicast_group = InetAddress.getByName(Config.SessionManagerIp);
+			 MulticastSocket multicast_socket = new MulticastSocket(Config.SessionManagerPort);
+			 multicast_socket.joinGroup(multicast_group);
+			 DatagramPacket hi = new DatagramPacket(msg.getBytes(), msg.length(), multicast_group, Config.SessionManagerPort);
+			 multicast_socket.send(hi);
+			 multicast_socket.close();
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Unable to send multicast update");
+		}
+	 */
 }

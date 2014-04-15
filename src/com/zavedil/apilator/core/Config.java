@@ -40,4 +40,5 @@ public class Config {
 	
 	// Multicast address for Session Manager
 	public static final String SessionManagerIp = "234.234.234.234";
+	public static final int SessionManagerPort = 12345;
 }

@@ -36,7 +36,7 @@ public class SessionStorage {
 	public static void put(String key, Object value) {
 		storage.put(key, value);
 		
-		//TODO: send network multicast update
+		//TODO: tell the session manager about the update so that he can feed it over the network
 	}
 	
 	/**
