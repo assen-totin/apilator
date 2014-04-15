@@ -30,13 +30,57 @@ import com.zavedil.apilator.core.*;
  */
 
 /*
-// Example code to get a new session ID:
-String session_id = Session.getNewSessionId();
+// Example code to work with session objects
+
+// Get a new session object (it will be automatically stored)
+SessionItem session = new SessionItem();
+
+// Get the session_id from it:
+String session_id = session.getSessoinId();
+
+// Put a key-value pair to session object:
+session.put("key", "value");
+
+// Get a value from a session object by a given key:
+// You need to cast the returned object to its proper type!
+Object value = sessio.get("key");
+
+// Delete a key-value pair from session object:
+session.del("key");
 */
 
 /*
-//Example code to save an uploaded file:
-//if the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
+// Example code to deal with JSON:
+
+// Read the value for key "key" from incoming JSON string:
+JsonObject jsonObject = JsonObject.readFrom( string );
+String value = jsonObject.get( "key" ).asString();
+
+// Same but for index 0 of an array:
+JsonArray jsonArray = JsonArray.readFrom( string );
+String value = jsonArray.get( 0 ).asString();
+
+// Getting a nested array from key "key":
+JsonArray nestedArray = jsonObject.get( "key" ).asArray();
+
+// Iterating over JSON array or object:
+for( String key : jsonObject.names() ) {
+  JsonValue value = jsonObject.get( key );
+  ...
+}
+
+// Create JSON array or object:
+jsonObject = new JsonObject().add( "key", "value" ).add( "key_int", 42 );
+jsonArray = new JsonArray().add( "value" ).add( 42 );
+
+// Write JSON from array to string:
+String json = jsonArray.toString();
+String json = jsonObject.toString();
+*/
+
+/*
+// Example code to save an uploaded file:
+// If the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
 if (task.http_input.containsKey("myfile") && task.http_input.containsKey("myfile_fn")) {			
 	byte[] myfile = (byte []) http_input.get("myfile");
 	String myfile_fn = http_input.get("myfile_fn").toString();
