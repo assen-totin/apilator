@@ -58,12 +58,31 @@ public class SessionManager implements Runnable {
 	}
 	
 	/*
+      try
+      {
+         FileOutputStream fileOut = new FileOutputStream("/tmp/employee.ser");
+         ObjectOutputStream out = new ObjectOutputStream(fileOut);
+         out.writeObject(e);
+         out.close();
+         fileOut.close();
+         System.out.printf("Serialized data is saved in /tmp/employee.ser");
+      }
+      catch(IOException e) {
+          i.printStackTrace();
+      }
+	 */
+	
+	/*
 		try {
 			 String msg = "Hello";
 			 
 			 InetAddress multicast_group = InetAddress.getByName(Config.SessionManagerIp);
 			 MulticastSocket multicast_socket = new MulticastSocket(Config.SessionManagerPort);
 			 multicast_socket.joinGroup(multicast_group);
+			 
+			 multicast_socket_out = new ObjectOutputStream(multicast_socket.getOutputStream());
+			 multicast_socket_out.writeObject(x);
+			 
 			 DatagramPacket hi = new DatagramPacket(msg.getBytes(), msg.length(), multicast_group, Config.SessionManagerPort);
 			 multicast_socket.send(hi);
 			 multicast_socket.close();

@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionItem {
+public class SessionItem implements java.io.Serializable {
+	private static final long serialVersionUID = 1L;
 	private final String className;
 	HashMap<String, Object> session_item = null;
 	
