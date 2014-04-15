@@ -29,8 +29,12 @@ import java.nio.ByteBuffer;
 public class Session {
 
 	/**
-	 * Create new session ID
+	 * Create new session ID.
 	 * @return byte[] The new session ID
+	 * 
+	 * The session ID consists of 12 bytes: 4 bytes of a local IP address and 8 bytes of creation timestamp.
+	 * The timestamp is in milliseconds and the last 3 bytes of it (which are most random) 
+	 * will be used as first-level key when storing the session in-memory
 	 */
 	public static byte[] getNewSessionId() {
 		String session=null;
@@ -52,12 +56,10 @@ public class Session {
 			//ip = InetAddress.getByAddress("apilator.zavedil.com", "127.0.0.1");
 		}
 		
-		// Reverse time and append IP address
+		// Append time to IP address
 		session_id = new byte[curr_time_array.length + 4];
-	    for (int i=0; i<curr_time_array.length; i++)
-	    	session_id[i] = curr_time_array[curr_time_array.length - i - 1];
-	    for (int i=curr_time_array.length; i<curr_time_array.length + ip.length; i++)
-	    	session_id[i] = ip[i];
+		System.arraycopy(session_id, 0, ip, 0, ip.length);
+		System.arraycopy(session_id, ip.length, curr_time_array, 0, curr_time_array.length);
 		
 		return session_id;
 	}
