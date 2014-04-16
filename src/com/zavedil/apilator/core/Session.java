@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Session item class. 
@@ -36,9 +35,9 @@ public class Session implements java.io.Serializable {
 	// Action will be set when sending the object over the network
 	private int action = 0;
 	// UNIX timestamps of creation, update and TTL
-	private final int created;
-	private int updated=0;
-	private int ttl=0;
+	private final long created;
+	private long updated=0;
+	private long ttl=0;
 	// Session ID for this object
 	private final String session_id;
 	
@@ -47,7 +46,7 @@ public class Session implements java.io.Serializable {
 		Logger.debug(className, "Creating new instance of the class.");
 		
 		// Creation timestamp
-		created = (int) System.currentTimeMillis()/1000;
+		created = System.currentTimeMillis();
 		
 		if (sess_id == null)
 			sess_id = Session.getNewSessionId();
@@ -65,7 +64,7 @@ public class Session implements java.io.Serializable {
 	 */
 	public void put(String key, Object value) {
 		session_item.put(key, value);
-		updated = (int) System.currentTimeMillis()/1000;
+		updated = System.currentTimeMillis();
 	}
 	
 	/**
@@ -83,14 +82,14 @@ public class Session implements java.io.Serializable {
 	 */
 	public void del(String key) {
 		session_item.remove(key);
-		updated = (int) System.currentTimeMillis()/1000;
+		updated = System.currentTimeMillis();
 	}
 	
 	/**
 	 * Update the internal timestamp of the item
 	 */
 	public void update() {
-		updated = (int) System.currentTimeMillis()/1000;
+		updated = System.currentTimeMillis();
 	}
 
 	/**
@@ -110,11 +109,43 @@ public class Session implements java.io.Serializable {
 	}
 	
 	/**
-	 * Set action
+	 * Setter for action
 	 * @param act int The ID of the action to set
 	 */
 	public void setAction(int act) {
 		action = act;
+	}
+
+	/**
+	 * Getter for created property
+	 * @return long The value of the created property
+	 */
+	public long getCreated() {
+		return created;
+	}
+	
+	/**
+	 * Getter for updated property
+	 * @return long The value of the updated property
+	 */
+	public long getUpdated() {
+		return updated;
+	}
+	
+	/**
+	 * Getter for ttl property
+	 * @return long The value of the ttl property
+	 */
+	public long getTtl() {
+		return ttl;
+	}
+
+	/**
+	 * Setter for ttl proeprty
+	 * @param act long The valu eof TTL to set
+	 */
+	public void setAction(long new_ttl) {
+		ttl = new_ttl;
 	}
 	
 	/**

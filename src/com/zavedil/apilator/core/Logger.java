@@ -39,7 +39,9 @@ public class Logger {
 	 * 5 - LOG_TRACE -  log traces: normal operation events inside main loop
 	 * 6 - LOG_DEBUG - log all messages
 	 */
-	private static final Hashtable<Integer,String> ErrorLevels = new Hashtable<Integer,String>() {{
+	private static final Hashtable<Integer,String> ErrorLevels = new Hashtable<Integer,String>() {
+		private static final long serialVersionUID = 1L;
+		{
 			put(0, "NONE");
 			put(1, "CRITICAL");
 			put(2, "ERROR");
@@ -47,7 +49,8 @@ public class Logger {
 			put(4, "NOTICE");
 			put(5, "TRACE");
 			put(6, "DEBUG");
-	}};
+		}
+	};
 	
 	/**
 	 * Method for writing to the access log.
@@ -88,10 +91,9 @@ public class Logger {
 	private static void log_event(String className, String input, int level) {
 		SimpleDateFormat format;
 		int current_log_level;
-		String line, system_name, level_name, date;
+		String line, level_name, date;
 		
 		current_log_level = Config.LogLevel;
-		//system_name = Config.getSystemName();
 		
 		if (level > current_log_level)
 			return;

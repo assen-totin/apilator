@@ -6,11 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -77,11 +75,7 @@ public class SessionManager implements Runnable {
 				processIncoming(obj);
 				
 				// Check if there are pending outgoing, serialize and send
-			    Iterator iterator = SessionStorage.queue.entrySet().iterator();
-			    while (iterator.hasNext()) {
-			        Map.Entry pair = (Map.Entry)iterator.next();
-			        iterator.remove(); // avoids a ConcurrentModificationException
-			        			
+				for (Map.Entry<String,Session> pair : SessionStorage.queue.entrySet()) {
 			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
 			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 					oos.writeObject(pair.getValue());
@@ -133,35 +127,4 @@ public class SessionManager implements Runnable {
 	private void del(String key) {
 		SessionStorage.del(key);
 	}
-	
-	/*
-      try
-      {
-         FileOutputStream fileOut = new FileOutputStream("/tmp/employee.ser");
-         ObjectOutputStream out = new ObjectOutputStream(fileOut);
-         out.writeObject(e);
-         out.close();
-         fileOut.close();
-         System.out.printf("Serialized data is saved in /tmp/employee.ser");
-      }
-      catch(IOException e) {
-          i.printStackTrace();
-      }
-	 */
-	
-	/*
-		try {
-			 String msg = "Hello";
-		 
-			 multicast_socket_out = new ObjectOutputStream(multicast_socket.getOutputStream());
-			 multicast_socket_out.writeObject(x);
-			 
-			 DatagramPacket hi = new DatagramPacket(msg.getBytes(), msg.length(), multicast_group, Config.SessionManagerPort);
-			 multicast_socket.send(hi);
-			 multicast_socket.close();
-		}
-		catch (IOException e) {
-			Logger.warning(className, "Unable to send multicast update");
-		}
-	 */
 }

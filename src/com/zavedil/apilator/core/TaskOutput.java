@@ -3,7 +3,6 @@ package com.zavedil.apilator.core;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,17 +47,13 @@ public class TaskOutput {
 	 * Cookie builder
 	 */
 	public void buildCookies() {
-		Map.Entry pair=null;
 		SimpleDateFormat format;
 		Date cookie_date;
 
 		format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
-	    Iterator iterator = cookies_data.entrySet().iterator();
-	    while (iterator.hasNext()) {
-	    	pair = (Map.Entry)iterator.next();
-	    	iterator.remove();
+		for (Map.Entry<String,String> pair : cookies_data.entrySet()) {
 	    	cookies += "Set-Cookie: " + pair.getKey().toString() + "=" +pair.getValue().toString();
 	    	if (cookies_expire.containsKey(pair.getKey())) {
 	    		cookie_date = new Date();
@@ -66,6 +61,6 @@ public class TaskOutput {
 	    		cookies += "; Expires=" + format.format(cookie_date) + " GMT\n";
 	    	}
 	    	cookies += "\n";
-	    }
+		}
 	}
 }
