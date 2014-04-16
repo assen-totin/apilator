@@ -24,17 +24,17 @@ package com.zavedil.apilator.core;
 
 public abstract class Api {
 	// Input data
-	protected final ApiTaskInput input;				// Input data 
+	protected final TaskInput input;				// Input data 
 
 	// Output data
-	protected ApiTaskOutput output;					// Output data
+	protected TaskOutput output;					// Output data
 		
 	/**
 	 * Constructor method
 	 */
-	protected Api(ApiTaskInput api_task) {
+	protected Api(TaskInput api_task) {
 		input = api_task;
-		output = new ApiTaskOutput();
+		output = new TaskOutput();
 		output.mime_type = "application/json";
 	}
 	
@@ -69,7 +69,7 @@ public abstract class Api {
 	/**
 	 * Getter for output object
 	 */
-	public ApiTaskOutput getOutput() {
+	public TaskOutput getOutput() {
 		return output;
 	}
 }

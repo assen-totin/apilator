@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class StaticContent {
-	private ApiTaskOutput output;
+	private TaskOutput output;
 	private String className;
 	
 	public StaticContent(String location) {
@@ -74,7 +74,7 @@ public class StaticContent {
 	 * Getter for output data object
 	 * @return ApiTaskOutput Output data object
 	 */
-	public ApiTaskOutput getOutput() {
+	public TaskOutput getOutput() {
 		return output;
 	}
 }

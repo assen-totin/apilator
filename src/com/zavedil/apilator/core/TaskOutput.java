@@ -30,7 +30,7 @@ import java.util.TimeZone;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class ApiTaskOutput {
+public class TaskOutput {
 	private final String className;
 	protected byte[] data=null;						// Output data
 	protected int http_status=200; 					// Default HTTP status from processing
@@ -39,7 +39,7 @@ public class ApiTaskOutput {
 	protected Hashtable<String, Long> cookies_expire = new Hashtable<String,Long>();	// Output cookies name/expiration (optional)
 	protected String cookies=null;						// Output HTTP headers for cookies (optional)
 	
-	public ApiTaskOutput() {
+	public TaskOutput() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}

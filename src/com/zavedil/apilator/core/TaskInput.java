@@ -24,13 +24,13 @@ import java.util.Hashtable;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class ApiTaskInput {
+public class TaskInput {
 	private final String className;
 	public Hashtable<String,String> data;
 	public Hashtable<String,String> cookies;
 	public Thread session_storage;
 	
-	public ApiTaskInput() {
+	public TaskInput() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}

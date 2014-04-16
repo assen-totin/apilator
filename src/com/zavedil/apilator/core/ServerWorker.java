@@ -57,7 +57,7 @@ public class ServerWorker implements Runnable {
 		String headers=null;
 		int headers_len=0;
 		byte[] response;
-		ApiTaskOutput output = new ApiTaskOutput();
+		TaskOutput output = new TaskOutput();
 		
 		// Override default MIME type
 		output.mime_type = "text/plain";
@@ -97,7 +97,7 @@ public class ServerWorker implements Runnable {
 				 */				
 				
 				// Construct new task
-				ApiTaskInput api_task = new ApiTaskInput();
+				TaskInput api_task = new TaskInput();
 				api_task.data = http_parser.getParams();
 				api_task.cookies = http_parser.getCookies();
 				
@@ -113,7 +113,7 @@ public class ServerWorker implements Runnable {
 					api_method.invoke(api_obj);
 								
 					Method api_method_get_output_data = api_obj.getClass().getMethod("getOutput");
-					output = (ApiTaskOutput) api_method_get_output_data.invoke(api_obj);					
+					output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
 				}
 				catch (Exception e) {
 					output.http_status = 404;

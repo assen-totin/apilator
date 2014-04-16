@@ -145,7 +145,7 @@ public class ApiEndpointExample extends Api {
 	/**
 	 * Constructor method
 	 */
-	public ApiEndpointExample(ApiTaskInput api_task) {
+	public ApiEndpointExample(TaskInput api_task) {
 		super(api_task);
 		className = this.getClass().getSimpleName();
 	}
