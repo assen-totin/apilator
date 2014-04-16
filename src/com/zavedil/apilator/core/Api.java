@@ -22,7 +22,13 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 
 public abstract class Api {
 	// Input data
@@ -30,7 +36,8 @@ public abstract class Api {
 	
 	// Output data
 	protected byte[] output_data=null;						// Output data
-	protected Hashtable output_cookies=null;				// Output cookies (optional)
+	protected Hashtable<String,String> output_cookies_data = new Hashtable<String,String>();	// Output cookies name/values (optional)
+	protected Hashtable<String, Long> output_cookies_expire = new Hashtable<String,Long>();		// Output cookies name/expiration (optional)
 	protected int output_http_status=200; 					// Output HTTP status from processing the request (optional)
 	protected String output_mime_type="application/json";	// Output MIME type (optional)
 	
@@ -79,8 +86,28 @@ public abstract class Api {
 	/**
 	 * Getter for 'output_cookies' property
 	 */
-	public Hashtable getOutputCookies() {
-		return output_cookies;
+	public String getOutputCookies() {
+		String cookies=null;
+		Map.Entry pair=null;
+		SimpleDateFormat format;
+		Date cookie_date;
+
+		format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
+	    Iterator iterator = output_cookies_data.entrySet().iterator();
+	    while (iterator.hasNext()) {
+	    	pair = (Map.Entry)iterator.next();
+	    	iterator.remove();
+	    	cookies += "Set-Cookie: " + pair.getKey().toString() + "=" +pair.getValue().toString();
+	    	if (output_cookies_expire.containsKey(pair.getKey())) {
+	    		cookie_date = new Date();
+	    		cookie_date.setTime((long) output_cookies_expire.get(pair.getKey()));
+	    		cookies += "; Expires=" + format.format(cookie_date) + " GMT\n";
+	    	}
+	    	cookies += "\n";
+	    }
+		return cookies;
 	}
 	
 	/**

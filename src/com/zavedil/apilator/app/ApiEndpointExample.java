@@ -64,6 +64,20 @@ if (cookies != null) {
 	}
 }
 
+// Add cookie to output table (the output table is empty by default): name and value should be String
+// You may need to encode the cookie value beforehand, e.g. to JSON
+output_cookies_data.put("cookie_name", "cookie_value");
+
+// Add optional expiration date for a cookie: 
+// name should existing cookie name and value should be expiration timestamp in milliseconds (long)
+Date date = new Date();
+long now = Date.getTime();
+now += 30 * 24 * 3600 * 1000;
+output_cookies_expire.put("cookie_name", now);
+
+// Copy all input cokies as output cookies
+output_cookies_data = task.cookies;
+
 
 
 // Example code to deal with JSON:

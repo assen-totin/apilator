@@ -26,8 +26,8 @@ import java.util.Hashtable;
 
 public class ApiTask {
 	private final String className;
-	public Hashtable http_input;
-	public Hashtable cookies;
+	public Hashtable<String,String> http_input;
+	public Hashtable<String,String> cookies;
 	public Thread session_storage;
 	
 	public ApiTask() {

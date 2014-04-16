@@ -54,10 +54,9 @@ public class ServerWorker implements Runnable {
 	 */
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
-		String headers=null, output_mime_type="text/plain";
+		String headers=null, headers_cookies=null, output_mime_type="text/plain";
 		int headers_len=0, output_http_status=0, output_data_len=0;
 		byte[] output_data=null, response;
-		Hashtable output_cookies=null;
 		
 		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
@@ -121,7 +120,7 @@ public class ServerWorker implements Runnable {
 						output_data = (byte[]) api_method_get_output_data.invoke(api_obj);
 						
 						Method api_method_get_output_cookies = api_obj.getClass().getMethod("getOutputCookies");
-						output_cookies = (Hashtable) api_method_get_output_cookies.invoke(api_obj);
+						headers_cookies = (String) api_method_get_output_cookies.invoke(api_obj);
 						
 						Method api_method_get_output_mime_type = api_obj.getClass().getMethod("getOutputMimeType");
 						output_mime_type = (String) api_method_get_output_mime_type.invoke(api_obj);						
@@ -149,6 +148,9 @@ public class ServerWorker implements Runnable {
 		// Prepare headers
 		headers = http_parser.getHttpReplyHeaders(output_http_status, output_mime_type);
 		headers += "Content-Length: " + output_data_len + "\n";
+		if (headers_cookies != null)
+			headers += headers_cookies;
+			
 		headers += "\n";
 		headers_len = headers.length();
 			
