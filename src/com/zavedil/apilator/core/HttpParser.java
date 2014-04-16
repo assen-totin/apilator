@@ -413,11 +413,10 @@ public class HttpParser {
     						filedata = decoder_qp.decode(filedata_encoded);
     						break;
     					case "7bit": 
-    						HttpDecode7Bit decoder_7b = new HttpDecode7Bit();
-    						filedata = decoder_7b.decode(filedata_encoded);
-    						break;
     					case "8bit":
     					case "binary":
+    						// 7bit, 8bit and binary do not modify data; 
+    						// 7bit and 8bit may only have added CRLF for very long lines, but we we'll leave them as they are 
     						filedata = filedata_encoded;
     						break;
     				}
