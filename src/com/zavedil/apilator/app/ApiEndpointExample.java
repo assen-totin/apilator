@@ -54,29 +54,29 @@ session.del("key");
 ////////////////////////////////////////////
 
 // Get cookies as a Hashtable
-Hashtable cookies = task.cookies;
+Hashtable cookies = input.cookies;
 
 // Get a cookie value by name
-if (cookies != null) {
-	if (cookies.containsKey("cookie_name")) {
-		String value = cookies.get("cookie_name");
+if (input.cookies != null) {
+	if (input.cookies.containsKey("cookie_name")) {
+		String value = input.cookies.get("cookie_name");
 		// You may need to further decode the cookie value if it is, say, JSON.
 	}
 }
 
 // Add cookie to output table (the output table is empty by default): name and value should be String
 // You may need to encode the cookie value beforehand, e.g. to JSON
-output_cookies_data.put("cookie_name", "cookie_value");
+output.cookies_data.put("cookie_name", "cookie_value");
 
 // Add optional expiration date for a cookie: 
 // name should existing cookie name and value should be expiration timestamp in milliseconds (long)
 Date date = new Date();
 long now = Date.getTime();
 now += 30 * 24 * 3600 * 1000;
-output_cookies_expire.put("cookie_name", now);
+output.cookies_expire.put("cookie_name", now);
 
 // Copy all input cokies as output cookies
-output_cookies_data = task.cookies;
+output.cookies_data = input.cookies;
 
 
 
@@ -114,9 +114,9 @@ String json = jsonObject.toString();
 ////////////////////////////////////////////
 
 // If the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
-if (task.http_input.containsKey("myfile") && task.http_input.containsKey("myfile_fn")) {			
-	byte[] myfile = (byte []) http_input.get("myfile");
-	String myfile_fn = http_input.get("myfile_fn").toString();
+if (input.data.containsKey("myfile") && input.data.containsKey("myfile_fn")) {			
+	byte[] myfile = (byte []) input.data.get("myfile");
+	String myfile_fn = input.data.get("myfile_fn").toString();
 	String dir = "/tmp";
 	try {
 		FileOutputStream fout = new FileOutputStream(dir + "/" + myfile_fn);
@@ -129,6 +129,13 @@ if (task.http_input.containsKey("myfile") && task.http_input.containsKey("myfile
 }
 else
 	output_http_status = 404;
+	
+
+// Example code to send back some data
+////////////////////////////////////////////
+
+output.data = "Keep walking, dude!".getBytes();
+	
 */
 
 
@@ -138,7 +145,7 @@ public class ApiEndpointExample extends Api {
 	/**
 	 * Constructor method
 	 */
-	public ApiEndpointExample(ApiTask api_task) {
+	public ApiEndpointExample(ApiTaskInput api_task) {
 		super(api_task);
 		className = this.getClass().getSimpleName();
 	}
@@ -152,10 +159,10 @@ public class ApiEndpointExample extends Api {
 		super.get();
 		
 		// Add your code below
-		String session_id = Session.getNewSessionId();
-		Session session_item = new Session();
-		session_item.put("some_key", "some_value");
-		SessionStorage.put(session_id, session_item);
+		Session session = new Session();
+		String session_id = session.getSessionId();
+		session.put("some_key", "some_value");
+		SessionStorage.put(session_id, session);
 	}
 	
 	/**

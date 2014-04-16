@@ -29,9 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class StaticContent {
-	private int output_http_status = 200;
-	private byte[] output_data = null;
-	private String output_http_mime_type = "text/plain";
+	private ApiTaskOutput output;
 	private String className;
 	
 	public StaticContent(String location) {
@@ -41,7 +39,7 @@ public class StaticContent {
 		final int chunk_size = 1000;
 		int curr_len = 0;
 		String document_root = Config.DocumentRoot;
-		String file = document_root + location;				// The 'location' will begin with a slash 
+		String file = document_root + location;				// The 'location' will begin with a slash
 		
 		try {
             byte[] buffer = new byte[chunk_size];
@@ -53,49 +51,30 @@ public class StaticContent {
             	byte[] newbuf = new byte[curr_len + nRead];
             	
             	if (curr_len > 0)
-            		System.arraycopy(output_data, 0, newbuf, 0, curr_len);
+            		System.arraycopy(output.data, 0, newbuf, 0, curr_len);
             	
             	System.arraycopy(buffer, 0, newbuf, curr_len, nRead);
             	
-            	output_data = newbuf;
-            	curr_len = output_data.length;
+            	output.data = newbuf;
+            	curr_len = output.data.length;
             }
 
             inputStream.close();
             
             String file_name = location.substring(1);
             Path path = FileSystems.getDefault().getPath(document_root, file_name);
-            output_http_mime_type = Files.probeContentType(path);
-        }
-        catch(FileNotFoundException ex) {
-        	output_http_status = 404;			
+            output.mime_type = Files.probeContentType(path);
         }
         catch(IOException ex) {
-        	output_http_status = 404;
+        	output.http_status = 404;
         }
 	}
 	
 	/**
-	 * Getter for HTTP status code
-	 * @return int HTTP status code
+	 * Getter for output data object
+	 * @return ApiTaskOutput Output data object
 	 */
-	public int getOutputHttpStatus() {
-		return output_http_status;
-	}
-	
-	/**
-	 * Getter for output data
-	 * @return byte[] Output data
-	 */
-	public byte[] getOutputData() {
-		return output_data;
-	}
-	
-	/**
-	 * Getter for MIME type of the output data
-	 * @return String MIME type
-	 */
-	public String getOutputMimeType() {
-		return output_http_mime_type;
+	public ApiTaskOutput getOutput() {
+		return output;
 	}
 }

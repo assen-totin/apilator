@@ -22,30 +22,20 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
-
 public abstract class Api {
 	// Input data
-	protected final ApiTask task;							// Input data 
-	
+	protected final ApiTaskInput input;				// Input data 
+
 	// Output data
-	protected byte[] output_data=null;						// Output data
-	protected Hashtable<String,String> output_cookies_data = new Hashtable<String,String>();	// Output cookies name/values (optional)
-	protected Hashtable<String, Long> output_cookies_expire = new Hashtable<String,Long>();		// Output cookies name/expiration (optional)
-	protected int output_http_status=200; 					// Output HTTP status from processing the request (optional)
-	protected String output_mime_type="application/json";	// Output MIME type (optional)
-	
+	protected ApiTaskOutput output;					// Output data
+		
 	/**
 	 * Constructor method
 	 */
-	protected Api(ApiTask api_task) {
-		task = api_task;
+	protected Api(ApiTaskInput api_task) {
+		input = api_task;
+		output = new ApiTaskOutput();
+		output.mime_type = "application/json";
 	}
 	
 	/**
@@ -77,50 +67,9 @@ public abstract class Api {
 	}
 	
 	/**
-	 * Getter for 'output_data' property
+	 * Getter for output object
 	 */
-	public byte[] getOutputData() {
-		return output_data;
-	}
-
-	/**
-	 * Getter for 'output_cookies' property
-	 */
-	public String getOutputCookies() {
-		String cookies=null;
-		Map.Entry pair=null;
-		SimpleDateFormat format;
-		Date cookie_date;
-
-		format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
-		format.setTimeZone(TimeZone.getTimeZone("GMT"));
-		
-	    Iterator iterator = output_cookies_data.entrySet().iterator();
-	    while (iterator.hasNext()) {
-	    	pair = (Map.Entry)iterator.next();
-	    	iterator.remove();
-	    	cookies += "Set-Cookie: " + pair.getKey().toString() + "=" +pair.getValue().toString();
-	    	if (output_cookies_expire.containsKey(pair.getKey())) {
-	    		cookie_date = new Date();
-	    		cookie_date.setTime((long) output_cookies_expire.get(pair.getKey()));
-	    		cookies += "; Expires=" + format.format(cookie_date) + " GMT\n";
-	    	}
-	    	cookies += "\n";
-	    }
-		return cookies;
-	}
-	
-	/**
-	 * Getter for 'output_http_status' property
-	 */
-	public int getOutputHttpStatus() {
-		return output_http_status;
-	}
-
-	/**
-	 * Getter for 'output_mime_type' property
-	 */
-	public String getOutputMimeType() {
-		return output_mime_type;
+	public ApiTaskOutput getOutput() {
+		return output;
 	}
 }

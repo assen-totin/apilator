@@ -54,24 +54,28 @@ public class ServerWorker implements Runnable {
 	 */
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		HttpParser http_parser=null;
-		String headers=null, headers_cookies=null, output_mime_type="text/plain";
-		int headers_len=0, output_http_status=0, output_data_len=0;
-		byte[] output_data=null, response;
+		String headers=null;
+		int headers_len=0;
+		byte[] response;
+		ApiTaskOutput output = new ApiTaskOutput();
+		
+		// Override default MIME type
+		output.mime_type = "text/plain";
 		
 		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
 		
 		try {
 			http_parser = new HttpParser(data, count);
-			output_http_status = http_parser.parseRequest();
+			output.http_status = http_parser.parseRequest();
 			
-			if (output_http_status == 0)
+			if (output.http_status == 0)
 				return;
-			else if (output_http_status == 200)
+			else if (output.http_status == 200)
 				headers_ok = true;
 		}
 		catch (IOException e) {
-			output_http_status = 500;
+			output.http_status = 500;
 			headers_ok = false;
 		}
 		
@@ -81,11 +85,7 @@ public class ServerWorker implements Runnable {
 			if (serveStatic(location)) {
 				// Call the static content class
 				StaticContent static_content = new StaticContent(location);
-				output_http_status = static_content.getOutputHttpStatus();
-				if (output_http_status == 200) {
-					output_data = static_content.getOutputData();
-					output_mime_type = static_content.getOutputMimeType();
-				}
+				output = static_content.getOutput();
 			}
 			
 			else {
@@ -97,8 +97,8 @@ public class ServerWorker implements Runnable {
 				 */				
 				
 				// Construct new task
-				ApiTask api_task = new ApiTask();
-				api_task.http_input = http_parser.getParams();
+				ApiTaskInput api_task = new ApiTaskInput();
+				api_task.data = http_parser.getParams();
 				api_task.cookies = http_parser.getCookies();
 				
 				// API call using reflection
@@ -111,53 +111,40 @@ public class ServerWorker implements Runnable {
 					String method = http_parser.getMethod();
 					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
 					api_method.invoke(api_obj);
-					
-					Method api_method_get_http_status = api_obj.getClass().getMethod("getOutputHttpStatus");
-					output_http_status = (int) api_method_get_http_status.invoke(api_obj);
-					
-					if (output_http_status == 200) {
-						Method api_method_get_output_data = api_obj.getClass().getMethod("getOutputData");
-						output_data = (byte[]) api_method_get_output_data.invoke(api_obj);
-						
-						Method api_method_get_output_cookies = api_obj.getClass().getMethod("getOutputCookies");
-						headers_cookies = (String) api_method_get_output_cookies.invoke(api_obj);
-						
-						Method api_method_get_output_mime_type = api_obj.getClass().getMethod("getOutputMimeType");
-						output_mime_type = (String) api_method_get_output_mime_type.invoke(api_obj);						
-					}
+								
+					Method api_method_get_output_data = api_obj.getClass().getMethod("getOutput");
+					output = (ApiTaskOutput) api_method_get_output_data.invoke(api_obj);					
 				}
 				catch (Exception e) {
-					output_http_status = 404;
+					output.http_status = 404;
 				}
 			} // End API call here
 		}
 		
 		// Prepare body
-		if (output_data == null)
-			output_data = http_parser.getHttpMessageForCode(output_http_status).getBytes();
-		output_data_len = output_data.length;		
+		if (output.data == null)
+			output.data = http_parser.getHttpMessageForCode(output.http_status).getBytes();	
 		
 		// Log the request
 		// Note: we don't handle authentication, hence user is always "-"
 		// Who's there?
-		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), output_http_status, output_data_len);
-		
-		// TODO: Prepare cookies
-		// output_cookies
+		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), output.http_status, output.data.length);
 		
 		// Prepare headers
-		headers = http_parser.getHttpReplyHeaders(output_http_status, output_mime_type);
-		headers += "Content-Length: " + output_data_len + "\n";
-		if (headers_cookies != null)
-			headers += headers_cookies;
-			
+		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
+		headers += "Content-Length: " + output.data.length + "\n";
+		
+		output.buildCookies();
+		if (output.cookies != null)
+			headers += output.cookies;
+
 		headers += "\n";
 		headers_len = headers.length();
 			
 		// Combine headers and body
-		response = new byte[headers_len + output_data_len];
+		response = new byte[headers_len + output.data.length];
     	System.arraycopy(headers.getBytes(), 0, response, 0, headers_len);
-    	System.arraycopy(output_data, 0, response, headers_len, output_data_len);
+    	System.arraycopy(output.data, 0, response, headers_len, output.data.length);
 	
     	// Push response back
 		synchronized(queue) {
