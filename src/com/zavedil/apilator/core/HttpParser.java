@@ -615,7 +615,7 @@ public class HttpParser {
 		String ret;
 		SimpleDateFormat format;
 
-		ret = "HTTP/" + ver[0] + "." + ver[1] + http_status + HttpReplies.get(http_status).toString() + "\n";
+		ret = "HTTP/" + ver[0] + "." + ver[1] + " " +  http_status + " " + HttpReplies.get(http_status).toString() + "\n";
 		
 		format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));

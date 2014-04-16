@@ -3,6 +3,7 @@ package com.zavedil.apilator.core;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -31,12 +32,12 @@ import java.util.TimeZone;
 
 public class TaskOutput {
 	private final String className;
-	protected byte[] data=null;						// Output data
-	protected int http_status=200; 					// Default HTTP status from processing
-	protected String mime_type="text/plain";		// Default output MIME type
-	protected Hashtable<String,String> cookies_data = new Hashtable<String,String>();	// Output cookies name/values (optional)
-	protected Hashtable<String, Long> cookies_expire = new Hashtable<String,Long>();	// Output cookies name/expiration (optional)
-	protected String cookies=null;						// Output HTTP headers for cookies (optional)
+	public byte[] data=null;						// Output data
+	public int http_status=200; 					// Default HTTP status from processing
+	public String mime_type="text/plain";		// Default output MIME type
+	public Hashtable<String,String> cookies_data = new Hashtable<String,String>();	// Output cookies name/values (optional)
+	public Hashtable<String, Long> cookies_expire = new Hashtable<String,Long>();	// Output cookies name/expiration (optional)
+	public String cookies="";						// Output HTTP headers for cookies (optional)
 	
 	public TaskOutput() {
 		className = this.getClass().getSimpleName();
@@ -52,7 +53,7 @@ public class TaskOutput {
 
 		format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", Locale.US);
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));
-		
+
 		for (Map.Entry<String,String> pair : cookies_data.entrySet()) {
 	    	cookies += "Set-Cookie: " + pair.getKey().toString() + "=" +pair.getValue().toString();
 	    	if (cookies_expire.containsKey(pair.getKey())) {
@@ -62,5 +63,6 @@ public class TaskOutput {
 	    	}
 	    	cookies += "\n";
 		}
+		
 	}
 }

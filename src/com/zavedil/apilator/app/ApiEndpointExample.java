@@ -26,6 +26,7 @@ import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Hashtable;
 
 /*
@@ -59,7 +60,7 @@ Hashtable cookies = input.cookies;
 // Get a cookie value by name
 if (input.cookies != null) {
 	if (input.cookies.containsKey("cookie_name")) {
-		String value = input.cookies.get("cookie_name");
+		String value = input.cookies.get("cookie_name").toString();
 		// You may need to further decode the cookie value if it is, say, JSON.
 	}
 }
@@ -71,11 +72,11 @@ output.cookies_data.put("cookie_name", "cookie_value");
 // Add optional expiration date for a cookie: 
 // name should existing cookie name and value should be expiration timestamp in milliseconds (long)
 Date date = new Date();
-long now = Date.getTime();
-now += 30 * 24 * 3600 * 1000;
+long now = date.getTime();
+now += 30 * 24 * 3600 * 1000L;
 output.cookies_expire.put("cookie_name", now);
 
-// Copy all input cokies as output cookies
+// Copy all input cookies as output cookies
 output.cookies_data = input.cookies;
 
 
@@ -159,10 +160,12 @@ public class ApiEndpointExample extends Api {
 		super.get();
 		
 		// Add your code below
+		/*
 		Session session = new Session();
 		String session_id = session.getSessionId();
 		session.put("some_key", "some_value");
 		SessionStorage.put(session_id, session);
+		*/
 	}
 	
 	/**

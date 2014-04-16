@@ -104,8 +104,8 @@ public class ServerWorker implements Runnable {
 				// API call using reflection
 				String endpoint = getEndpoint(location);
 				try {
-					Class api_class = Class.forName(getPackageName() + "." + endpoint);
-					Constructor api_constr = api_class.getConstructor(Hashtable.class);
+					Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
+					Constructor api_constr = api_class.getConstructor(TaskInput.class);
 					Object api_obj = api_constr.newInstance(input);
 					
 					String method = http_parser.getMethod();
@@ -116,6 +116,7 @@ public class ServerWorker implements Runnable {
 					output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
 				}
 				catch (Exception e) {
+					e.printStackTrace();
 					output.http_status = 404;
 				}
 			} // End API call here
@@ -202,7 +203,14 @@ public class ServerWorker implements Runnable {
 	
 	private String getPackageName() {
 		String[] parts = this.getClass().getPackage().toString().split(" ");
-		return parts[1];
+		String[] parts2 = parts[1].split("\\.");
+		String ret = "";
+		for (int i=0; i< parts2.length - 1; i++) {
+			if (ret != "")
+				ret += ".";
+			ret += parts2[i];
+		}
+		return ret;
 	}
 	
 }
