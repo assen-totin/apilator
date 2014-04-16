@@ -78,7 +78,7 @@ public class HttpParser {
 	//private DataInputStream binary_reader;
 	private byte[] request=null;
 	private String first_line, method, url, location, post_data=null, boundary;
-	private Hashtable headers=null, params=null, cookies=null;
+	private Hashtable headers=null, params=null;
 	private int[] ver;
 	private String className;
 	private int header_bytes=0, received_bytes=0, content_length=0;
@@ -556,6 +556,19 @@ public class HttpParser {
 	 * @return Hashtable All cookies from the request
 	 */
 	public Hashtable getCookies() {
+		String cookie_header;
+		String[] cookie_pairs, nv_pair;
+		Hashtable<String, String> cookies = null;
+		
+		if (headers.containsKey("cookie")) {
+			cookies = new Hashtable<String, String>();
+			cookie_header = headers.get("cookie").toString();
+			cookie_pairs = cookie_header.split(" ");
+			for (int i=0; i<cookie_pairs.length; i++) {
+				nv_pair = cookie_pairs[i].split("=");
+				cookies.put(cleanQuotes(nv_pair[0]), cleanQuotes(nv_pair[1]));
+			}	
+		}
 		return cookies;
 	}
 	

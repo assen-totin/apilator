@@ -1,12 +1,5 @@
 package com.zavedil.apilator.app;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Hashtable;
-
-import com.eclipsesource.json.JsonObject;
-import com.zavedil.apilator.core.*;
-
 /**
  * Example API Endpoint class. 
  * Use as skeleton for actual development. 
@@ -29,8 +22,15 @@ import com.zavedil.apilator.core.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+import com.eclipsesource.json.JsonObject;
+import com.zavedil.apilator.core.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Hashtable;
+
 /*
 // Example code to work with session objects
+////////////////////////////////////////////
 
 // Get a new session object (it will be automatically stored)
 SessionItem session = new SessionItem();
@@ -43,14 +43,31 @@ session.put("key", "value");
 
 // Get a value from a session object by a given key:
 // You need to cast the returned object to its proper type!
-Object value = sessio.get("key");
+Object value = session.get("key");
 
 // Delete a key-value pair from session object:
 session.del("key");
-*/
 
-/*
+
+
+// Example code to work with cookies
+////////////////////////////////////////////
+
+// Get cookies as a Hashtable
+Hashtable cookies = task.cookies;
+
+// Get a cookie value by name
+if (cookies != null) {
+	if (cookies.containsKey("cookie_name")) {
+		String value = cookies.get("cookie_name");
+		// You may need to further decode the cookie value if it is, say, JSON.
+	}
+}
+
+
+
 // Example code to deal with JSON:
+////////////////////////////////////////////
 
 // Read the value for key "key" from incoming JSON string:
 JsonObject jsonObject = JsonObject.readFrom( string );
@@ -76,10 +93,12 @@ jsonArray = new JsonArray().add( "value" ).add( 42 );
 // Write JSON from array to string:
 String json = jsonArray.toString();
 String json = jsonObject.toString();
-*/
 
-/*
-// Example code to save an uploaded file:
+
+
+// Example code to save an uploaded file
+////////////////////////////////////////////
+
 // If the form field with the file was named "myfile", then the filename will be available in "myfile_fn"
 if (task.http_input.containsKey("myfile") && task.http_input.containsKey("myfile_fn")) {			
 	byte[] myfile = (byte []) http_input.get("myfile");
