@@ -31,7 +31,7 @@ public class Session implements java.io.Serializable {
 	private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final long serialVersionUID = 1L;
 	private final String className;
-	private HashMap<String, Object> session_item = null;
+	private HashMap<String, Object> session_item = new HashMap<String, Object>();
 	// Action will be set when sending the object over the network
 	private int action = 0;
 	// UNIX timestamps of creation, update and TTL
@@ -141,7 +141,7 @@ public class Session implements java.io.Serializable {
 	}
 
 	/**
-	 * Setter for ttl proeprty
+	 * Setter for ttl property
 	 * @param act long The valu eof TTL to set
 	 */
 	public void setAction(long new_ttl) {
@@ -162,7 +162,7 @@ public class Session implements java.io.Serializable {
 		
 		// Get time in milliseconds, convert to byte array
 		long curr_time_millis = System.currentTimeMillis();
-	    curr_time_buffer = ByteBuffer.allocate(Long.SIZE);
+	    curr_time_buffer = ByteBuffer.allocate(Long.SIZE/8);
 	    curr_time_buffer.putLong(curr_time_millis);
 	    curr_time_array = curr_time_buffer.array();
 		
@@ -177,8 +177,8 @@ public class Session implements java.io.Serializable {
 		
 		// Append time to IP address
 		session_id_bytes = new byte[curr_time_array.length + 4];
-		System.arraycopy(session_id_bytes, 0, ip, 0, ip.length);
-		System.arraycopy(session_id_bytes, ip.length, curr_time_array, 0, curr_time_array.length);
+		System.arraycopy(ip, 0, session_id_bytes, 0, ip.length);
+		System.arraycopy(curr_time_array, 0, session_id_bytes, ip.length,curr_time_array.length);
 		
 		return bytesToHex(session_id_bytes);
 	}

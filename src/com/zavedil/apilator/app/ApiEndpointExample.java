@@ -42,9 +42,15 @@ String session_id = session.getSessoinId();
 // Put a key-value pair to session object:
 session.put("key", "value");
 
+// Get a session object from storage by its ID:
+// (If the key is missing from the storage, you'll get NULL back)
+Session session = SessionStorage.get(session_id);
+
 // Get a value from a session object by a given key:
 // You need to cast the returned object to its proper type!
-Object value = session.get("key");
+if ((session != null) && session.containsKey("key")) {
+	Object value = session.get("key");
+}
 
 // Delete a key-value pair from session object:
 session.del("key");
@@ -159,13 +165,27 @@ public class ApiEndpointExample extends Api {
 		Logger.debug(className, "Entering function get.");
 		super.get();
 		
-		// Add your code below
+		// Add your code below		
+		
 		/*
-		Session session = new Session();
-		String session_id = session.getSessionId();
-		session.put("some_key", "some_value");
-		SessionStorage.put(session_id, session);
+		if (input.data.containsKey("session_id")) {
+			String session_id = input.data.get("session_id").toString();
+			Session session = SessionStorage.get(session_id);
+			if ((session != null) && session.containsKey("some_key")) {
+				String value = (String) session.get("some_key");
+				output.data = value.getBytes();
+			}
+		}
+		else {
+			Session session = new Session();
+			String session_id = session.getSessionId();
+			session.put("some_key", "some_value");
+			SessionStorage.put(session_id, session);
+			
+			output.data = session_id.getBytes();
+		}
 		*/
+		
 	}
 	
 	/**
