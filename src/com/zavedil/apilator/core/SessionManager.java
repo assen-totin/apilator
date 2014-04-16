@@ -1,9 +1,12 @@
 package com.zavedil.apilator.core;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -34,7 +37,7 @@ import java.util.Map;
 
 public class SessionManager implements Runnable {
 	private final String className;
-	public final int MAX_PACKET_SIZE= 1500;		// Ethernet payload
+	public final int MAX_PACKET_SIZE= 8192;		
 	public static final int ACTION_STORE = 1;	// Used when multicasting an update
 	public static final int ACTION_DELETE = 2;	// Used when multicasting a deletion
 	public static final int ACTION_WHOHAS = 3;	// Used when asking for the value of the specified key
@@ -55,17 +58,18 @@ public class SessionManager implements Runnable {
 		InetAddress multicast_group;
 		MulticastSocket multicast_socket;
 		DatagramPacket packet;
-		byte[] receive_buffer;
+		byte[] receive_buffer, send_buffer;
 		
 		try {
 			multicast_group = InetAddress.getByName(Config.SessionManagerIp);
 			multicast_socket = new MulticastSocket(Config.SessionManagerPort);
 			multicast_socket.joinGroup(multicast_group);
-			receive_buffer = new byte[MAX_PACKET_SIZE];
-			packet = new DatagramPacket(receive_buffer, receive_buffer.length); 
 			
 			while (true) {
 				// Read and unserialize incoming packets
+				receive_buffer = new byte[MAX_PACKET_SIZE];
+				packet = new DatagramPacket(receive_buffer, receive_buffer.length);
+				
 				multicast_socket.receive(packet);
 				InputStream is = new ByteArrayInputStream(packet.getData());
 				ObjectInputStream ois = new ObjectInputStream(is);
@@ -77,7 +81,16 @@ public class SessionManager implements Runnable {
 			    while (iterator.hasNext()) {
 			        Map.Entry pair = (Map.Entry)iterator.next();
 			        iterator.remove(); // avoids a ConcurrentModificationException
-			        processOutgoing((Session) pair.getValue());
+			        			
+			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
+			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
+					oos.writeObject(pair.getValue());
+					
+					send_buffer = os.toByteArray();
+					packet = new DatagramPacket(send_buffer, send_buffer.length);
+					multicast_socket.send(packet);
+					
+			        // Remove from queue
 			        SessionStorage.queue.remove((String) pair.getKey());
 			    }
 			} 
@@ -102,10 +115,6 @@ public class SessionManager implements Runnable {
 				//TODO: send back the requested object (via Unicast?) 
 				break;
 		}
-	}
-	
-	private void processOutgoing(Session session) {
-		//FIXME: Send over the network
 	}
 	
 	/**
