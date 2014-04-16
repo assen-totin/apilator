@@ -26,7 +26,7 @@ import java.util.Hashtable;
 
 public class TaskInput {
 	private final String className;
-	public Hashtable<String,String> data;
+	public Hashtable<String,Object> data;
 	public Hashtable<String,String> cookies;
 	public Thread session_storage;
 	

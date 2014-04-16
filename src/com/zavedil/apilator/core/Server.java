@@ -55,7 +55,7 @@ public class Server implements Runnable {
 	private ServerWorker worker;
 
 	// A list of PendingChange instances
-	private List pendingChanges = new LinkedList();
+	private List<ServerChangeRequest> pendingChanges = new LinkedList<ServerChangeRequest>();
 
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
@@ -161,7 +161,7 @@ public class Server implements Runnable {
 
 		// Accept the connection and make it non-blocking
 		SocketChannel socketChannel = serverSocketChannel.accept();
-		Socket socket = socketChannel.socket();
+		//Socket socket = socketChannel.socket();
 		socketChannel.configureBlocking(false);
 
 		// Register the new SocketChannel with our Selector, indicating

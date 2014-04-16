@@ -30,56 +30,60 @@ import java.net.URLDecoder;
 
 public class HttpParser {
 	private final String HttpServerName;
-	private static final Hashtable<Integer,String> HttpReplies = new Hashtable<Integer,String>() {{
-		put(100, "Continue");
-		put(101, "Switching Protocols");
-		put(200, "OK");
-		put(201, "Created");
-		put(202, "Accepted");
-		put(203, "Non-Authoritative Information");
-		put(204, "No Content");
-		put(205, "Reset Content");
-		put(206, "Partial Content");
-		put(300, "Multiple Choices");
-		put(301, "Moved Permanently");
-		put(302, "Found");
-		put(303, "See Other");
-		put(304, "Not Modified");
-		put(305, "Use Proxy");
-		put(306, "(Unused)");
-		put(307, "Temporary Redirect");
-		put(400, "Bad Request");
-		put(401, "Unauthorized");
-		put(402, "Payment Required");
-		put(403, "Forbidden");
-		put(404, "Not Found");
-		put(405, "Method Not Allowed");
-		put(406, "Not Acceptable");
-		put(407, "Proxy Authentication Required");
-		put(408, "Request Timeout");
-		put(409, "Conflict");
-		put(410, "Gone");
-		put(411, "Length Required");
-		put(412, "Precondition Failed");
-		put(413, "Request Entity Too Large");
-		put(414, "Request-URI Too Long");
-		put(415, "Unsupported Media Type");
-		put(416, "Requested Range Not Satisfiable");
-		put(417, "Expectation Failed");
-		put(500, "Internal Server Error");
-		put(501, "Not Implemented");
-		put(502, "Bad Gateway");
-		put(503, "Service Unavailable");
-		put(504, "Gateway Timeout");
-		put(505, "HTTP Version Not Supported");
-	}};
+	private static final Hashtable<Integer,String> HttpReplies = new Hashtable<Integer,String>() {
+		private static final long serialVersionUID = 1L;
+		{
+			put(100, "Continue");
+			put(101, "Switching Protocols");
+			put(200, "OK");
+			put(201, "Created");
+			put(202, "Accepted");
+			put(203, "Non-Authoritative Information");
+			put(204, "No Content");
+			put(205, "Reset Content");
+			put(206, "Partial Content");
+			put(300, "Multiple Choices");
+			put(301, "Moved Permanently");
+			put(302, "Found");
+			put(303, "See Other");
+			put(304, "Not Modified");
+			put(305, "Use Proxy");
+			put(306, "(Unused)");
+			put(307, "Temporary Redirect");
+			put(400, "Bad Request");
+			put(401, "Unauthorized");
+			put(402, "Payment Required");
+			put(403, "Forbidden");
+			put(404, "Not Found");
+			put(405, "Method Not Allowed");
+			put(406, "Not Acceptable");
+			put(407, "Proxy Authentication Required");
+			put(408, "Request Timeout");
+			put(409, "Conflict");
+			put(410, "Gone");
+			put(411, "Length Required");
+			put(412, "Precondition Failed");
+			put(413, "Request Entity Too Large");
+			put(414, "Request-URI Too Long");
+			put(415, "Unsupported Media Type");
+			put(416, "Requested Range Not Satisfiable");
+			put(417, "Expectation Failed");
+			put(500, "Internal Server Error");
+			put(501, "Not Implemented");
+			put(502, "Bad Gateway");
+			put(503, "Service Unavailable");
+			put(504, "Gateway Timeout");
+			put(505, "HTTP Version Not Supported");
+		}
+	};
 
 	private BufferedReader reader;
 	//private DataInputStream binary_reader;
 	private byte[] request=null;
-	private String first_line, method, url, location, post_data=null, boundary;
-	private Hashtable headers=null, params=null;
-	private int[] ver;
+	private String first_line, method="", url="", location, post_data=null, boundary;
+	private Hashtable<String,String> headers = null;
+	private Hashtable<String,Object> params  = new Hashtable<String,Object>();
+	private int[] ver = new int[2];
 	private String className;
 	private int header_bytes=0, received_bytes=0, content_length=0;
 
@@ -92,11 +96,7 @@ public class HttpParser {
 	public HttpParser(byte[] data, int count) throws UnsupportedEncodingException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Entering function HttpParser");
-		method = "";
-		url = "";
-		headers = new Hashtable();
-		params = new Hashtable();
-		ver = new int[2];		
+	
 		received_bytes = count;
 		HttpServerName = Config.SystemName;
 		
@@ -115,7 +115,7 @@ public class HttpParser {
 	public int parseRequest() throws IOException {
 		Logger.debug(className, "Entering function parseRequest");
 	    String prms[]=null, cmd[], temp[];
-	    int ret, idx, i;
+	    int ret, idx;
 	
 	    ret = 200; // default is OK now
 	    
@@ -242,6 +242,10 @@ public class HttpParser {
 		
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
 	    while (!(line = reader.readLine()).equals("")) {
+	    	// Init headers only if we have at least one header
+	    	if (headers == null)
+	    		headers = new Hashtable<String,String>();
+	    	
 	    	header_bytes += line.length() + 2;	// Don't forget the CRLF which was stripped by Java
 			if ((idx = line.indexOf(':')) > 0)
 				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
@@ -259,8 +263,7 @@ public class HttpParser {
 		Logger.debug(className, "Entering function parseGet");
 		int i;
 		String temp[];
-		  
-		params = new Hashtable();
+
 		for (i=0; i<prms.length; i++) {
 			temp = prms[i].split("=");
 	        if (temp.length == 2) {
@@ -522,7 +525,7 @@ public class HttpParser {
 	 * Getter method for all HTTP headers
 	 * @return Hashtable All HTTP headers
 	 */
-	public Hashtable getHeaders() {
+	public Hashtable<String,String> getHeaders() {
 		return headers;
 	}
 
@@ -547,7 +550,7 @@ public class HttpParser {
 	 * Getter method for all GET or POST parameters
 	 * @return Hashtable All GET or POST parameters
 	 */
-	public Hashtable getParams() {
+	public Hashtable<String,Object> getParams() {
 		return params;
 	}
 
@@ -555,7 +558,7 @@ public class HttpParser {
 	 * Getter method for all cookies from the request
 	 * @return Hashtable All cookies from the request
 	 */
-	public Hashtable getCookies() {
+	public Hashtable<String,String> getCookies() {
 		String cookie_header;
 		String[] cookie_pairs, nv_pair;
 		Hashtable<String, String> cookies = null;

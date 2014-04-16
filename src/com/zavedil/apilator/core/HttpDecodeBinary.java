@@ -77,7 +77,6 @@ public class HttpDecodeBinary {
 	 * @return
 	 */
 	public int indexOfLast(byte[] data, byte[] pattern) {
-    	boolean flag = true;
     	int idx=0;
     	
     	// Flip data

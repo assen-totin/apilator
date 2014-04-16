@@ -32,7 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ServerWorker implements Runnable {
-	private List queue = new LinkedList();
+	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
 	private final String className;
 	
 	/**
@@ -58,6 +58,7 @@ public class ServerWorker implements Runnable {
 		int headers_len=0;
 		byte[] response;
 		TaskOutput output = new TaskOutput();
+		TaskInput input = new TaskInput();
 		
 		// Override default MIME type
 		output.mime_type = "text/plain";
@@ -97,16 +98,15 @@ public class ServerWorker implements Runnable {
 				 */				
 				
 				// Construct new task
-				TaskInput api_task = new TaskInput();
-				api_task.data = http_parser.getParams();
-				api_task.cookies = http_parser.getCookies();
+				input.data = http_parser.getParams();
+				input.cookies = http_parser.getCookies();
 				
 				// API call using reflection
 				String endpoint = getEndpoint(location);
 				try {
 					Class api_class = Class.forName(getPackageName() + "." + endpoint);
 					Constructor api_constr = api_class.getConstructor(Hashtable.class);
-					Object api_obj = api_constr.newInstance(api_task);
+					Object api_obj = api_constr.newInstance(input);
 					
 					String method = http_parser.getMethod();
 					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
