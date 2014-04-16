@@ -26,14 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionStorage {
 	// Create initial storage for 1000 sessions, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<String, Object> storage = new ConcurrentHashMap<String, Object>(1000, 0.9f, 1);	
+	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
+	
+	// Create internal queue for network updates: 100 objects, expand when 90% full and use only 1 shard
+	public static ConcurrentHashMap<String, Session> queue = new ConcurrentHashMap<String, Session>(100, 0.9f, 1);	
 	
 	/**
 	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void put(String key, Object value) {
+	public static void put(String key, Session value) {
 		storage.put(key, value);
 		
 		//TODO: tell the session manager about the update so that he can feed it over the network
@@ -44,11 +47,14 @@ public class SessionStorage {
 	 * @param key String The key to search for.
 	 * @return Object The Object found in the storage or null if not found.
 	 */
-	public static Object get(String key) {
+	public static Session get(String key) {
+		//FIXME: add network query here if key not found
 		return storage.get(key);
 	}
 	
 	public static void del(String key) {
 		storage.remove(key);
+		
+		//TODO: tell the session manager about the update so that he can feed it over the network
 	}
 }

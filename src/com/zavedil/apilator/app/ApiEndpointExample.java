@@ -120,7 +120,7 @@ public class ApiEndpointExample extends Api {
 		
 		// Add your code below
 		String session_id = Session.getNewSessionId();
-		SessionItem session_item = new SessionItem();
+		Session session_item = new Session();
 		session_item.put("some_key", "some_value");
 		SessionStorage.put(session_id, session_item);
 	}

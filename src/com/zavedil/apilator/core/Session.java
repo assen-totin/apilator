@@ -1,8 +1,14 @@
 package com.zavedil.apilator.core;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Session class. 
- * Use it to create session IDs and convert a session ID between diferent formats
+ * Session item class. 
+ * Describes an object stored in the Session Storage against a partifular Session ID.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
@@ -22,12 +28,94 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
+public class Session implements java.io.Serializable {
+	private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	private static final long serialVersionUID = 1L;
+	private final String className;
+	private HashMap<String, Object> session_item = null;
+	// Action will be set when sending the object over the network
+	private int action = 0;
+	// UNIX timestamps of creation, update and TTL
+	private final int created;
+	private int updated=0;
+	private int ttl=0;
+	// Session ID for this object
+	private final String session_id;
+	
+	public Session(String sess_id) {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
+		
+		// Creation timestamp
+		created = (int) System.currentTimeMillis()/1000;
+		
+		if (sess_id == null)
+			sess_id = Session.getNewSessionId();
+		session_id = sess_id;
+	}
+	
+	public Session() {
+		this(null);
+	}
+	
+	/**
+	 * Store a key and a value in this object. If key exists, record will be updated
+	 * @param key String Key
+	 * @param value Object Value
+	 */
+	public void put(String key, Object value) {
+		session_item.put(key, value);
+		updated = (int) System.currentTimeMillis()/1000;
+	}
+	
+	/**
+	 * Retrieve a value from this object based on its key (or null if key does not exists)
+	 * @param key String The key to search for.
+	 * @return Object The value found in the storage or null if key not found.
+	 */
+	public Object get(String key) {
+		return session_item.get(key);
+	}
+	
+	/**
+	 * Remove a key/value pair
+	 * @param key The key to remove
+	 */
+	public void del(String key) {
+		session_item.remove(key);
+		updated = (int) System.currentTimeMillis()/1000;
+	}
+	
+	/**
+	 * Update the internal timestamp of the item
+	 */
+	public void update() {
+		updated = (int) System.currentTimeMillis()/1000;
+	}
 
-public class Session {
-	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	/**
+	 * Getter for session_id property
+	 * @return int The value of the session_id property
+	 */
+	public String getSessionId() {
+		return session_id;
+	}
+	
+	/**
+	 * Getter for action property
+	 * @return int The value of the action property
+	 */
+	public int getAction() {
+		return action;
+	}
+	
+	/**
+	 * Set action
+	 * @param act int The ID of the action to set
+	 */
+	public void setAction(int act) {
+		action = act;
+	}
 	
 	/**
 	 * Create new session ID.

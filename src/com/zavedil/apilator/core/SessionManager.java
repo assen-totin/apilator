@@ -67,7 +67,7 @@ public class SessionManager implements Runnable {
 				multicast_socket.receive(packet);
 				InputStream is = new ByteArrayInputStream(packet.getData());
 				ObjectInputStream ois = new ObjectInputStream(is);
-				SessionItem obj = (SessionItem)ois.readObject();	
+				Session obj = (Session)ois.readObject();	
 				processObject(obj);
 			} 
 		}
@@ -79,7 +79,7 @@ public class SessionManager implements Runnable {
 		}
     }
 	
-	private void processObject(SessionItem obj) {
+	private void processObject(Session obj) {
 		switch(obj.getAction()) {
 			case ACTION_STORE:
 				put(obj.getSessionId(), obj);
@@ -98,7 +98,7 @@ public class SessionManager implements Runnable {
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	private void put(String key, Object value) {
+	private void put(String key, Session value) {
 		SessionStorage.put(key, value);
 	}
 	
