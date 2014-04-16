@@ -37,9 +37,11 @@ public class SessionStorage {
 	 * @param value Object The Object to store associated with the key
 	 */
 	public static void put(String key, Session value) {
+		// Store locally
 		storage.put(key, value);
 		
-		//TODO: tell the session manager about the update so that he can feed it over the network
+		// Add to network queue
+		queue.put(key, value);
 	}
 	
 	/**
@@ -53,8 +55,10 @@ public class SessionStorage {
 	}
 	
 	public static void del(String key) {
+		// Remove locally
 		storage.remove(key);
 		
-		//TODO: tell the session manager about the update so that he can feed it over the network
+		// Add to network queue
+		queue.remove(key);
 	}
 }

@@ -30,6 +30,7 @@ public abstract class Api {
 	
 	// Output data
 	protected byte[] output_data=null;						// Output data
+	protected Hashtable output_cookies=null;				// Output cookies (optional)
 	protected int output_http_status=200; 					// Output HTTP status from processing the request (optional)
 	protected String output_mime_type="application/json";	// Output MIME type (optional)
 	
@@ -69,10 +70,17 @@ public abstract class Api {
 	}
 	
 	/**
-	 * Getter for 'output' property
+	 * Getter for 'output_data' property
 	 */
 	public byte[] getOutputData() {
 		return output_data;
+	}
+
+	/**
+	 * Getter for 'output_cookies' property
+	 */
+	public Hashtable getOutputCookies() {
+		return output_cookies;
 	}
 	
 	/**

@@ -78,7 +78,7 @@ public class HttpParser {
 	//private DataInputStream binary_reader;
 	private byte[] request=null;
 	private String first_line, method, url, location, post_data=null, boundary;
-	private Hashtable headers=null, params=null;
+	private Hashtable headers=null, params=null, cookies=null;
 	private int[] ver;
 	private String className;
 	private int header_bytes=0, received_bytes=0, content_length=0;
@@ -551,6 +551,14 @@ public class HttpParser {
 		return params;
 	}
 
+	/**
+	 * Getter method for all cookies from the request
+	 * @return Hashtable All cookies from the request
+	 */
+	public Hashtable getCookies() {
+		return cookies;
+	}
+	
 	/**
 	 * Getter method for HTTP version of the request
 	 * @return String The HTTP version of the request

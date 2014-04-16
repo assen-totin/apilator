@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Session manager class. 
@@ -63,12 +65,21 @@ public class SessionManager implements Runnable {
 			packet = new DatagramPacket(receive_buffer, receive_buffer.length); 
 			
 			while (true) {
-				// Read and unserialize packets
+				// Read and unserialize incoming packets
 				multicast_socket.receive(packet);
 				InputStream is = new ByteArrayInputStream(packet.getData());
 				ObjectInputStream ois = new ObjectInputStream(is);
 				Session obj = (Session)ois.readObject();	
-				processObject(obj);
+				processIncoming(obj);
+				
+				// Check if there are pending outgoing, serialize and send
+			    Iterator iterator = SessionStorage.queue.entrySet().iterator();
+			    while (iterator.hasNext()) {
+			        Map.Entry pair = (Map.Entry)iterator.next();
+			        iterator.remove(); // avoids a ConcurrentModificationException
+			        processOutgoing((Session) pair.getValue());
+			        SessionStorage.queue.remove((String) pair.getKey());
+			    }
 			} 
 		}
 		catch (IOException e) {
@@ -79,7 +90,7 @@ public class SessionManager implements Runnable {
 		}
     }
 	
-	private void processObject(Session obj) {
+	private void processIncoming(Session obj) {
 		switch(obj.getAction()) {
 			case ACTION_STORE:
 				put(obj.getSessionId(), obj);
@@ -91,6 +102,10 @@ public class SessionManager implements Runnable {
 				//TODO: send back the requested object (via Unicast?) 
 				break;
 		}
+	}
+	
+	private void processOutgoing(Session session) {
+		//FIXME: Send over the network
 	}
 	
 	/**

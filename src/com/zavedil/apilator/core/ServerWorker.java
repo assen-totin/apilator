@@ -57,6 +57,7 @@ public class ServerWorker implements Runnable {
 		String headers=null, output_mime_type="text/plain";
 		int headers_len=0, output_http_status=0, output_data_len=0;
 		byte[] output_data=null, response;
+		Hashtable output_cookies=null;
 		
 		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
@@ -98,7 +99,8 @@ public class ServerWorker implements Runnable {
 				
 				// Construct new task
 				ApiTask api_task = new ApiTask();
-				api_task.http_input = http_parser.getParams();;
+				api_task.http_input = http_parser.getParams();
+				api_task.cookies = http_parser.getCookies();
 				
 				// API call using reflection
 				String endpoint = getEndpoint(location);
@@ -115,11 +117,14 @@ public class ServerWorker implements Runnable {
 					output_http_status = (int) api_method_get_http_status.invoke(api_obj);
 					
 					if (output_http_status == 200) {
-						Method api_method_get_output = api_obj.getClass().getMethod("getOutputData");
-						output_data = (byte[]) api_method_get_output.invoke(api_obj);
+						Method api_method_get_output_data = api_obj.getClass().getMethod("getOutputData");
+						output_data = (byte[]) api_method_get_output_data.invoke(api_obj);
 						
-						Method api_method_get_mime_type = api_obj.getClass().getMethod("getOutputMimeType");
-						output_mime_type = (String) api_method_get_mime_type.invoke(api_obj);						
+						Method api_method_get_output_cookies = api_obj.getClass().getMethod("getOutputCookies");
+						output_cookies = (Hashtable) api_method_get_output_cookies.invoke(api_obj);
+						
+						Method api_method_get_output_mime_type = api_obj.getClass().getMethod("getOutputMimeType");
+						output_mime_type = (String) api_method_get_output_mime_type.invoke(api_obj);						
 					}
 				}
 				catch (Exception e) {
@@ -137,6 +142,9 @@ public class ServerWorker implements Runnable {
 		// Note: we don't handle authentication, hence user is always "-"
 		// Who's there?
 		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), output_http_status, output_data_len);
+		
+		// TODO: Prepare cookies
+		// output_cookies
 		
 		// Prepare headers
 		headers = http_parser.getHttpReplyHeaders(output_http_status, output_mime_type);
