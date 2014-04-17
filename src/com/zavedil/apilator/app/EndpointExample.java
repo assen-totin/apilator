@@ -108,8 +108,8 @@ for( String key : jsonObject.names() ) {
 }
 
 // Create JSON array or object:
-jsonObject = new JsonObject().add( "key", "value" ).add( "key_int", 42 );
-jsonArray = new JsonArray().add( "value" ).add( 42 );
+JsonObject jsonObject = new JsonObject().add( "key", "value" ).add( "key_int", 42 );
+JsonObject jsonArray = new JsonArray().add( "value" ).add( 42 );
 
 // Write JSON from array to string:
 String json = jsonArray.toString();

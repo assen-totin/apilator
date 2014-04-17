@@ -68,19 +68,23 @@ public class Stats extends Endpoint {
 
 		
 		// Should we send in plain text or in JSON?
+		String resp;
 		if (input.data.containsKey("format") && input.data.get("format").toString().equals("json")) {
 			// Send JSON
-			
+			JsonObject jsonObject = new JsonObject().add( "server_uptime", server_uptime );
+			jsonObject.add("total_threads", total_threads);
+			jsonObject.add("total_requests", total_requests);
+			jsonObject.add("avg_exec_time", avg_exec_time);
+			resp = jsonObject.toString();
 		}
 		else {
 			// Send plain text
-			String resp = "server_uptime:" + server_uptime + "\n";
+			resp = "server_uptime:" + server_uptime + "\n";
 			resp += "total_threads:" + total_threads + "\n";
 			resp += "total_requests:" + total_requests + "\n";
 			resp += "avg_exec_time:" + avg_exec_time + "\n";
-			output.data = resp.getBytes();
 		}
-	
+		output.data = resp.getBytes();
 	}
 	
 	/**
