@@ -23,11 +23,6 @@ package com.zavedil.apilator.app;
 
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Hashtable;
 import java.util.Map;
 
 public class Stats extends Endpoint {

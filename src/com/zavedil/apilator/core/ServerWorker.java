@@ -90,7 +90,7 @@ public class ServerWorker implements Runnable {
 			
 			if (serveStatic(location)) {
 				// Call the static content class
-				StaticContent static_content = new StaticContent(location);
+				StaticContent static_content = new StaticContent(stripStaticPrefix(location));
 				output = static_content.onCompletion();
 			}
 			
@@ -212,13 +212,24 @@ public class ServerWorker implements Runnable {
 	}
 	
 	/**
+	 * Helper method to strip the static prefix from the location 
+	 * @param location String The local part of the original URL
+	 * @return String  The local part of the original URL with the static prefix stripped
+	 */
+	private String stripStaticPrefix(String location) {
+		return location.replaceFirst(Config.StaticLocation, "");
+	}
+	
+	/**
 	 * Helper method to derive the name of the API endpoint from the original URL
 	 * @param location String The local part of the original URL
 	 * @return String The name of the API endpoint
 	 */
 	private String getEndpoint(String location) {
 		String[] parts = location.split("/");
-		return parts[2];
+		if (parts.length < 2)
+			return location;
+		return parts[1];
 	}
 	
 	private String getPackageName() {
@@ -232,7 +243,7 @@ public class ServerWorker implements Runnable {
 		}
 		return ret;
 	}
-	
+		
 	/**
 	 * Getter for the 'busy' property
 	 * @return

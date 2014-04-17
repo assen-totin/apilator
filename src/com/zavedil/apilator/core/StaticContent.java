@@ -40,6 +40,8 @@ public class StaticContent {
 		String document_root = Config.DocumentRoot;
 		String file = document_root + location;				// The 'location' will begin with a slash
 		
+		output = new TaskOutput();
+		
 		try {
             byte[] buffer = new byte[chunk_size];
 

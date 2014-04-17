@@ -53,7 +53,7 @@ public class Server implements Runnable {
 	private int byteBufSize = 8192;
 
 	//private ServerWorker worker;
-	private List<ServerWorker> workers;
+	private List<ServerWorker> workers = new LinkedList<ServerWorker>();
 
 	// A list of PendingChange instances
 	private List<ServerChangeRequest> pendingChanges = new LinkedList<ServerChangeRequest>();
