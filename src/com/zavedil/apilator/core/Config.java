@@ -38,6 +38,9 @@ public class Config {
 	// Log level
 	public static final int LogLevel = 6; // LOG_DEBUG
 	
+	// Session cookie name
+	public static final String SessionCookie = "apilator";
+	
 	// Multicast address for Session Manager
 	public static final String SessionManagerIp = "234.234.234.234";
 	public static final int SessionManagerPort = 12345;

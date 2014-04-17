@@ -66,7 +66,7 @@ Hashtable cookies = input.cookies;
 // Get a cookie value by name
 if (input.cookies != null) {
 	if (input.cookies.containsKey("cookie_name")) {
-		String value = input.cookies.get("cookie_name").toString();
+		String value = input.cookies.get("cookie_name");
 		// You may need to further decode the cookie value if it is, say, JSON.
 	}
 }
@@ -146,13 +146,13 @@ output.data = "Keep walking, dude!".getBytes();
 */
 
 
-public class ApiEndpointExample extends Api {
+public class EndpointExample extends Endpoint {
 	private final String className;
 	
 	/**
 	 * Constructor method
 	 */
-	public ApiEndpointExample(TaskInput api_task) {
+	public EndpointExample(TaskInput api_task) {
 		super(api_task);
 		className = this.getClass().getSimpleName();
 	}
