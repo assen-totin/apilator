@@ -49,7 +49,7 @@ public class Stats extends Endpoint {
 		Logger.debug(className, "Entering function get.");
 		super.get();
 		
-		// Gather statistics: server_uptime, total_hreads, total_requests, avg_exec_time
+		// Gather statistics: server_uptime, total_threads, total_requests, avg_exec_time
 		long server_uptime=0, total_threads=0, total_requests=0, total_exec_time=0, avg_exec_time;
 		
 		for(Map.Entry<Long,Long> entry : ServerStats.uptime.entrySet()) {
@@ -68,6 +68,18 @@ public class Stats extends Endpoint {
 
 		
 		// Should we send in plain text or in JSON?
+		if (input.data.containsKey("format") && input.data.get("format").toString().equals("json")) {
+			// Send JSON
+			
+		}
+		else {
+			// Send plain text
+			String resp = "server_uptime:" + server_uptime + "\n";
+			resp += "total_threads:" + total_threads + "\n";
+			resp += "total_requests:" + total_requests + "\n";
+			resp += "avg_exec_time:" + avg_exec_time + "\n";
+			output.data = resp.getBytes();
+		}
 	
 	}
 	
