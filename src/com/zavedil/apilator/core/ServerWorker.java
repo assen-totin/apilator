@@ -34,6 +34,10 @@ import java.util.List;
 public class ServerWorker implements Runnable {
 	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
 	private final String className;
+	private final long created = System.currentTimeMillis();
+	private boolean busy = false;
+	private long busy_time = 0;
+	private int served_requests = 0;
 	
 	/**
 	 * Constructor. 
@@ -53,17 +57,18 @@ public class ServerWorker implements Runnable {
 	 * @throws IOException
 	 */
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
+		busy = true;
+		long run_start_time = System.currentTimeMillis();
+		
+		Logger.debug(className, "Entering function processData.");
+		
 		HttpParser http_parser=null;
 		String headers=null;
 		int headers_len=0;
 		byte[] response;
 		TaskOutput output = new TaskOutput();
-		TaskInput input = new TaskInput();
+		TaskInput input = new TaskInput();		
 		
-		// Override default MIME type
-		output.mime_type = "text/plain";
-		
-		Logger.debug(className, "Entering function processData.");
 		boolean headers_ok = false;
 		
 		try {
@@ -154,6 +159,13 @@ public class ServerWorker implements Runnable {
 			queue.add(new ServerDataEvent(server, socketChannel, response));
 			queue.notify();
 		}
+		
+		// Stats
+		served_requests++;
+		busy_time += System.currentTimeMillis() - run_start_time;
+		
+		// Ready for new task
+		busy = false;
 	}
 	
 	/**
@@ -215,4 +227,35 @@ public class ServerWorker implements Runnable {
 		return ret;
 	}
 	
+	/**
+	 * Getter for the 'busy' property
+	 * @return
+	 */
+	public boolean isBusy() {
+		return busy;
+	}
+	
+	/**
+	 * Getter for the 'created' property
+	 * @return
+	 */
+	public long getCreated() {
+		return created;
+	}
+	
+	/**
+	 * Getter for the 'served_requests' property
+	 * @return
+	 */
+	public long getServedRequests() {
+		return served_requests;
+	}
+	
+	/**
+	 * Getter for the 'busy_time' property
+	 * @return
+	 */
+	public long getBusyTime() {
+		return busy_time;
+	}
 }

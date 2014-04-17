@@ -52,7 +52,8 @@ public class Server implements Runnable {
 	//private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
 	private int byteBufSize = 8192;
 
-	private ServerWorker worker;
+	//private ServerWorker worker;
+	private List<ServerWorker> workers;
 
 	// A list of PendingChange instances
 	private List<ServerChangeRequest> pendingChanges = new LinkedList<ServerChangeRequest>();
@@ -65,7 +66,8 @@ public class Server implements Runnable {
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.selector = this.initSelector();
-		this.worker = worker;
+		workers.add(worker);
+		//this.worker = worker;
 	}
 
 	/**
@@ -215,10 +217,27 @@ public class Server implements Runnable {
 		tmpBuffer.put(newBuffer);
 		int buffer_pos = tmpBuffer.position();
 		key.attach(tmpBuffer);
-		
-		// Hand the data off to our worker thread
 		tmpBuffer.flip();
-		this.worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		
+		// Hand the data off to a worker thread
+		boolean got_worker = false;
+		for (ServerWorker entry : workers) {
+			if (!entry.isBusy()) {
+				got_worker = true;
+				entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+			}
+		}
+		if (!got_worker) {
+			// Span a new worker thread, add it to the pool
+			ServerWorker new_worker = new ServerWorker();
+			new Thread(new_worker).start();
+			workers.add(new_worker);
+			new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		}
+		
+		//this.worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		
+		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);
 	}
 

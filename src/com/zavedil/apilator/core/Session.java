@@ -35,7 +35,7 @@ public class Session implements java.io.Serializable {
 	// Action will be set when sending the object over the network
 	private int action = SessionManager.ACTION_NONE;
 	// UNIX timestamps of creation, update and TTL
-	private final long created = System.currentTimeMillis();;
+	private final long created = System.currentTimeMillis();
 	private long updated=0;
 	private long ttl=0;
 	// Session ID for this object
