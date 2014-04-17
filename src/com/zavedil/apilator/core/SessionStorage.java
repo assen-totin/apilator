@@ -43,7 +43,8 @@ public class SessionStorage {
 			// Store locally
 			storage.put(session_id, session);
 			
-			// Add to network queue
+			// Add to network queue; set the action to ACTION_STORE so that the peers update themselves
+			session.setAction(SessionManager.ACTION_STORE);
 			queue.put(session_id, session);		
 		}
 	}
@@ -59,11 +60,15 @@ public class SessionStorage {
 	}
 	
 	public static void del(String session_id) {
+		Session session;
+		
+		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
+		session = storage.get(session_id);
+		session.setAction(SessionManager.ACTION_DELETE);
+		queue.put(session_id, session);
+		
 		// Remove locally
 		storage.remove(session_id);
-		
-		// Add to network queue
-		queue.remove(session_id);
 	}
 	
 	public static boolean saveSession(Session session) {

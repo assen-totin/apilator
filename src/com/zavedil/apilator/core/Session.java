@@ -133,9 +133,9 @@ public class Session implements java.io.Serializable {
 
 	/**
 	 * Setter for ttl property
-	 * @param act long The valu eof TTL to set
+	 * @param act long The value of TTL to set
 	 */
-	public void setAction(long new_ttl) {
+	public void setTtl(long new_ttl) {
 		ttl = new_ttl;
 	}
 	
