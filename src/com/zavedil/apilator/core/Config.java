@@ -38,8 +38,16 @@ public class Config {
 	// Log level
 	public static final int LogLevel = 6; // LOG_DEBUG
 	
-	// Session cookie name
+	// Session cookie name; set to empty to disable auto-search and auto-dispatch of session ID as cookie.
 	public static final String SessionCookie = "apilator";
+	
+	// Session cookie expiration time: (for example, 30 days). Time is in milliseconds and should be long.
+	// If the number is positive, the session cookie will every time be set with this TTL as offset from current time 
+	// (meaning if a valid session is provided, it will be extended with this amount of time)
+	// If the number is positive, the session cookie will every time be set with this TTL as offset from session creation time
+	// (meaning if a valid session is provided, its original TTL will be retained)
+	// If the number is 0, the session cookie will be sent without any TTL.
+	public static final long SessionCookieExpire = 30 * 24 * 60 * 60 * 1000L;
 	
 	// Multicast address for Session Manager
 	public static final String SessionManagerIp = "234.234.234.234";

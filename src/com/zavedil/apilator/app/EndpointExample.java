@@ -34,7 +34,7 @@ import java.util.Hashtable;
 ////////////////////////////////////////////
 
 // Get a new session object (it will be automatically stored)
-SessionItem session = new SessionItem();
+Session session = new Session();
 
 // Get the session_id from it:
 String session_id = session.getSessoinId();

@@ -108,11 +108,13 @@ public class ServerWorker implements Runnable {
 					Constructor api_constr = api_class.getConstructor(TaskInput.class);
 					Object api_obj = api_constr.newInstance(input);
 					
+					// Call the method which corresponds to the HTTP method
 					String method = http_parser.getMethod();
 					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
 					api_method.invoke(api_obj);
-								
-					Method api_method_get_output_data = api_obj.getClass().getMethod("getOutput");
+					
+					// Call the method to get back the output
+					Method api_method_get_output_data = api_obj.getClass().getMethod("onCompletion");
 					output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
 				}
 				catch (Exception e) {

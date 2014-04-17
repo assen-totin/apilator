@@ -36,12 +36,16 @@ public class SessionStorage {
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void put(String key, Session value) {
-		// Store locally
-		storage.put(key, value);
-		
-		// Add to network queue
-		queue.put(key, value);
+	public static void put(String session_id, Session session) {
+		// Only save the session if it does not exists or  
+		// if the 'updated' field of the supplied session is newer than the 'updated' field in the existing session  
+		if (SessionStorage.saveSession(session)) {
+			// Store locally
+			storage.put(session_id, session);
+			
+			// Add to network queue
+			queue.put(session_id, session);		
+		}
 	}
 	
 	/**
@@ -49,16 +53,29 @@ public class SessionStorage {
 	 * @param key String The key to search for.
 	 * @return Object The Object found in the storage or null if not found.
 	 */
-	public static Session get(String key) {
+	public static Session get(String session_id) {
 		//FIXME: add network query here if key not found
-		return storage.get(key);
+		return storage.get(session_id);
 	}
 	
-	public static void del(String key) {
+	public static void del(String session_id) {
 		// Remove locally
-		storage.remove(key);
+		storage.remove(session_id);
 		
 		// Add to network queue
-		queue.remove(key);
+		queue.remove(session_id);
+	}
+	
+	public static boolean saveSession(Session session) {
+		Session session_old;
+		session_old = SessionStorage.get(session.getSessionId());
+		// If the session does not exists, we should save it - return true
+		if (session_old == null)
+			return true;
+		// If the 'updated' field of the supplied session is newer than the same field from stored session, we should update it - return true
+		if (session.getUpdated() > session_old.getUpdated())
+			return true;
+		
+		return false;
 	}
 }

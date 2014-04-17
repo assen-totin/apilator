@@ -35,7 +35,9 @@ import java.util.Map;
 
 public class SessionManager implements Runnable {
 	private final String className;
-	public final int MAX_PACKET_SIZE= 8192;		
+	public final int MAX_PACKET_SIZE= 8192;	
+	// Network actions
+	public static final int ACTION_NONE = 1;	// Take no action
 	public static final int ACTION_STORE = 1;	// Used when multicasting an update
 	public static final int ACTION_DELETE = 2;	// Used when multicasting a deletion
 	public static final int ACTION_WHOHAS = 3;	// Used when asking for the value of the specified key
@@ -97,34 +99,19 @@ public class SessionManager implements Runnable {
 		}
     }
 	
-	private void processIncoming(Session obj) {
-		switch(obj.getAction()) {
+	private void processIncoming(Session session) {
+		switch(session.getAction()) {
 			case ACTION_STORE:
-				put(obj.getSessionId(), obj);
+				// Check if we have the same key; if yes, only update if 'updated' in the arrived one id newer
+				if (SessionStorage.saveSession(session))
+					SessionStorage.put(session.getSessionId(), session);
 				break;
 			case ACTION_DELETE:
-				del(obj.getSessionId());
+				SessionStorage.del(session.getSessionId());
 				break;
 			case ACTION_WHOHAS:
 				//TODO: send back the requested object (via Unicast?) 
 				break;
 		}
-	}
-	
-	/**
-	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
-	 * @param key String Session ID, used as key
-	 * @param value Object The Object to store associated with the key
-	 */
-	private void put(String key, Session value) {
-		SessionStorage.put(key, value);
-	}
-	
-	/**
-	 * Delete the specified item
-	 * @param key String Session ID, used as key
-	 */
-	private void del(String key) {
-		SessionStorage.del(key);
 	}
 }

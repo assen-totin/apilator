@@ -28,33 +28,24 @@ import java.util.HashMap;
  */
 
 public class Session implements java.io.Serializable {
-	private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	private static final long serialVersionUID = 1L;
 	private final String className;
+	// Key-value storage
 	private HashMap<String, Object> session_item = new HashMap<String, Object>();
 	// Action will be set when sending the object over the network
-	private int action = 0;
+	private int action = SessionManager.ACTION_NONE;
 	// UNIX timestamps of creation, update and TTL
-	private final long created;
+	private final long created = System.currentTimeMillis();;
 	private long updated=0;
 	private long ttl=0;
 	// Session ID for this object
 	private final String session_id;
 	
-	public Session(String sess_id) {
+	public Session() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		
-		// Creation timestamp
-		created = System.currentTimeMillis();
-		
-		if (sess_id == null)
-			sess_id = Session.getNewSessionId();
-		session_id = sess_id;
-	}
-	
-	public Session() {
-		this(null);
+		session_id = Session.getNewSessionId();
 	}
 	
 	/**
@@ -184,6 +175,7 @@ public class Session implements java.io.Serializable {
 	}
 	
 	public static String bytesToHex(byte[] bytes) {
+		final char[] hexArray = "0123456789ABCDEF".toCharArray();
 	    char[] hexChars = new char[bytes.length * 2];
 	    for ( int j = 0; j < bytes.length; j++ ) {
 	        int v = bytes[j] & 0xFF;
