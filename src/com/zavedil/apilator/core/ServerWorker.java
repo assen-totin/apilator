@@ -36,8 +36,8 @@ public class ServerWorker implements Runnable {
 	private final String className;
 	private final long created = System.currentTimeMillis();
 	private boolean busy = false;
-	private long busy_time = 0;
-	private int served_requests = 0;
+	private long exec_time = 0;
+	private long requests = 0;
 	
 	/**
 	 * Constructor. 
@@ -161,9 +161,15 @@ public class ServerWorker implements Runnable {
 		}
 		
 		// Stats
-		served_requests++;
-		busy_time += System.currentTimeMillis() - run_start_time;
+		long uptime = System.currentTimeMillis() - created;
+		ServerStats.uptime.put(created, uptime);
 		
+		requests++;
+		ServerStats.requests.put(created, requests);
+		
+		exec_time += System.currentTimeMillis() - run_start_time;
+		ServerStats.exec_time.put(created, exec_time);
+				
 		// Ready for new task
 		busy = false;
 	}
@@ -233,29 +239,5 @@ public class ServerWorker implements Runnable {
 	 */
 	public boolean isBusy() {
 		return busy;
-	}
-	
-	/**
-	 * Getter for the 'created' property
-	 * @return
-	 */
-	public long getCreated() {
-		return created;
-	}
-	
-	/**
-	 * Getter for the 'served_requests' property
-	 * @return
-	 */
-	public long getServedRequests() {
-		return served_requests;
-	}
-	
-	/**
-	 * Getter for the 'busy_time' property
-	 * @return
-	 */
-	public long getBusyTime() {
-		return busy_time;
 	}
 }
