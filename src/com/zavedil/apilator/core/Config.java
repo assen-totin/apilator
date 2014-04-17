@@ -31,6 +31,11 @@ public class Config {
 	// Filename for access log
 	public static final String AccessLog = "/tmp/apilator-access.log";
 	
+	// Location for static content. If the local part of the URL begins with this string, 
+	// the remainder of the local part will be mapped to the filesystem starting at DocumentRoot (see below)
+	// and the requested file, if found, will be served. 
+	public static final String StaticLocation = "/static";
+	
 	// DocumentRoot for serving static content
 	//private static final String DocumentRoot = "/Users/assen/Desktop/L";
 	public static final String DocumentRoot = "/root/Desktop/_Pics/L";

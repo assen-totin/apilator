@@ -73,7 +73,7 @@ public class StaticContent {
 	 * Getter for output data object
 	 * @return ApiTaskOutput Output data object
 	 */
-	public TaskOutput getOutput() {
+	public TaskOutput onCompletion() {
 		return output;
 	}
 }

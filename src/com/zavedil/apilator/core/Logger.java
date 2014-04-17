@@ -73,7 +73,8 @@ public class Logger {
 		line = host + space + ident + space + username + space + "[" +  date + "]" + space + request + space + http_resp_status + space + http_resp_body_len + "\n";
 
 		try {
-			FileOutputStream fout = new FileOutputStream(Config.AccessLog);
+			// Open the file for appending
+			FileOutputStream fout = new FileOutputStream(Config.AccessLog, true);
 			fout.write(line.getBytes());
 			fout.close();
 		}

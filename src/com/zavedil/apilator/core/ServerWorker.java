@@ -86,7 +86,7 @@ public class ServerWorker implements Runnable {
 			if (serveStatic(location)) {
 				// Call the static content class
 				StaticContent static_content = new StaticContent(location);
-				output = static_content.getOutput();
+				output = static_content.onCompletion();
 			}
 			
 			else {
@@ -187,10 +187,10 @@ public class ServerWorker implements Runnable {
 	 * @return boolean TRUE if the worker should serve static content, FALSE if the worker should call the API
 	 */
 	private boolean serveStatic(String location) {
-		int idx = location.indexOf("/api");
+		int idx = location.indexOf(Config.StaticLocation);
 		if (idx == 0)
-			return false;
-		return true;
+			return true;
+		return false;
 	}
 	
 	/**
