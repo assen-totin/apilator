@@ -57,4 +57,10 @@ public class Config {
 	// Multicast address for Session Manager
 	public static final String SessionManagerIp = "234.234.234.234";
 	public static final int SessionManagerPort = 12345;
+	
+	// URL for object retrieval via Session Manager
+	public static final String SessionManagerLocation = "/sessman";
+	
+	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
+	public static final int SessionManagerTimeout = 10;
 }

@@ -36,12 +36,6 @@ import java.util.Map;
 public class SessionManager implements Runnable {
 	private final String className;
 	public final int MAX_PACKET_SIZE= 8192;	
-	// Network actions
-	public static final int ACTION_NONE = 1;	// Take no action
-	public static final int ACTION_STORE = 1;	// Used when multicasting an update
-	public static final int ACTION_DELETE = 2;	// Used when multicasting a deletion
-	public static final int ACTION_WHOHAS = 3;	// Used when asking for the value of the specified key
-	public static final int ACTION_ISAT = 4;	// Used when sending a reply to WHO HAS
 	
 	public SessionManager() {
 		className = this.getClass().getSimpleName();
@@ -73,11 +67,11 @@ public class SessionManager implements Runnable {
 				multicast_socket.receive(packet);
 				InputStream is = new ByteArrayInputStream(packet.getData());
 				ObjectInputStream ois = new ObjectInputStream(is);
-				Session obj = (Session)ois.readObject();	
-				processIncoming(obj);
+				SessionMessage msg = (SessionMessage)ois.readObject();	
+				processIncoming(msg);
 				
 				// Check if there are pending outgoing, serialize and send
-				for (Map.Entry<String,Session> pair : SessionStorage.queue.entrySet()) {
+				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_send.entrySet()) {
 			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
 			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 					oos.writeObject(pair.getValue());
@@ -87,7 +81,7 @@ public class SessionManager implements Runnable {
 					multicast_socket.send(packet);
 					
 			        // Remove from queue
-			        SessionStorage.queue.remove((String) pair.getKey());
+			        SessionStorage.queue_send.remove((String) pair.getKey());
 			    }
 			} 
 		}
@@ -99,15 +93,15 @@ public class SessionManager implements Runnable {
 		}
     }
 	
-	private void processIncoming(Session session) {
-		switch(session.getAction()) {
-			case ACTION_STORE:
-				SessionStorage.putFromNetwork(session.getSessionId(), session);
+	private void processIncoming(SessionMessage message) {
+		switch(message.type) {
+			case SessionMessage.MSG_STORE:
+				SessionStorage.putFromNetwork(message.session_id, session);
 				break;
-			case ACTION_DELETE:
-				SessionStorage.del(session.getSessionId());
+			case SessionMessage.MSG_DELETE:
+				SessionStorage.del(message.session_id);
 				break;
-			case ACTION_WHOHAS:
+			case SessionMessage.MSG_WHOHAS:
 				//TODO: send back the requested object (via Unicast?) 
 				break;
 		}

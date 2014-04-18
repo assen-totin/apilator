@@ -32,8 +32,6 @@ public class Session implements java.io.Serializable {
 	private final String className;
 	// Key-value storage
 	private HashMap<String, Object> session_item = new HashMap<String, Object>();
-	// Action will be set when sending the object over the network
-	private int action = SessionManager.ACTION_NONE;
 	// UNIX timestamps of creation, update and TTL
 	private final long created = System.currentTimeMillis();
 	private long updated=0;
@@ -92,22 +90,6 @@ public class Session implements java.io.Serializable {
 	}
 	
 	/**
-	 * Getter for action property
-	 * @return int The value of the action property
-	 */
-	public int getAction() {
-		return action;
-	}
-	
-	/**
-	 * Setter for action
-	 * @param act int The ID of the action to set
-	 */
-	public void setAction(int act) {
-		action = act;
-	}
-
-	/**
 	 * Getter for created property
 	 * @return long The value of the created property
 	 */
@@ -158,13 +140,7 @@ public class Session implements java.io.Serializable {
 	    curr_time_array = curr_time_buffer.array();
 		
 	    // Get the local IP address as byte array
-		try {
-			ip = InetAddress.getLocalHost().getAddress();
-		} 
-		catch (UnknownHostException e) {
-			// Set to 127.0.0.1 if we have no network at all
-			ip = new byte[] {0x7f, 0x0, 0x0, 0x1};
-		}
+	    ip = ConfigAuto.ip.getAddress();
 		
 		// Append time to IP address
 		session_id_bytes = new byte[curr_time_array.length + 4];

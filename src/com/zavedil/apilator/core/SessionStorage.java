@@ -29,7 +29,7 @@ public class SessionStorage {
 	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
 	
 	// Create internal queue for network updates: 100 objects, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<String, Session> queue = new ConcurrentHashMap<String, Session>(100, 0.9f, 1);	
+	public static ConcurrentHashMap<String, SessionMessage> queue_send = new ConcurrentHashMap<String, SessionMessage>(100, 0.9f, 1);	
 	
 	/**
 	 * Store a locally generated session Object in storage. If key exists, record will be updated
@@ -51,10 +51,10 @@ public class SessionStorage {
 		
 		// Store locally
 		storage.put(session_id, session);
-			
-		// Add to network queue; set the action to ACTION_STORE so that the peers update themselves
-		session.setAction(SessionManager.ACTION_STORE);
-		queue.put(session_id, session);		
+		
+		// Add to network queue
+		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_STORE);
+		queue_send.put(session_id, session_message);		
 	}
 	
 	/**
@@ -76,17 +76,33 @@ public class SessionStorage {
 	 * @return Object The Object found in the storage or null if not found.
 	 */
 	public static Session get(String session_id) {
-		//FIXME: add network query here if key not found
-		return storage.get(session_id);
-	}
-	
-	public static void del(String session_id) {
 		Session session;
 		
-		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
 		session = storage.get(session_id);
-		session.setAction(SessionManager.ACTION_DELETE);
-		queue.put(session_id, session);
+		if (session == null) {
+			// Query the network if key not found
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_WHOHAS);
+			queue_send.put(session_id, session_message);
+			
+			try {
+				Thread.sleep(Config.SessionManagerTimeout);
+			} 
+			catch (InterruptedException e) {
+				// There's little we can if our sleep was interrupted - just go on
+				;
+			}
+			
+			// See if we received the object
+			session = storage.get(session_id);
+		}
+
+		return session;
+	}
+	
+	public static void del(String session_id) {	
+		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
+		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_DELETE);
+		queue_send.put(session_id, session_message);
 		
 		// Remove locally
 		storage.remove(session_id);
