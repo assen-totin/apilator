@@ -162,7 +162,7 @@ public class ServerWorkerHttp implements Runnable {
 		
 		// Stats
 		long uptime = System.currentTimeMillis() - created;
-		ServerStats.uptime.put(created, uptime);
+		ServerStats.threads_uptime.put(created, uptime);
 		
 		requests++;
 		ServerStats.requests.put(created, requests);

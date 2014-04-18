@@ -66,7 +66,7 @@ public class SessionStorage {
 	public static void putFromNetwork(String session_id, Session session) {
 		// Only save the session if it does not exists or  
 		// if the 'updated' field of the supplied session is newer than the 'updated' field in the existing session  
-		if (SessionStorage.saveSession(session))
+		if (SessionStorage.saveSession(session_id, session.getUpdated()))
 			// Store locally
 			storage.put(session_id, session);
 	}
@@ -130,14 +130,14 @@ public class SessionStorage {
 	 * @param session The session to check.
 	 * @return TRUE if object should be added, FALSE otherwise.
 	 */
-	public static boolean saveSession(Session session) {
-		Session session_old;
-		session_old = SessionStorage.get(session.getSessionId());
+	public static boolean saveSession(String session_id, long updated) {
+		Session stored_session;
+		stored_session = SessionStorage.get(session_id);
 		// If the session does not exists, we should save it - return true
-		if (session_old == null)
+		if (stored_session == null)
 			return true;
 		// If the 'updated' field of the supplied session is newer than the same field from stored session, we should update it - return true
-		if (session.getUpdated() > session_old.getUpdated())
+		if (updated > stored_session.getUpdated())
 			return true;
 		
 		return false;

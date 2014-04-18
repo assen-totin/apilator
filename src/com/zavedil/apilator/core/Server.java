@@ -376,6 +376,8 @@ public class Server implements Runnable {
 			// Start the Session Manager server 
 			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
 
+			//Stats: uptime
+			ServerStats.server_boottime = System.currentTimeMillis();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();

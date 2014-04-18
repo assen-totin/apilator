@@ -24,11 +24,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class ServerStats {
-	// Create initial storage for 1000 threads, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<Long, Long> requests = new ConcurrentHashMap<Long, Long>(1000, 0.9f, 1);	
+	// Server absolute uptime
+	public static long server_boottime = 0;
 	
 	// Create initial storage for 1000 threads, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<Long, Long> uptime = new ConcurrentHashMap<Long, Long>(1000, 0.9f, 1);
+	public static ConcurrentHashMap<Long, Long> threads_uptime = new ConcurrentHashMap<Long, Long>(1000, 0.9f, 1);
+	
+	// Create initial storage for 1000 threads, expand when 90% full and use only 1 shard
+	public static ConcurrentHashMap<Long, Long> requests = new ConcurrentHashMap<Long, Long>(1000, 0.9f, 1);	
 	
 	// Create initial storage for 1000 threads, expand when 90% full and use only 1 shard
 	public static ConcurrentHashMap<Long, Long> exec_time = new ConcurrentHashMap<Long, Long>(1000, 0.9f, 1);

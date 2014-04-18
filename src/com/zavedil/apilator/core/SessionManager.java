@@ -69,7 +69,7 @@ public class SessionManager implements Runnable {
 				ObjectInputStream ois = new ObjectInputStream(is);
 				SessionMessage msg = (SessionMessage)ois.readObject();	
 				processIncoming(msg);
-				
+							
 				// Check if there are pending outgoing, serialize and send
 				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
 			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
@@ -96,15 +96,25 @@ public class SessionManager implements Runnable {
 	private void processIncoming(SessionMessage message) {
 		switch(message.type) {
 			case SessionMessage.MSG_STORE:
+				// First check if we already have this or later version before requesting
+				if (!SessionStorage.saveSession(message.session_id, message.updated))
+					break;
 			case SessionMessage.MSG_ISAT:
-				//FIXME: add code to retrieve the specified object from the peer
-				//Provide the session ID to ask for and the IP object of the peer
-				//SessionStorage.putFromNetwork(message.session_id, session);
+				// Fetch the session from the peer using unicast
+				SessionMessage msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_GET);
+				SessionClient sc = new SessionClient(message.ip, msg_out);
+				if (sc.send()) {
+					Session new_session = sc.getSession();
+					SessionStorage.put(new_session.getSessionId(), new_session);
+				}
 				break;
 			case SessionMessage.MSG_DELETE:
+				// Delete the session from local storage
 				SessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.MSG_WHOHAS:
+				// If we have this session, send back a reply that we have it
+				//FIXME: see if our response can be made unicast to save bandwidth.
 				if (SessionStorage.exists(message.session_id)) {
 					SessionMessage response = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
 					SessionStorage.queue_multicast.put(message.session_id, response);

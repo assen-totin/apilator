@@ -47,10 +47,13 @@ public class Stats extends Endpoint {
 		// Gather statistics: server_uptime, total_threads, total_requests, avg_exec_time
 		long server_uptime=0, total_threads=0, total_requests=0, total_exec_time=0, avg_exec_time;
 		
-		for(Map.Entry<Long,Long> entry : ServerStats.uptime.entrySet()) {
+		/*
+		for(Map.Entry<Long,Long> entry : ServerStats.threads_uptime.entrySet()) {
 			if (entry.getValue() > server_uptime)
 				server_uptime = entry.getValue(); 
 		}
+		*/
+		server_uptime = System.currentTimeMillis() - ServerStats.server_boottime;
 		
 		for(Map.Entry<Long,Long> entry : ServerStats.requests.entrySet()) {
 			total_requests += entry.getValue();

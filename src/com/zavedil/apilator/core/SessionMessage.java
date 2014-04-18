@@ -26,12 +26,14 @@ import java.net.UnknownHostException;
  */
 
 public class SessionMessage implements java.io.Serializable {
+	private final String className;
 	// Network actions
 	public static final int MSG_NONE = 0;	// Take no action
 	public static final int MSG_STORE = 1;	// Used when multicasting an available update
 	public static final int MSG_DELETE = 2;	// Used when multicasting a deletion
 	public static final int MSG_WHOHAS = 3;	// Used when asking for the value of the specified key
-	public static final int MSG_ISAT = 4;	// Used when announcing key avaiability for unicast retrieval
+	public static final int MSG_ISAT = 4;	// Used when announcing key availability for unicast retrieval
+	public static final int MSG_GET = 5;	// Used when requesting a session for unicast retrieval
 	
 	private static final long serialVersionUID = 1L;
 	public final int type;
@@ -40,6 +42,8 @@ public class SessionMessage implements java.io.Serializable {
 	public long updated=0;
 	
 	public SessionMessage(String session_id, int type) {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
 		this.session_id = session_id;
 		this.type = type;	
 		this.ip = ConfigAuto.ip;
