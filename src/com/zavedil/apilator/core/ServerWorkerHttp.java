@@ -31,7 +31,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ServerWorker implements Runnable {
+public class ServerWorkerHttp implements Runnable {
 	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
@@ -43,7 +43,7 @@ public class ServerWorker implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerWorker() {
+	public ServerWorkerHttp() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}

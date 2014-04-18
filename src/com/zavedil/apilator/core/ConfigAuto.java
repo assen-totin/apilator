@@ -29,7 +29,7 @@ import java.net.UnknownHostException;
 
 public class ConfigAuto {
 	public static final InetAddress ip;
-	public static final short netmask;
+	//public static final short netmask;
 	
 	// Get a local IP address
 	static {	
@@ -44,6 +44,7 @@ public class ConfigAuto {
 		ip = ip_tmp;
 	}
 	
+	/*
 	// Get a local subnet mask
 	static {
 		NetworkInterface iface_tmp = null;
@@ -56,4 +57,5 @@ public class ConfigAuto {
 		}
 		netmask = iface_tmp.getInterfaceAddresses().get(0).getNetworkPrefixLength();	
 	}
+	*/
 }

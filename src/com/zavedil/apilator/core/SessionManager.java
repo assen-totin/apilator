@@ -55,8 +55,8 @@ public class SessionManager implements Runnable {
 		byte[] receive_buffer, send_buffer;
 		
 		try {
-			multicast_group = InetAddress.getByName(Config.SessionManagerIp);
-			multicast_socket = new MulticastSocket(Config.SessionManagerPort);
+			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
+			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
 			multicast_socket.joinGroup(multicast_group);
 			
 			while (true) {
