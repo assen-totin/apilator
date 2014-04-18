@@ -35,7 +35,7 @@ import java.util.Map;
 
 public class SessionManager implements Runnable {
 	private final String className;
-	public final int MAX_PACKET_SIZE= 8192;	
+	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
 	
 	public SessionManager() {
 		className = this.getClass().getSimpleName();
@@ -71,7 +71,7 @@ public class SessionManager implements Runnable {
 				processIncoming(msg);
 				
 				// Check if there are pending outgoing, serialize and send
-				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_send.entrySet()) {
+				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
 			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
 			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 					oos.writeObject(pair.getValue());
@@ -81,7 +81,7 @@ public class SessionManager implements Runnable {
 					multicast_socket.send(packet);
 					
 			        // Remove from queue
-			        SessionStorage.queue_send.remove((String) pair.getKey());
+			        SessionStorage.queue_multicast.remove((String) pair.getKey());
 			    }
 			} 
 		}
@@ -96,13 +96,19 @@ public class SessionManager implements Runnable {
 	private void processIncoming(SessionMessage message) {
 		switch(message.type) {
 			case SessionMessage.MSG_STORE:
-				SessionStorage.putFromNetwork(message.session_id, session);
+			case SessionMessage.MSG_ISAT:
+				//FIXME: add code to retrieve the specified object from the peer
+				//Provide the session ID to ask for and the IP object of the peer
+				//SessionStorage.putFromNetwork(message.session_id, session);
 				break;
 			case SessionMessage.MSG_DELETE:
 				SessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.MSG_WHOHAS:
-				//TODO: send back the requested object (via Unicast?) 
+				if (SessionStorage.exists(message.session_id)) {
+					SessionMessage response = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
+					SessionStorage.queue_multicast.put(message.session_id, response);
+				}
 				break;
 		}
 	}

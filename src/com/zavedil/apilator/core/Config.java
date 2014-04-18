@@ -58,9 +58,16 @@ public class Config {
 	public static final String SessionManagerIp = "234.234.234.234";
 	public static final int SessionManagerPort = 12345;
 	
-	// URL for object retrieval via Session Manager
-	public static final String SessionManagerLocation = "/sessman";
-	
 	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
 	public static final int SessionManagerTimeout = 10;
+	
+	// URL for object retrieval via Session Manager
+	public static final String SessionManagerLocation = "/sessman";
+
+	// Pre-shared key for object retrieval via Session Manager.
+	// Because session objects are retrieved using standard HTTP request, it is important to make sure
+	// only authorised hosts have access to them. Default behaviour is to only allow queries from hosts on the same subnet.
+	// To keep this behaviour, leave the pre-shared key blank. Only set it to something else if you really need to allow
+	// queries from other network segments. 
+	public static final String SessionManagerPsk = "";
 }

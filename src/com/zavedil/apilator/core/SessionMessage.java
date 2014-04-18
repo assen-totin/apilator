@@ -31,11 +31,13 @@ public class SessionMessage implements java.io.Serializable {
 	public static final int MSG_STORE = 1;	// Used when multicasting an available update
 	public static final int MSG_DELETE = 2;	// Used when multicasting a deletion
 	public static final int MSG_WHOHAS = 3;	// Used when asking for the value of the specified key
+	public static final int MSG_ISAT = 4;	// Used when announcing key avaiability for unicast retrieval
 	
 	private static final long serialVersionUID = 1L;
 	public final int type;
 	public final String session_id;
 	public final InetAddress ip;
+	public long updated=0;
 	
 	public SessionMessage(String session_id, int type) {
 		this.session_id = session_id;

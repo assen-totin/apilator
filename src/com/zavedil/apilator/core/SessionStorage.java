@@ -29,7 +29,7 @@ public class SessionStorage {
 	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
 	
 	// Create internal queue for network updates: 100 objects, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<String, SessionMessage> queue_send = new ConcurrentHashMap<String, SessionMessage>(100, 0.9f, 1);	
+	public static ConcurrentHashMap<String, SessionMessage> queue_multicast = new ConcurrentHashMap<String, SessionMessage>(100, 0.9f, 1);	
 	
 	/**
 	 * Store a locally generated session Object in storage. If key exists, record will be updated
@@ -54,7 +54,8 @@ public class SessionStorage {
 		
 		// Add to network queue
 		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_STORE);
-		queue_send.put(session_id, session_message);		
+		session_message.updated = session.getUpdated();
+		queue_multicast.put(session_id, session_message);		
 	}
 	
 	/**
@@ -82,7 +83,7 @@ public class SessionStorage {
 		if (session == null) {
 			// Query the network if key not found
 			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_WHOHAS);
-			queue_send.put(session_id, session_message);
+			queue_multicast.put(session_id, session_message);
 			
 			try {
 				Thread.sleep(Config.SessionManagerTimeout);
@@ -99,15 +100,36 @@ public class SessionStorage {
 		return session;
 	}
 	
+	/**
+	 * Delete object from the session storage by its session ID
+	 * @param session_id String The session ID to delete. 
+	 */
 	public static void del(String session_id) {	
 		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
 		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_DELETE);
-		queue_send.put(session_id, session_message);
+		queue_multicast.put(session_id, session_message);
 		
 		// Remove locally
 		storage.remove(session_id);
 	}
 	
+	/**
+	 * Check if a session ID exists in the storage.
+	 * @param session_id String The session ID to check.
+	 * @return boolean TRUE if key exists, FALSE otherwise. 
+	 */
+	public static boolean exists(String session_id) {
+		Session session = SessionStorage.get(session_id);
+		if (session == null)
+			return false;
+		return true;
+	}
+	
+	/** 
+	 * Check if a session needs to be added to the storage (i.e. is not present or is older version)
+	 * @param session The session to check.
+	 * @return TRUE if object should be added, FALSE otherwise.
+	 */
 	public static boolean saveSession(Session session) {
 		Session session_old;
 		session_old = SessionStorage.get(session.getSessionId());
