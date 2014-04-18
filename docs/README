@@ -1,0 +1,132 @@
+ABOUT APILATOR
+==============
+
+Apilator is a high-performance, self-contained clustered server in pure Java for building data APIs over HTTP.
+
+High-performance: it was written from scratch with minimalistic code, providing only the necessary functionality. Its components and algorithms have been carefully selected to achieve performance well above the average. It uses multiple threads and non-blocking I/O to get the maximum out of your hardware, especially suitable for system with large number of low-activity clients (e.g., any mobile or web based application). 
+
+Self-contained: it does not need an external application server to run and only requires a standard JRE. It also contains everything necessary to provide advanced features like automated session cookies, automatically synchronised session storage across multiple instances etc.
+
+Clustered: it is ready to run in parallel in multiple instances out of the box. It features unique relaxed (meaning: without any pre-configuration), dynamically adjusted session storage to give you the maximum flexibility of adding or removing servers form the cluster without the need to configure or restart anything. 
+
+Apilator was built around the idea of frontend-backend split applications: a frontend app which contains everything necessary to work (think of HTML templates and styles for a JavaScript-based browser-based app or of a native app for a mobile platform) and a backend which primarily serves data to it. Thus the main mindset of Apilator is to accept and serve JSON over HTTP; it can, in addition, serve static content or, in fact, whatever your program it to. 
+
+
+CONFIGURING APILATOR
+====================
+
+All settings in Apilator are stored in the Config.java class in the form of static strings. Comments are provided to explain the meaning of each setting. Most of them are discussed below where appropriate. 
+
+
+RUNNING APILATOR
+================
+
+Apliator requires Java 7 to run. Beside this, it only needs a minimal system environment. You can run it in two ways: 
+- from command line: java -jar apilator.jar
+- form a supervisor (e.g., D. J. Bernstein's SV or commonly available supervisord) which gives you the benefit of utilising Apilator's advanced logging. 
+
+By itself, Apilator does not require any system privileges, so it can be run from any zero-privileges account like 'nobody' or any other you wish. It does need, however, a write access to a log file and permission to bind to a TCP port; both can be configured at system level. Do note that on UNIX system using TCP ports below 1024 requires effective UID=0 (i.e. superuser privileges) and Apilator does not provide privilege separation. 
+
+By default, Apilator will bind to all available network interfaces. This is currently non-configurable. You can specify in the configuration the TCP port used for serving requests (it has a default value of 8080). 
+
+If you run a cluster, the Apliatgor servers exchange messages to update their session storages in two ways: 
+- A multicast group is established between all servers. Your network equipment should support and allow multicast. The multicast address and port can be configured in Apilator's settings. This group is used for exchanging notices when a session is added, updated or deleted. 
+- Additional TCP port is used for unicast exchange of actual session data between servers. The TCP port used for this purpose is also configurable. 
+
+Apilator provides a standard access long in the NCSA's Common Format. It's location and name is configurable. Apilator will always append to this file and will never attempt to rotate it; it is left to your OS to do so. 
+
+In addition to it, Apilator writes system messages to its STDOUT and STDERR. It implements 7 standard levels of logging, from 0 (meaning no logging at all) to 6 (debug logging). Messages with level 1 (critical) and 2 (error) are written to both STDERR and STDOUT; all messages with levels 3-6 (warning, notice, trace, debug) are only written to STDOUT. It is up to you to decide if and where these messages get sent or written. 
+
+Apilator keeps and provides automated runtime statistics through the API endpoint /Stats in the com.zavedil.apilator.app package. You can rename the Stats.java class to anything else desired. By default, the information is provided in plain text as name-value pairs; if you send format=json in your GET request, the data will be returned as JSON instead. The following numbers are provided: 
+- server_uptime: number of milliseconds taken from the oldest running thread
+- total_threads: number of currently running threads
+- total_requests: number of requests served since power up
+- avg_exec_time: average execution time per request in milliseconds. 
+
+All statistics data is gathered since server's power up and is never flushed, hence numbers will always be increasing. Statistics is per-server, so if you run multiple servers, you need to query each separately. Many popular network graphing tools like MRTG, Cacti etc. know how to build nice graphs with per-time-slot numbers from such incremental data. 
+
+
+HTTP INTERFACE
+==============
+
+Apilator speaks HTTP and supports versions 1.0 and 1.1. However, there are certain limitations in the HTTP implementation raising from the nature of Apilator: 
+- Only the following HTTP methods are supported: GET, POST, PUT, DELETE. 
+- For POST, both x-www-url-encoded and multipart/form-data are supported (i.e. file upload is available), but multipart/mixed is not. 
+- File upload requries one of the following encodings: binary (default for most current browsers and HTTP libraries), 8bit, 7bit, base64, quoted-printable. 
+- Virtual hosts are not supported. If virtual hosts are required, it is expected that they will be off-loaded in a previous hop (e.g., load-balancer like HAProxy or a web server with reverse proxy).
+- SSL is not supprted. If SSL is required, it is expected that it will be off-loaded in a previous hop (e.g., load-balancer like HAProxy or a web server with reverse proxy).
+- Partial downloads are not supported. Apilator will always serve the full content. 
+- No CGI support is available. 
+- Apilator is strict about HTTP methods., Mixing GET and POST will not work, i.e. if you POST and the URL has GET parameters, the latter will be ignored. 
+
+
+SERVING CONTENT
+===============
+
+Apilator can serve static content. In the Config.java class set the desired static location (default value is "/static") and the corresponding document root directory in your filesystem. If the local part of the supplied URL in a request begins with the same string as the static location, everything else in it will be mapped 1:1 to the document root directory and, if found, served. 
+
+When serving static content Apilator will do its best to provide proper MIME type guessed from file's content. MIME type configuration by file name matching (i.e. by filename's "extension") is not supported. 
+
+Apilator will not serve directory listings. If the specified resource is a directory, a HTTP 404 Not Found will be issued (instead of more commonly seen 501 Access Denied).
+
+
+CREATING AN API
+===============
+
+If the local part of the URL in a request does not begin with the static prefix it will be treared as an API call. The first string between two consicutive slashes will be extracted and treated as API endpoint name. Apilator will then try to instantiate a class from com.zavedil.apilator.app with the same name. From it, Apilator will run a method with the same name (but in lower case) as the HTTP method. This means that any following parts of the location (before GET parameters, if any) will be discarded. If you need to pass argumens to your endpoint, do so as a part of the GET or POST request, not as a part of the location.
+
+You should place your API endpoints in com.zavedil.apilator.app package, one class per endpoint. Each class should extend the Endpoint class. You need to override the 4 main methods: get(), post(), put() and delete(). In each override first call the parent method of the same name. Then you can continue with your own business logic. You are free to create as many additional helper classes as you need and use them in any way your application requires it. 
+
+Apilator provides you with an input object containing the data from the HTTP input. It has the following fields: 
+- Hashtable<String,Object> data: contains the input parameters from the GET or POST request. The field name is the key (String) and the field value is the value (Object). You need to cast the Object to the appropriate type: byte[] for file upload data and String for everything else. The table is public and you can access it directly through the .get() method of the map. 
+- Hashtable<String,String> cookies: contains the cookies supplied. Cookie name is in the key and cookie value is the value. Both are of type String and need no casting. The table is public and you can access it directly through the .get() method of the map. If you have send your cookie in JSON, you need to manually decode it further. If automated sessions are enabled (by default they are) and a session ID was supplied by the client, a cookie with the session ID will be available in the table; cookie name for session cookies is configurable in Config.java. See below for more info on automated sessions. 
+- Session session: provided automatically if automated sessions are on (a blank session object if no session cookie was supplied or if the specified session ID was not found in the storage, or the stored session object otherwise).
+
+Each session has its own session ID. The ID is automatically generated when the session object is created. It is guaranteed to be unique even across a cluster of servers. For convenience, the session ID is also stored inside the session and can be obtained with the .getSessionId() method (read-only). The session ID's text representation is a string of 24 hex characters (0-9,a-f). 
+
+The session stores one or more objects, each object accessible by its key. The session provides a .put(), .get() and .del() methods to add, fetch or delete an object. Because the session stores objects, you need to cast them into proper type once retrieved. The object you store in the session may, in turn, contain whatever you need (e.g., other objects or primitives etc.). 
+
+The session object features 3 timestamps (all of them of type long, containing UNIX timestamp in milliseconds): 
+- created: the timestamp of creation of the session; accessible read-only through the .getCreated() method. 
+- updated: the timestamp of the last modifiction of the session; accessible read-only through the .getUpdated() method. 
+- ttl: time-to-live of the session; accessible read-write through the .getTtl() and .setTtl(milliseconds) methods.
+
+Sessions are stored in Apilator's internal in-memory storage, which is automatically synchronized between servers (read more on this below).
+
+Automated Session Management (ASM) is an Apliator's feature that takes off the developer the burden to keep track of users and to maintain their data between requests. It accomplishes the following atsks: 
+- When a request arrives which does not provide a session cookie, Apilator will automatically create a new blank session. 
+- If a session cookie is provided, the corresponding session is automatically fetched from the session storage; if not found there, a blank new session is created. 
+- In both previous cases the session object is made readily available to your API classes in the 'session' object. 
+- When the reply is sent to the client, a session cookie will be created with a name specified in the Config.java class and with the value of the session ID. 
+- At the same time the session will be stored into the session storage. 
+
+If ASM is off, similar actions can still be taken manually, e.g. check the input cookies for a session cookie or create a new, blank session. In that case the session has to be manually managed throughout the request (e.g., added to the session storage before sending the reply or having a session cookie sent to the client).
+
+If you need to know whether the session is blank (i.e. just created) or not, it is enough to compare its created and updated properties. If they are equal, the session is blank (new); otherwise it contains data. It is up to your application to decide what to do if a blank session is detected (e.g., send back a login prompt). To populate a blank session with data, add your code to the .populateNewSession() method in the Endpoint.java class - it is called every time a new session is created. 
+
+The output data should be stored in an Output object. A blank object is readily provided to your class under the name 'output'. It has several fields which can be filled up, of which only the first is mandatory:
+- byte[] data: a byte[] buffer that will be sent in the body of the HTTP response. If you need to send a text (String), use the .getBytes() method to convert to byte[]. Specify appropriate character encoding if not sending ASCII. If sending binary data (a file), then just copy it to the byte[] buffer. 
+- int http_status: the HTTP code to send back in the reply. Default is 200. 
+- String mime_type: the MIME type to specify in reply. Default is "application/json".
+- Hashtable<String,String> cookies_data: if you want a cookie to be send in the reply, add it with the cookie name as a key and cookie value as value. Both should be strings. The cookie value will be send as you provide it, so if you want it encoded, e.g. JSON, you have to do it manually. By default the cookie will be sent without 'Expire' attribute, meaning the browser will only store it until restarted. 
+- Hashtable<String, Long> cookies_expire: if you want an outbound cookie to have the 'Expire' attribute, add it here. Set the cookie name as key (same as a key in 'cookie_data' property) and the expiration time as value. Expiration time should be UNIX timestamp in milliseconds and should be of type long. It will be send 'as is' even if it is in the past.
+
+If ASM is on, Apilator will automatically add a record in the output object for the session cookie. The expiration time for it can be set in the Config.java class. Expiration time should be in milliseconds. If it is a positive number, it will be added to current time when sending the cookie (i.e. the session will effectively be prolonged with the specified amount of time). If the number is negative, it's absolute value will be set as absolute time-to-live since the creation of the session (i.e. the sesion will retain its original TTL no matter how many times used). If the number is zero, no expiration will be set (i.e. the client will retain the session cookie only until restarted). If ASM is off and you want a session cookie sent, you need to create it manually. 
+
+When creating multiple cookies, or when adding a cookie with automated session turned on, don't forget that many cliens support only one cookie per reply and will arbitraty drop the rest. 
+
+Sessions are automatically cleaned up from the session storage upon their expiration time (i.e. when the current time exceeds their 'ttl' property). This is not influenced by whether the ASM is on or off. 
+
+
+SESSION STORAGE SYNCHRONISATION
+===============================
+
+When Apilator runs on multiple servers, their session storages will automatically get synchronised. This allows you to transparently add or remove servers from the cluster without the need of any reconfiguration or restart. The synchronisation happens in real time and does not require any of the servers to have any knowledge about other cluster members. Synchronisation happens at two tiers: 
+- Notices regarding new, updated or deleted objects are sent using network multicast packets. The same way are sent queries regarding the existence of a particular object. This approach allows automated delivery to all available parties without the need of prior knowledge who the parties are. 
+- Actual object transfer happens in unicast from a peer who sends the update availability notice or who first responds to an availability query. This allows only one actual transfer to occur to each peer and also secures the data transfer using TCP. 
+
+Two types of notices are send over multicast: 
+- A notice that a session object has been created, updated or deleted. The notice contains the unicast IP address of the sender and a timestamp when the object in question was last updated. All parties who receive the notice check whether they have the same object. If they don't, or if they have it but with older timestamp, they update themselves from the specified unicast IP address. 
+- A question for session availability. When a HTTP request with a session cookie arrives (and the automated sessions are turned on), if the session ID is not found in the local storage, a multicast request for this ID is sent over the network. If any other server has the object, it responds with the object version and its unicast IP address. When a response is received, the original requester retrieves the desired object from the first responding peer using unicast. If no response comes back in predefined amount of ime (by default, 5 ms), it is assumed that no one has the object is question (e.g., ithas expired and has been removed from the session storage on all servers) and a new, blank session is created. 
+
+The multicast group address, the multicast port and the TCP port to use for session objects exchange are specified in the Config.java class. 

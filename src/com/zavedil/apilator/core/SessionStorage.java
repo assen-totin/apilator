@@ -32,21 +32,42 @@ public class SessionStorage {
 	public static ConcurrentHashMap<String, Session> queue = new ConcurrentHashMap<String, Session>(100, 0.9f, 1);	
 	
 	/**
-	 * Store a sessionID and its corresponding Object in storage. If key exists, record will be updated
+	 * Store a locally generated session Object in storage. If key exists, record will be updated
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
 	public static void put(String session_id, Session session) {
+		// Update TTL for locally generated/modified sessions
+		long now = System.currentTimeMillis();
+
+		// Add optional expiration date for a cookie		
+		if (Config.SessionCookieExpire > 0)
+			// Extend the cookie life with the specified TTL
+			session.setTtl(now + Config.SessionCookieExpire);
+		else if (Config.SessionCookieExpire < 0) 
+			// Set the cookie life to the specified TTL
+			session.setTtl(session.getCreated() + (-1 * Config.SessionCookieExpire));
+		// else do not touch the TTL
+		
+		// Store locally
+		storage.put(session_id, session);
+			
+		// Add to network queue; set the action to ACTION_STORE so that the peers update themselves
+		session.setAction(SessionManager.ACTION_STORE);
+		queue.put(session_id, session);		
+	}
+	
+	/**
+	 * Store in storage a session Object received from the network. If key exists, record will be updated
+	 * @param key String Session ID, used as key
+	 * @param value Object The Object to store associated with the key
+	 */
+	public static void putFromNetwork(String session_id, Session session) {
 		// Only save the session if it does not exists or  
 		// if the 'updated' field of the supplied session is newer than the 'updated' field in the existing session  
-		if (SessionStorage.saveSession(session)) {
+		if (SessionStorage.saveSession(session))
 			// Store locally
 			storage.put(session_id, session);
-			
-			// Add to network queue; set the action to ACTION_STORE so that the peers update themselves
-			session.setAction(SessionManager.ACTION_STORE);
-			queue.put(session_id, session);		
-		}
 	}
 	
 	/**

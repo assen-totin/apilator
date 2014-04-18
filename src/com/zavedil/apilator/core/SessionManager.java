@@ -102,9 +102,7 @@ public class SessionManager implements Runnable {
 	private void processIncoming(Session session) {
 		switch(session.getAction()) {
 			case ACTION_STORE:
-				// Check if we have the same key; if yes, only update if 'updated' in the arrived one id newer
-				if (SessionStorage.saveSession(session))
-					SessionStorage.put(session.getSessionId(), session);
+				SessionStorage.putFromNetwork(session.getSessionId(), session);
 				break;
 			case ACTION_DELETE:
 				SessionStorage.del(session.getSessionId());

@@ -82,7 +82,7 @@ public class Endpoint {
 	 */
 	private void onLoad() {
 		String session_id;
-		long created, valid_to, now = new Date().getTime();
+		long created, valid_to, now = System.currentTimeMillis();
 		
 		// If session cookies are disabled, we have nothing to do here
 		if (Config.SessionCookie.equals(""))
@@ -135,7 +135,7 @@ public class Endpoint {
 		// If session cookies are disabled, we have nothing to do here
 		if (!Config.SessionCookie.equals(""))
 			// Send the session to the SessionStorage
-			SessionStorage.storage.put(session.getSessionId(), session);
+			SessionStorage.put(session.getSessionId(), session);
 		
 		return output;
 	}
