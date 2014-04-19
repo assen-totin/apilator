@@ -76,7 +76,8 @@ public class ServerWorkerSessionManager implements Runnable {
 			Logger.warning(className, "Received empty or broken session retrieval request.");
 		}	
 		
-		if (SessionStorage.exists(msg.session_id)) {
+		// Process a GET request for an object ID, return the object if found
+		if ((msg.type == SessionMessage.MSG_GET) && SessionStorage.exists(msg.session_id)) {
 			Session session = SessionStorage.get(msg.session_id);
 			
 			// Serialize session and send back
@@ -84,6 +85,16 @@ public class ServerWorkerSessionManager implements Runnable {
 	        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 			oos.writeObject(session);
 			response = os.toByteArray();
+		}
+		
+		// Process ISAT response to our multicaset WHOHAS, fetch the object from the originator using GET
+		if (msg.type == SessionMessage.MSG_ISAT) {
+			SessionMessage msg_out = new SessionMessage(msg.session_id, SessionMessage.MSG_GET);
+			SessionClient sc = new SessionClient(msg.ip, msg_out);
+			if (sc.send()) {
+				Session new_session = sc.getSession();
+				SessionStorage.put(new_session.getSessionId(), new_session);
+			}
 		}
 	
     	// Push response back

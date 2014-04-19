@@ -94,18 +94,20 @@ public class SessionManager implements Runnable {
     }
 	
 	private void processIncoming(SessionMessage message) {
+		SessionMessage msg_out;
+		SessionClient sc;
+		
 		switch(message.type) {
 			case SessionMessage.MSG_STORE:
 				// First check if we already have this or later version before requesting
-				if (!SessionStorage.saveSession(message.session_id, message.updated))
-					break;
-			case SessionMessage.MSG_ISAT:
-				// Fetch the session from the peer using unicast
-				SessionMessage msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_GET);
-				SessionClient sc = new SessionClient(message.ip, msg_out);
-				if (sc.send()) {
-					Session new_session = sc.getSession();
-					SessionStorage.put(new_session.getSessionId(), new_session);
+				if (SessionStorage.saveSession(message.session_id, message.updated)) {
+					// Fetch the session from the peer using unicast
+					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_GET);
+					sc = new SessionClient(message.ip, msg_out);
+					if (sc.send()) {
+						Session new_session = sc.getSession();
+						SessionStorage.put(new_session.getSessionId(), new_session);
+					}					
 				}
 				break;
 			case SessionMessage.MSG_DELETE:
@@ -113,11 +115,11 @@ public class SessionManager implements Runnable {
 				SessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.MSG_WHOHAS:
-				// If we have this session, send back a reply that we have it
-				//FIXME: see if our response can be made unicast to save bandwidth.
+				// If we have this session, send back a unicast reply that we have it
 				if (SessionStorage.exists(message.session_id)) {
-					SessionMessage response = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
-					SessionStorage.queue_multicast.put(message.session_id, response);
+					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
+					sc = new SessionClient(message.ip, msg_out);
+					sc.send();
 				}
 				break;
 		}
