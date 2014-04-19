@@ -38,7 +38,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ServerWorkerSessionManager implements Runnable {
-	private static int MAX_PACKET_SIZE = 8192;
 	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
 	private final String className;
 	private boolean busy = false;
@@ -81,7 +80,7 @@ public class ServerWorkerSessionManager implements Runnable {
 			Session session = SessionStorage.get(msg.session_id);
 			
 			// Serialize session and send back
-	        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
+	        ByteArrayOutputStream os = new ByteArrayOutputStream();
 	        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 			oos.writeObject(session);
 			response = os.toByteArray();

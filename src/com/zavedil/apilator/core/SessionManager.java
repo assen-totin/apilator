@@ -71,8 +71,8 @@ public class SessionManager implements Runnable {
 				processIncoming(msg);
 							
 				// Check if there are pending outgoing, serialize and send
-				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
-			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
+				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {					
+			        ByteArrayOutputStream os = new ByteArrayOutputStream();
 			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 					oos.writeObject(pair.getValue());
 					

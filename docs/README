@@ -31,7 +31,7 @@ By default, Apilator will bind to all available network interfaces. This is curr
 
 If you run a cluster, the Apliatgor servers exchange messages to update their session storages in two ways: 
 - A multicast group is established between all servers. Your network equipment should support and allow multicast. The multicast address and port can be configured in Apilator's settings. This group is used for exchanging notices when a session is added, updated or deleted. 
-- Additional TCP port is used for unicast exchange of actual session data between servers. The TCP port used for this purpose is also configurable. 
+- Additional TCP port is used for unicast exchange of actual session data between servers. The TCP port used for this purpose is also configurable. Because session information is sensitive, do not forget to firewall off this port at the border of your network.  
 
 Apilator provides a standard access long in the NCSA's Common Format. It's location and name is configurable. Apilator will always append to this file and will never attempt to rotate it; it is left to your OS to do so. 
 

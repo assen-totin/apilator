@@ -57,6 +57,8 @@ public class Config {
 	// Multicast address for Session Manager
 	public static final String SessionManagerMulticastIp = "234.234.234.234";
 	public static final int SessionManagerMulticastPort = 12345;
+	
+	// Unicast TCP Port for Session Manager
 	public static final int SessionManagerTcpPort = 12345;
 	
 	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
