@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.DatagramPacket;
@@ -62,6 +63,7 @@ public class ServerWorkerSessionManager implements Runnable {
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		busy = true;
 		Logger.debug(className, "Entering function processData.");
+		Logger.debug(className, "Chunk size is: " + count);
 		
 		byte[] response = new byte[]{(byte)0xFF};
 		
@@ -74,7 +76,11 @@ public class ServerWorkerSessionManager implements Runnable {
 		catch (ClassNotFoundException e) {
 			// If we got no object (deserialisation failed), just do nothing
 			Logger.warning(className, "Received empty or broken session retrieval request.");
-		}	
+		}
+		catch (StreamCorruptedException e) {
+			// This exception means there is more data yet to come, so just return for now.
+			return;
+		}
 		
 		// Process a GET request for an object ID, return the object if found
 		if ((msg.type == SessionMessage.MSG_GET) && SessionStorage.exists(msg.session_id)) {
