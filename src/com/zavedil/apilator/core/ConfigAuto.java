@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 /**
  * Automatic configuration class.
@@ -34,14 +35,40 @@ public class ConfigAuto {
 	// Get a local IP address
 	static {	
 		InetAddress ip_tmp = null;
+		boolean have_ip = false; 
 		try {
+			// Often our name should point to a public IP...
 			ip_tmp = InetAddress.getLocalHost();
+
+			// but sometimes it does not, so walk around searching for a good IP to use
+			if (!isRoutedIp(ip_tmp)) {
+			    Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
+			    for (; n.hasMoreElements();) {
+			        NetworkInterface e = n.nextElement();
+			        Enumeration<InetAddress> a = e.getInetAddresses();
+			        for (; a.hasMoreElements();) {
+			            InetAddress addr = a.nextElement();
+			            if (isRoutedIp(addr)) {	
+			            	ip_tmp = addr;
+			            	have_ip = true;
+			            	break;
+			            }
+			        }
+			        if (have_ip)
+			        	break;
+			    }
+			}
+		}
+		catch (SocketException e) {
+			Logger.critical("ConfigAuto", "Unable to obtain NIC list. Exiting");
+			System.exit(255);
 		}
 		catch (UnknownHostException e) {
 			Logger.critical("ConfigAuto", "Unable to obtain local IP address. Exiting");
 			System.exit(255);
 		}
 		ip = ip_tmp;
+		Logger.notice("ConfigAuto", "Using IP address: " + ip.getHostAddress());
 	}
 	
 	/*
@@ -58,4 +85,21 @@ public class ConfigAuto {
 		netmask = iface_tmp.getInterfaceAddresses().get(0).getNetworkPrefixLength();	
 	}
 	*/
+	
+	private static boolean isRoutedIp(InetAddress ip) {
+		// Skip IPv6 
+		if (ip.getHostAddress().length() > 15)
+			return false;
+		// Skip loopback
+		if (ip.isLoopbackAddress())
+			return false;
+		// Skip 169.254... 
+		if (ip.isLinkLocalAddress())
+			return false;
+		// Next are private IPs
+		//if (ip.isSiteLocalAddress())
+		//	return false;
+		
+		return true;
+	}
 }

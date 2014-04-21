@@ -356,7 +356,10 @@ public class Server implements Runnable {
 	 * @param args String[] Command-line arguments, if any
 	 */
 	public static void main(String[] args) {
-		try {		
+		try {
+			// Automatic configuration
+			new ConfigAuto();
+			
 			// Start the session storage manager thread for sending
 			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
 			Thread sm_send_t = new Thread(sm_send);
