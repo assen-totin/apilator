@@ -10,6 +10,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Map;
+import java.util.Timer;
 
 /**
  * Session manager class. 
@@ -33,11 +34,11 @@ import java.util.Map;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManagerSend implements Runnable {
+public class SessionManagerSendScheduler implements Runnable {
 	private final String className;
 	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
 	
-	public SessionManagerSend() {
+	public SessionManagerSendScheduler() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -51,40 +52,19 @@ public class SessionManagerSend implements Runnable {
 		
 		InetAddress multicast_group;
 		MulticastSocket multicast_socket;
-		DatagramPacket packet;
-		byte[] send_buffer;
 		
 		try {
 			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
 			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
 			multicast_socket.joinGroup(multicast_group);
 
-			//while (true) {
-				// Check if there are pending outgoing, serialize and send
-				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
-					Logger.debug(className, "Sending multicast...");
-			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
-			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
-					oos.writeObject(pair.getValue());
-					
-					send_buffer = os.toByteArray();
-					packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-					multicast_socket.send(packet);
-					
-			        // Remove from queue
-			        SessionStorage.queue_multicast.remove(pair.getKey());
-			        
-			        // Sleep 10 ms to avoid too high CPU usage
-			        Thread.sleep(100);
-			    }
-			//} 
+			
+			Timer time = new Timer();
+			SessionManagerSendTask smst = new SessionManagerSendTask(multicast_group, multicast_socket);
+			time.schedule(smst, 0, 10);
 		}
 		catch (IOException e) {
-			Logger.warning(className, "Unable to process multicast packet");
+			Logger.warning(className, "Unable to join multicast group");
 		}
-		catch (InterruptedException e) {
-			Logger.warning(className, "Interrupted thread sleep");
-		}
-
     }
 }

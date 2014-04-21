@@ -365,7 +365,7 @@ public class Server implements Runnable {
 			*/
 			
 			// Start the session storage manager thread for sending
-			SessionManagerSend sm_send = new SessionManagerSend();
+			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
 			Thread sm_send_t = new Thread(sm_send);
 			sm_send_t.start();
 			
