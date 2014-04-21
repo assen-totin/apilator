@@ -33,11 +33,11 @@ import java.util.Map;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManager implements Runnable {
+public class SessionManagerSend implements Runnable {
 	private final String className;
 	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
 	
-	public SessionManager() {
+	public SessionManagerSend() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -52,14 +52,14 @@ public class SessionManager implements Runnable {
 		InetAddress multicast_group;
 		MulticastSocket multicast_socket;
 		DatagramPacket packet;
-		byte[] receive_buffer, send_buffer;
+		byte[] send_buffer;
 		
 		try {
 			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
 			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
 			multicast_socket.joinGroup(multicast_group);
 
-			while (true) {
+			//while (true) {
 				// Check if there are pending outgoing, serialize and send
 				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
 					Logger.debug(className, "Sending multicast...");
@@ -73,61 +73,18 @@ public class SessionManager implements Runnable {
 					
 			        // Remove from queue
 			        SessionStorage.queue_multicast.remove(pair.getKey());
+			        
+			        // Sleep 10 ms to avoid too high CPU usage
+			        Thread.sleep(100);
 			    }
-				
-				/*
-				Logger.debug(className, "Waiting for multicast...");
-				
-				// Read and unserialize incoming packets
-				receive_buffer = new byte[MAX_PACKET_SIZE];
-				packet = new DatagramPacket(receive_buffer, receive_buffer.length);			
-				multicast_socket.receive(packet);
-				
-				InputStream is = new ByteArrayInputStream(packet.getData());
-				ObjectInputStream ois = new ObjectInputStream(is);
-				SessionMessage msg = (SessionMessage)ois.readObject();	
-				processIncoming(msg);
-				*/
-			} 
+			//} 
 		}
 		catch (IOException e) {
 			Logger.warning(className, "Unable to process multicast packet");
-			e.printStackTrace();
 		}
-		//catch (ClassNotFoundException e) {
-			//Logger.warning(className, "Unable to process inbound multicast packet");
-		//}
+		catch (InterruptedException e) {
+			Logger.warning(className, "Interrupted thread sleep");
+		}
+
     }
-	
-	private void processIncoming(SessionMessage message) {
-		SessionMessage msg_out;
-		SessionClient sc;
-		
-		switch(message.type) {
-			case SessionMessage.MSG_STORE:
-				// First check if we already have this or later version before requesting
-				if (SessionStorage.saveSession(message.session_id, message.updated)) {
-					// Fetch the session from the peer using unicast
-					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_GET);
-					sc = new SessionClient(message.ip, msg_out);
-					if (sc.send()) {
-						Session new_session = sc.getSession();
-						SessionStorage.put(new_session.getSessionId(), new_session);
-					}					
-				}
-				break;
-			case SessionMessage.MSG_DELETE:
-				// Delete the session from local storage
-				SessionStorage.del(message.session_id);
-				break;
-			case SessionMessage.MSG_WHOHAS:
-				// If we have this session, send back a unicast reply that we have it
-				if (SessionStorage.exists(message.session_id)) {
-					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
-					sc = new SessionClient(message.ip, msg_out);
-					sc.send();
-				}
-				break;
-		}
-	}
 }

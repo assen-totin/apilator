@@ -356,11 +356,23 @@ public class Server implements Runnable {
 	 * @param args String[] Command-line arguments, if any
 	 */
 	public static void main(String[] args) {
-		try {		
+		try {
+			/*
 			// Start the session storage manager thread
 			SessionManager session_manager = new SessionManager();
 			Thread session_manager_t = new Thread(session_manager);
 			session_manager_t.start();
+			*/
+			
+			// Start the session storage manager thread for sending
+			SessionManagerSend sm_send = new SessionManagerSend();
+			Thread sm_send_t = new Thread(sm_send);
+			sm_send_t.start();
+			
+			// Start the session storage manager thread for receiving
+			SessionManagerReceive sm_receive = new SessionManagerReceive();
+			Thread sm_receive_t = new Thread(sm_receive);
+			sm_receive_t.start();
 			
 			// Start one worker for HTTP requests
 			ServerWorkerHttp worker = new ServerWorkerHttp();

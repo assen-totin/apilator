@@ -33,11 +33,11 @@ import java.util.Map;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManager implements Runnable {
+public class SessionManagerReceive implements Runnable {
 	private final String className;
 	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
 	
-	public SessionManager() {
+	public SessionManagerReceive() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -52,7 +52,7 @@ public class SessionManager implements Runnable {
 		InetAddress multicast_group;
 		MulticastSocket multicast_socket;
 		DatagramPacket packet;
-		byte[] receive_buffer, send_buffer;
+		byte[] receive_buffer;
 		
 		try {
 			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
@@ -60,22 +60,6 @@ public class SessionManager implements Runnable {
 			multicast_socket.joinGroup(multicast_group);
 
 			while (true) {
-				// Check if there are pending outgoing, serialize and send
-				for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
-					Logger.debug(className, "Sending multicast...");
-			        ByteArrayOutputStream os = new ByteArrayOutputStream(MAX_PACKET_SIZE);
-			        ObjectOutputStream oos = new ObjectOutputStream(os);			        
-					oos.writeObject(pair.getValue());
-					
-					send_buffer = os.toByteArray();
-					packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-					multicast_socket.send(packet);
-					
-			        // Remove from queue
-			        SessionStorage.queue_multicast.remove(pair.getKey());
-			    }
-				
-				/*
 				Logger.debug(className, "Waiting for multicast...");
 				
 				// Read and unserialize incoming packets
@@ -87,16 +71,16 @@ public class SessionManager implements Runnable {
 				ObjectInputStream ois = new ObjectInputStream(is);
 				SessionMessage msg = (SessionMessage)ois.readObject();	
 				processIncoming(msg);
-				*/
+				
 			} 
 		}
 		catch (IOException e) {
 			Logger.warning(className, "Unable to process multicast packet");
 			e.printStackTrace();
 		}
-		//catch (ClassNotFoundException e) {
-			//Logger.warning(className, "Unable to process inbound multicast packet");
-		//}
+		catch (ClassNotFoundException e) {
+			Logger.warning(className, "Unable to process inbound multicast packet");
+		}
     }
 	
 	private void processIncoming(SessionMessage message) {
