@@ -180,7 +180,6 @@ public class EndpointExample extends Endpoint {
 			//Session session = new Session();
 			//String session_id = session.getSessionId();
 			session.put("some_key", "some_value");
-			SessionStorage.put(session.getSessionId(), session);
 			
 			output.data = session.getSessionId().getBytes();
 		}

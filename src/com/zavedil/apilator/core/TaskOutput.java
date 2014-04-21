@@ -61,7 +61,7 @@ public class TaskOutput {
 	    		cookie_date.setTime((long) cookies_expire.get(pair.getKey()));
 	    		cookies += "; Expires=" + format.format(cookie_date) + " GMT\n";
 	    	}
-	    	cookies += "\n";
+	    	//cookies += "\n";
 		}
 		
 	}
