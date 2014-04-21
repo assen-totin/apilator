@@ -60,9 +60,7 @@ public class SessionManagerReceive implements Runnable {
 			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
 			multicast_socket.joinGroup(multicast_group);
 
-			while (true) {
-				Logger.debug(className, "Waiting for multicast...");
-				
+			while (true) {	
 				// Read and unserialize incoming packets
 				receive_buffer = new byte[MAX_PACKET_SIZE];
 				packet = new DatagramPacket(receive_buffer, receive_buffer.length);			
