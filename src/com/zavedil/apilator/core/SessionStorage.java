@@ -132,7 +132,7 @@ public class SessionStorage {
 	 */
 	public static boolean saveSession(String session_id, long updated) {
 		Session stored_session;
-		stored_session = SessionStorage.get(session_id);
+		stored_session = SessionStorage.storage.get(session_id);
 		// If the session does not exists, we should save it - return true
 		if (stored_session == null)
 			return true;
