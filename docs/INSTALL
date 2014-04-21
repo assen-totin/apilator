@@ -1,0 +1,14 @@
+REQUIREMENTS
+============
+
+- Java 7
+- Running in a clustered environment requires multicast-capable switching equipment
+
+
+INSTALLATION
+============
+
+- Get the sources and tweak to your taste (see README for details; as a minimum, check Config.java class)
+- Export as JAR
+- Run in your favourite JRE
+

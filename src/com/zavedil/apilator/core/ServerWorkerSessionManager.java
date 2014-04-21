@@ -63,7 +63,6 @@ public class ServerWorkerSessionManager implements Runnable {
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		busy = true;
 		Logger.debug(className, "Entering function processData.");
-		Logger.debug(className, "Chunk size is: " + count);
 		
 		byte[] response = new byte[]{(byte)0xFF};
 		
