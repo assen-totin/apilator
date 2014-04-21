@@ -167,24 +167,24 @@ public class EndpointExample extends Endpoint {
 		
 		// Add your code below		
 		
-		/*
+		
 		if (input.data.containsKey("session_id")) {
-			String session_id = input.data.get("session_id").toString();
-			Session session = SessionStorage.get(session_id);
-			if ((session != null) && session.containsKey("some_key")) {
+		//	String session_id = input.data.get("session_id").toString();
+		//	Session session = SessionStorage.get(session_id);
+			if (session != null) {
 				String value = (String) session.get("some_key");
 				output.data = value.getBytes();
 			}
 		}
 		else {
-			Session session = new Session();
-			String session_id = session.getSessionId();
+			//Session session = new Session();
+			//String session_id = session.getSessionId();
 			session.put("some_key", "some_value");
-			SessionStorage.put(session_id, session);
+			SessionStorage.put(session.getSessionId(), session);
 			
-			output.data = session_id.getBytes();
+			output.data = session.getSessionId().getBytes();
 		}
-		*/
+		
 		
 	}
 	
