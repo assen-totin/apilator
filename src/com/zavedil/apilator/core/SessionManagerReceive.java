@@ -75,7 +75,7 @@ public class SessionManagerReceive implements Runnable {
 			} 
 		}
 		catch (IOException e) {
-			Logger.warning(className, "Unable to process multicast packet");
+			Logger.warning(className, "Unable to bind to multicast packet");
 			e.printStackTrace();
 		}
 		catch (ClassNotFoundException e) {

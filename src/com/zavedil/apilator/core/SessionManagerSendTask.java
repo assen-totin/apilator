@@ -28,7 +28,6 @@ public class SessionManagerSendTask extends TimerTask {
 		try {
 			// Check if there are pending outgoing, serialize and send
 			for (Map.Entry<String,SessionMessage> pair : SessionStorage.queue_multicast.entrySet()) {
-				Logger.debug(className, "Sending multicast...");
 		        ByteArrayOutputStream os = new ByteArrayOutputStream();
 		        ObjectOutputStream oos = new ObjectOutputStream(os);			        
 				oos.writeObject(pair.getValue());
