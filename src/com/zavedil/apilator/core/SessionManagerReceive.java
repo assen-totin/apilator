@@ -12,8 +12,9 @@ import java.net.MulticastSocket;
 import java.util.Map;
 
 /**
- * Session manager class. 
- * Updates the local session storage from network.
+ * Session manager receiving class. 
+ * Listens at multicast address for inbound messages; 
+ * retrieves updates for session storage using unciast.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 

@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.Timer;
 
 /**
- * Session manager class. 
- * Updates the local session storage from network.
+ * Session manager multicast sending scheduler.  
+ * Binds a multicast group and runs the sending as a scheduled task each 10 ms.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
