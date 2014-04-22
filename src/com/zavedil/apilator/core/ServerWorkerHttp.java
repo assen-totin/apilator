@@ -123,7 +123,6 @@ public class ServerWorkerHttp implements Runnable {
 					output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
 				}
 				catch (Exception e) {
-					e.printStackTrace();
 					output.http_status = 404;
 				}
 			} // End API call here

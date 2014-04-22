@@ -29,7 +29,7 @@ public class Config {
 	public static final int TcpPort = 8080;
 
 	// Filename for access log
-	public static final String AccessLog = "/tmp/apilator-access.log";
+	public static final String AccessLog = "/tmp/apilator.log";
 	
 	// Location for static content. If the local part of the URL begins with this string, 
 	// the remainder of the local part will be mapped to the filesystem starting at DocumentRoot (see below)

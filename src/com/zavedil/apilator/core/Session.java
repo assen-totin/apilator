@@ -42,6 +42,7 @@ public class Session implements java.io.Serializable {
 		Logger.debug(className, "Creating new instance of the class.");
 		
 		session_id = Session.getNewSessionId();
+		updated = created;
 	}
 	
 	/**

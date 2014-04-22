@@ -372,6 +372,18 @@ public class Server implements Runnable {
 			SessionManagerReceive sm_receive = new SessionManagerReceive();
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
+					
+			// Start one worker for Session Manager requests
+			ServerWorkerSessionManager worker_sm = new ServerWorkerSessionManager();
+			new Thread(worker_sm).start();
+			
+			// Start the Session Manager server 
+			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
+
+			// Start Session Manager Clean-upper thread
+			SessionManagerCleanupScheduler smcs = new SessionManagerCleanupScheduler();
+			Thread smcs_t = new Thread (smcs);
+			smcs_t.start();
 			
 			// Start one worker for HTTP requests
 			ServerWorkerHttp worker = new ServerWorkerHttp();
@@ -380,13 +392,6 @@ public class Server implements Runnable {
 			// Start the HTTP server
 			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
 			
-			// Start one worker for Session Manager requests
-			ServerWorkerSessionManager worker_sm = new ServerWorkerSessionManager();
-			new Thread(worker_sm).start();
-			
-			// Start the Session Manager server 
-			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
-
 			//Stats: uptime
 			ServerStats.server_boottime = System.currentTimeMillis();
 		} 
