@@ -360,6 +360,9 @@ public class Server implements Runnable {
 			// Automatic configuration
 			new ConfigAuto();
 			
+			// Init the session storage (load form disk cache)
+			SessionStorage.init();
+			
 			// Start the session storage manager thread for sending
 			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
 			Thread sm_send_t = new Thread(sm_send);

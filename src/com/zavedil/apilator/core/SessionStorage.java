@@ -22,7 +22,13 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import com.zavedil.apilator.app.*;
 
 public class SessionStorage {
@@ -31,6 +37,30 @@ public class SessionStorage {
 	
 	// Create internal queue for network updates: 100 objects, expand when 90% full and use only 1 shard
 	public static ConcurrentHashMap<String, SessionMessage> queue_multicast = new ConcurrentHashMap<String, SessionMessage>(100, 0.9f, 1);	
+	
+	public static final String className = "SessionStorage";
+	
+	/**
+	 * Init the session storage from a local cache upon start-up
+	 */
+	public static void init() {
+		// Load the storage from disk
+		try {
+			InputStream fis = new FileInputStream(Config.SessionManagerDiskCache);
+	        ObjectInputStream ois = new ObjectInputStream(fis);			        
+	        ConcurrentHashMap<String, Session> readObject = (ConcurrentHashMap<String, Session>) ois.readObject();
+			// Copy values to our hash map to preserve the partitioning and density
+	        for (Map.Entry<String, Session> entry : readObject.entrySet()) 
+	        	storage.put(entry.getKey(), entry.getValue());
+			fis.close();
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Could not read disk cache.");
+		}
+		catch (ClassNotFoundException e) {
+			Logger.warning(className, "Disk cache entry could not be read.");
+		}
+	}
 	
 	/**
 	 * Store a locally generated session Object in storage. If key exists, record will be updated

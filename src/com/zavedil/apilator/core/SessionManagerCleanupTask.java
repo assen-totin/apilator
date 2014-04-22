@@ -45,14 +45,9 @@ public class SessionManagerCleanupTask extends TimerTask {
 		
 		// Check if there are sessions which have expired: delete and send a notification to peers
 		for (Map.Entry<String,Session> pair : SessionStorage.storage.entrySet()) {
-			if (pair.getValue().getTtl() < now) {
-				// Add to multicast queue a DELETE message
-				SessionMessage sm = new SessionMessage(pair.getKey(), SessionMessage.MSG_DELETE);
-				SessionStorage.queue_multicast.put(pair.getKey(), sm);
-					
-				// Delete session from storage
-				SessionStorage.storage.remove(pair.getKey());
-			}			
+			if (pair.getValue().getTtl() < now) 				
+				// Delete session from storage (will also send a DELETE message over multicast)
+				SessionStorage.del(pair.getKey());	
 	    }
 		
 		// Dump the storage to disk
