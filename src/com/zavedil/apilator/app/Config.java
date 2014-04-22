@@ -64,15 +64,9 @@ public class Config {
 	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
 	public static final int SessionManagerTimeout = 10;
 	
-	/*
-	// URL for object retrieval via Session Manager
-	public static final String SessionManagerLocation = "/sessman";
-
-	// Pre-shared key for object retrieval via Session Manager.
-	// Because session objects are retrieved using standard HTTP request, it is important to make sure
-	// only authorised hosts have access to them. Default behaviour is to only allow queries from hosts on the same subnet.
-	// To keep this behaviour, leave the pre-shared key blank. Only set it to something else if you really need to allow
-	// queries from other network segments. 
-	public static final String SessionManagerPsk = "";
-	*/
+	// Time interval to run the Session Manager clean-upper thread, in milliseconds (1 minute by default)
+	public static final int SessionManagerCleanupperInterval = 60000;
+	
+	// File to periodically dump the session storage for faster restore on server restart
+	public static final String SessionManagerDiskCache = "/tmp/apilator.cache";
 }
