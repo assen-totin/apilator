@@ -34,15 +34,21 @@ public class SessionClient {
 	private final InetAddress ip;
 	private final SessionMessage message;
 	private Session session;
+	private SessionMessage session_message;
+	//private final int type;
+
+	public static final int MSG_TYPE_NONE = 0;
+	public static final int MSG_TYPE_SESSION = 1;
+	public static final int MSG_TYPE_SESSION_MESSAGE = 2;
 	
-	public SessionClient(InetAddress ip, SessionMessage message) {
+	public SessionClient(InetAddress ipaddr, SessionMessage msg) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		this.ip = ip;
-		this.message = message;
+		ip = ipaddr;
+		message = msg;
 	}
 	
-	public boolean send() {
+	public boolean send(int answer_type) {
 		boolean res = true;
 		
 		try {
@@ -52,7 +58,15 @@ public class SessionClient {
 			  
 			  ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 			  try {
-				  session = (Session)ois.readObject();
+				  switch (answer_type) {
+				  case MSG_TYPE_SESSION:
+					  session = (Session)ois.readObject();
+					  break;
+				  case MSG_TYPE_SESSION_MESSAGE:
+					  session_message = (SessionMessage)ois.readObject();
+					  break;
+				  }
+				  
 			  }
 			  catch(ClassNotFoundException e) {
 				  Logger.warning(className, "Incorrect session received from peer: " + ip.toString());
@@ -71,5 +85,9 @@ public class SessionClient {
 	
 	public Session getSession() {
 		return session;
+	}
+	
+	public SessionMessage getSessionMessage() {
+		return session_message;
 	}
 }

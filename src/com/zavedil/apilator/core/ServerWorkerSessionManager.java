@@ -64,11 +64,16 @@ public class ServerWorkerSessionManager implements Runnable {
 		busy = true;
 		Logger.debug(className, "Entering function processData.");
 		
-		byte[] response = new byte[]{(byte)0xFF};
+		byte[] response;
 		
 		InputStream is = new ByteArrayInputStream(data);
 		ObjectInputStream ois = new ObjectInputStream(is);
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(os);
+		
 		SessionMessage msg = null;
+		
 		try {
 			msg = (SessionMessage)ois.readObject();
 		} 
@@ -82,27 +87,28 @@ public class ServerWorkerSessionManager implements Runnable {
 		}
 		
 		// Process a GET request for an object ID, return the object if found
-		if ((msg.type == SessionMessage.MSG_GET) && SessionStorage.exists(msg.session_id)) {
+		if ((msg.type == SessionMessage.ACT_GET) && SessionStorage.exists(msg.session_id)) {
 			Session session = SessionStorage.get(msg.session_id);
-			
-			// Serialize session and send back
-	        ByteArrayOutputStream os = new ByteArrayOutputStream();
-	        ObjectOutputStream oos = new ObjectOutputStream(os);			        
+			// Serialize session and send back		        
 			oos.writeObject(session);
-			response = os.toByteArray();
 		}
 		
-		// Process ISAT response to our multicaset WHOHAS, fetch the object from the originator using GET
-		if (msg.type == SessionMessage.MSG_ISAT) {
-			SessionMessage msg_out = new SessionMessage(msg.session_id, SessionMessage.MSG_GET);
+		// Process ISAT response to a multicaset WHOHAS, fetch the object from the originator using GET, then return ACT_NOOP
+		if (msg.type == SessionMessage.ACT_ISAT) {
+			SessionMessage msg_out = new SessionMessage(msg.session_id, SessionMessage.ACT_GET);
 			SessionClient sc = new SessionClient(msg.ip, msg_out);
-			if (sc.send()) {
+			// Send the SessionMessage and expect a Session back
+			if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
 				Session new_session = sc.getSession();
 				SessionStorage.put(new_session.getSessionId(), new_session);
 			}
+			
+			SessionMessage msg_out2 = new SessionMessage(msg.session_id, SessionMessage.ACT_NOOP);		        
+			oos.writeObject(msg_out2);
 		}
 	
     	// Push response back
+		response = os.toByteArray();
 		synchronized(queue) {
 			queue.add(new ServerDataEvent(server, socketChannel, response));
 			queue.notify();

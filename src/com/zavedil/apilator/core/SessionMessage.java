@@ -27,12 +27,12 @@ import java.net.InetAddress;
 public class SessionMessage implements java.io.Serializable {
 	private final String className;
 	// Network actions
-	public static final int MSG_NONE = 0;	// Take no action
-	public static final int MSG_STORE = 1;	// Used when multicasting an available update
-	public static final int MSG_DELETE = 2;	// Used when multicasting a deletion
-	public static final int MSG_WHOHAS = 3;	// Used when asking for the value of the specified key
-	public static final int MSG_ISAT = 4;	// Used when announcing key availability for unicast retrieval
-	public static final int MSG_GET = 5;	// Used when requesting a session for unicast retrieval
+	public static final int ACT_NOOP = 0;	// Take no action
+	public static final int ACT_STORE = 1;	// Used when multicasting an available update
+	public static final int ACT_DELETE = 2;	// Used when multicasting a deletion
+	public static final int ACT_WHOHAS = 3;	// Used when asking for the value of the specified key
+	public static final int ACT_ISAT = 4;	// Used when announcing key availability for unicast retrieval
+	public static final int ACT_GET = 5;	// Used when requesting a session for unicast retrieval
 	
 	private static final long serialVersionUID = 1L;
 	public final int type;

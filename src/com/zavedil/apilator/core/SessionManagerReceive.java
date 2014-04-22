@@ -85,28 +85,31 @@ public class SessionManagerReceive implements Runnable {
 		SessionClient sc;
 		
 		switch(message.type) {
-			case SessionMessage.MSG_STORE:
+			case SessionMessage.ACT_STORE:
 				// First check if we already have this or later version before requesting
 				if (SessionStorage.saveSession(message.session_id, message.updated)) {
 					// Fetch the session from the peer using unicast
-					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_GET);
+					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_GET);
 					sc = new SessionClient(message.ip, msg_out);
-					if (sc.send()) {
+					// Send the SessionMessage and expect a Session back
+					if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
 						Session new_session = sc.getSession();
 						SessionStorage.putFromNetwork(new_session.getSessionId(), new_session);
 					}					
 				}
 				break;
-			case SessionMessage.MSG_DELETE:
+			case SessionMessage.ACT_DELETE:
 				// Delete the session from local storage
 				SessionStorage.del(message.session_id);
 				break;
-			case SessionMessage.MSG_WHOHAS:
+			case SessionMessage.ACT_WHOHAS:
 				// If we have this session, send back a unicast reply that we have it
 				if (SessionStorage.exists(message.session_id)) {
-					msg_out = new SessionMessage(message.session_id, SessionMessage.MSG_ISAT);
+					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_ISAT);
 					sc = new SessionClient(message.ip, msg_out);
-					sc.send();
+					// Send the SessionMessage and expect a SessionMessage back
+					// (we don't care for it so won't fetch it)
+					sc.send(SessionClient.MSG_TYPE_SESSION_MESSAGE);
 				}
 				break;
 		}

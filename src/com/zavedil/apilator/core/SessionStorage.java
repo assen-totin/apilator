@@ -84,7 +84,7 @@ public class SessionStorage {
 		storage.put(session_id, session);
 		
 		// Add to network queue
-		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_STORE);
+		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
 		session_message.updated = session.getUpdated();
 		queue_multicast.put(session_id, session_message);
 	}
@@ -113,7 +113,7 @@ public class SessionStorage {
 		session = storage.get(session_id);
 		if (session == null) {
 			// Query the network if key not found
-			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_WHOHAS);
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_WHOHAS);
 			queue_multicast.put(session_id, session_message);
 			
 			try {
@@ -137,7 +137,7 @@ public class SessionStorage {
 	 */
 	public static void del(String session_id) {	
 		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
-		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.MSG_DELETE);
+		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_DELETE);
 		queue_multicast.put(session_id, session_message);
 		
 		// Remove locally
