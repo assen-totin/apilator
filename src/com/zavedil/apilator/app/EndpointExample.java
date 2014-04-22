@@ -33,18 +33,26 @@ import java.util.Hashtable;
 // Example code to work with session objects
 ////////////////////////////////////////////
 
-// Get a new session object (it will be automatically stored)
+// Get a new session object 
+// Note that with Automated Session Management (ASM) sessions are automatically created;
+// if you do not use ASM, you can manually create a session (it will be automatically stored):  
 Session session = new Session();
 
-// Get the session_id from it:
+// Get a session object from storage by its ID (NULL is returned on missing ID)
+// Note that with ASM session is automatically loaded for you from the session cookie; 
+// if you do not use ASM, you can manually load a session:
+Session session = SessionStorage.get(session_id);
+
+// Get the session_id from the session object:
 String session_id = session.getSessoinId();
+
+// Check if the session is a blank one (helpful when using ASM)
+if (session.getUpdated() == session.getCreated()) {
+	// This is a blank session, just created
+}
 
 // Put a key-value pair to session object:
 session.put("key", "value");
-
-// Get a session object from storage by its ID:
-// (If the key is missing from the storage, you'll get NULL back)
-Session session = SessionStorage.get(session_id);
 
 // Get a value from a session object by a given key:
 // You need to cast the returned object to its proper type!
@@ -165,25 +173,26 @@ public class EndpointExample extends Endpoint {
 		Logger.debug(className, "Entering function get.");
 		super.get();
 		
-		// Add your code below		
+		// Add your code below
 		
+		// We use ASM in the example, so session should be preloaded for us from a session cookie (if supplied). 
 		
-		if (input.data.containsKey("session_id")) {
-		//	String session_id = input.data.get("session_id").toString();
-		//	Session session = SessionStorage.get(session_id);
-			if (session != null) {
-				String value = (String) session.get("some_key");
-				output.data = value.getBytes();
-			}
-		}
-		else {
-			//Session session = new Session();
-			//String session_id = session.getSessionId();
-			session.put("some_key", "some_value");
-			
+		// If this is a blank session...
+		if (session.getUpdated() == session.getCreated()) {
+			// Just store some key and return the value of the session ID
+			session.put("some_key", "some_value");		
 			output.data = session.getSessionId().getBytes();
 		}
 		
+		// ... or if we have a valid session... 
+		else {
+			String value = (String) session.get("some_key");
+			if (value != null)
+				output.data = value.getBytes();
+			else 
+				output.data = "Sorry, could nod find key some_key!".getBytes();
+		}
+
 		
 	}
 	
