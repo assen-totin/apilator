@@ -1,12 +1,5 @@
 package com.zavedil.apilator.core;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-
 /**
  * Session client class. 
  * Connects to another server and retrieves a session object.
@@ -28,6 +21,13 @@ import java.net.Socket;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import com.zavedil.apilator.app.*;
 
 public class SessionClient {
 	private final String className;

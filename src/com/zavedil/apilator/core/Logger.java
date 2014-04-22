@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Locale;
+import com.zavedil.apilator.app.*;
 
 public class Logger {
 	/**

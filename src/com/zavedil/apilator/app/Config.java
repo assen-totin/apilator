@@ -1,4 +1,4 @@
-package com.zavedil.apilator.core;
+package com.zavedil.apilator.app;
 
 /**
  * Configuration class.

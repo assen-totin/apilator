@@ -15,7 +15,7 @@ Apilator was built around the idea of frontend-backend split applications: a fro
 CONFIGURING APILATOR
 ====================
 
-All settings in Apilator are stored in the Config.java class in the form of static strings. Comments are provided to explain the meaning of each setting. Most of them are discussed below where appropriate. 
+All settings in Apilator are stored in the Config.java class (com.zavedil.apilator.app package) in the form of static strings. Comments are provided to explain the meaning of each setting. Most of them are discussed below where appropriate. 
 
 
 RUNNING APILATOR

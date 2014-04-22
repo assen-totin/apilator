@@ -23,6 +23,7 @@ package com.zavedil.apilator.core;
  */
 
 import java.util.concurrent.ConcurrentHashMap;
+import com.zavedil.apilator.app.*;
 
 public class SessionStorage {
 	// Create initial storage for 1000 sessions, expand when 90% full and use only 1 shard

@@ -1,7 +1,6 @@
 package com.zavedil.apilator.core;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
  * Session message class. 

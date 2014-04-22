@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.zavedil.apilator.app.*;
 
 public class StaticContent {
 	private TaskOutput output;
