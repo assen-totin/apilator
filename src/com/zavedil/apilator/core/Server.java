@@ -62,9 +62,9 @@ public class Server implements Runnable {
 	private Map pendingData = new HashMap();
 	
 	// Operaton modes
-	private final static int MODE_NONE = 0;
-	private final static int MODE_HTTP = 1;
-	private final static int MODE_SESSION_MANAGER = 2;
+	public final static int MODE_NONE = 0;
+	public final static int MODE_HTTP = 1;
+	public final static int MODE_SESSION_MANAGER = 2;
 	private final int mode;
 
 	/**
@@ -349,54 +349,5 @@ public class Server implements Runnable {
 		serverChannel.register(socketSelector, SelectionKey.OP_ACCEPT);
 
 		return socketSelector;
-	}
-
-	/**
-	 * Main entry point for the server
-	 * @param args String[] Command-line arguments, if any
-	 */
-	public static void main(String[] args) {
-		try {
-			// Automatic configuration
-			new ConfigAuto();
-			
-			// Init the session storage (load form disk cache)
-			SessionStorage.init();
-			
-			// Start the session storage manager thread for sending
-			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
-			Thread sm_send_t = new Thread(sm_send);
-			sm_send_t.start();
-			
-			// Start the session storage manager thread for receiving
-			SessionManagerReceive sm_receive = new SessionManagerReceive();
-			Thread sm_receive_t = new Thread(sm_receive);
-			sm_receive_t.start();
-					
-			// Start one worker for Session Manager requests
-			ServerWorkerSessionManager worker_sm = new ServerWorkerSessionManager();
-			new Thread(worker_sm).start();
-			
-			// Start the Session Manager server 
-			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
-
-			// Start Session Manager Clean-upper thread
-			SessionManagerCleanupScheduler smcs = new SessionManagerCleanupScheduler();
-			Thread smcs_t = new Thread (smcs);
-			smcs_t.start();
-			
-			// Start one worker for HTTP requests
-			ServerWorkerHttp worker = new ServerWorkerHttp();
-			new Thread(worker).start();
-			
-			// Start the HTTP server
-			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
-			
-			//Stats: uptime
-			ServerStats.server_boottime = System.currentTimeMillis();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }
