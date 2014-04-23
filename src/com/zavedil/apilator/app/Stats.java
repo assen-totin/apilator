@@ -23,6 +23,7 @@ package com.zavedil.apilator.app;
 
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
+
 import java.util.Map;
 
 public class Stats extends Endpoint {
@@ -34,6 +35,7 @@ public class Stats extends Endpoint {
 	public Stats(TaskInput api_task) {
 		super(api_task);
 		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating a new instance.");
 	}
 	
 	/**

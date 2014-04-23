@@ -25,11 +25,10 @@ package com.zavedil.apilator.app;
  */
 
 import java.util.Date;
-
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
 
-public class Endpoint {
+public abstract class Endpoint {
 	// Input data
 	protected final TaskInput input;
 
@@ -148,5 +147,15 @@ public class Endpoint {
 		// Add your code here.
 		// Example: put a key-value pair to session object:
 		//session.put("key", "value");
+	}
+	
+	protected String stripEndpointFromLocation() {
+		String output = "";
+		String[] parts = input.location.split("/");
+		
+		for (int i=1; i<parts.length; i++)
+			output += "/" + parts[i];
+		
+		return output;
 	}
 }

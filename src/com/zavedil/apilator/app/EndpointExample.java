@@ -24,6 +24,7 @@ package com.zavedil.apilator.app;
 
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
@@ -159,10 +160,12 @@ public class EndpointExample extends Endpoint {
 	
 	/**
 	 * Constructor method
+	 * @param api_task TaskInput The input data from the HTTP request
 	 */
 	public EndpointExample(TaskInput api_task) {
 		super(api_task);
 		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating a new instance.");
 	}
 	
 	/**

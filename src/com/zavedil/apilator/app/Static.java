@@ -1,4 +1,4 @@
-package com.zavedil.apilator.core;
+package com.zavedil.apilator.app;
 
 /**
  * A class to serve static content.
@@ -26,22 +26,34 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import com.zavedil.apilator.app.*;
+import com.zavedil.apilator.core.*;
 
-public class StaticContent {
-	private TaskOutput output;
+public class Static extends Endpoint {
 	private String className;
 	
-	public StaticContent(String location) {
+	/**
+	 * Constructor method
+	 * @param api_task TaskInput The input data from the HTTP request
+	 */
+	public Static(TaskInput api_task) {
+		super(api_task);
 		className = this.getClass().getSimpleName();
-		Logger.debug(className, "Entering function StaticContent");
+		Logger.debug(className, "Creating a new instance.");
+	}
+	
+	/**
+	 * Method invoked whenever a GET request is received.
+	 */
+	@Override
+	public void get() {
+		Logger.debug(className, "Entering function get.");
+		super.get();
 		
 		final int chunk_size = 1000;
 		int curr_len = 0;
 		String document_root = Config.DocumentRoot;
-		String file = document_root + location;				// The 'location' will begin with a slash
-		
-		output = new TaskOutput();
+		String fs_part = stripEndpointFromLocation();
+		String file = document_root + fs_part;		// The stripped down 'location' will begin with a slash
 		
 		try {
             byte[] buffer = new byte[chunk_size];
@@ -63,7 +75,7 @@ public class StaticContent {
 
             inputStream.close();
             
-            String file_name = location.substring(1);
+            String file_name = fs_part.substring(1);
             Path path = FileSystems.getDefault().getPath(document_root, file_name);
             output.mime_type = Files.probeContentType(path);
         }
@@ -72,11 +84,5 @@ public class StaticContent {
         }
 	}
 	
-	/**
-	 * Getter for output data object
-	 * @return ApiTaskOutput Output data object
-	 */
-	public TaskOutput onCompletion() {
-		return output;
-	}
+
 }

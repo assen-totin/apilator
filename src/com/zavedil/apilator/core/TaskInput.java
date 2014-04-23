@@ -28,6 +28,7 @@ public class TaskInput {
 	private final String className;
 	public Hashtable<String,Object> data;
 	public Hashtable<String,String> cookies;
+	public String location;
 	
 	public TaskInput() {
 		className = this.getClass().getSimpleName();

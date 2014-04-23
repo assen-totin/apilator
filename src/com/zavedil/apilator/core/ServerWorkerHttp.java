@@ -86,47 +86,38 @@ public class ServerWorkerHttp implements Runnable {
 		}
 		
 		if (headers_ok) {
-			String location = http_parser.getLocation();
+			/**
+			 * We call the API here; we/it should set:
+			 * - output_http_status (if not 200)
+			 * - output_data
+			 * - output_mime_type (if different from default text/plain)
+			 */				
+				
+			// Construct new task
+			input.data = http_parser.getParams();
+			input.cookies = http_parser.getCookies();
+			input.location = http_parser.getLocation();
 			
-			if (serveStatic(location)) {
-				// Call the static content class
-				StaticContent static_content = new StaticContent(stripStaticPrefix(location));
-				output = static_content.onCompletion();
+			// API call using reflection
+			String endpoint = getEndpoint(input.location);
+			try {
+				Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
+				Constructor api_constr = api_class.getConstructor(TaskInput.class);
+				Object api_obj = api_constr.newInstance(input);
+					
+				// Call the method which corresponds to the HTTP method
+				String method = http_parser.getMethod();
+				Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
+				api_method.invoke(api_obj);
+					
+				// Call the method to get back the output
+				Method api_method_get_output_data = api_obj.getClass().getMethod("onCompletion");
+				output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
 			}
-			
-			else {
-				/**
-				 * We call the API here; we/it should set:
-				 * - output_http_status (if not 200)
-				 * - output_data
-				 * - output_mime_type (if different from default text/plain)
-				 */				
-				
-				// Construct new task
-				input.data = http_parser.getParams();
-				input.cookies = http_parser.getCookies();
-				
-				// API call using reflection
-				String endpoint = getEndpoint(location);
-				try {
-					Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
-					Constructor api_constr = api_class.getConstructor(TaskInput.class);
-					Object api_obj = api_constr.newInstance(input);
-					
-					// Call the method which corresponds to the HTTP method
-					String method = http_parser.getMethod();
-					Method api_method = api_obj.getClass().getMethod(method.toLowerCase());
-					api_method.invoke(api_obj);
-					
-					// Call the method to get back the output
-					Method api_method_get_output_data = api_obj.getClass().getMethod("onCompletion");
-					output = (TaskOutput) api_method_get_output_data.invoke(api_obj);					
-				}
-				catch (Exception e) {
-					output.http_status = 404;
-				}
-			} // End API call here
-		}
+			catch (Exception e) {
+				output.http_status = 404;
+			}
+		} // End API call here
 		
 		// Prepare body
 		if (output.data == null)
@@ -196,27 +187,6 @@ public class ServerWorkerHttp implements Runnable {
 			// Return to sender
 			dataEvent.server.send(dataEvent.socket, dataEvent.data);
 		}
-	}
-	
-	/**
-	 * Helper method to check whether the worker should serve a static content or call the API
-	 * @param location String The local part of the original URL
-	 * @return boolean TRUE if the worker should serve static content, FALSE if the worker should call the API
-	 */
-	private boolean serveStatic(String location) {
-		int idx = location.indexOf(Config.StaticLocation);
-		if (idx == 0)
-			return true;
-		return false;
-	}
-	
-	/**
-	 * Helper method to strip the static prefix from the location 
-	 * @param location String The local part of the original URL
-	 * @return String  The local part of the original URL with the static prefix stripped
-	 */
-	private String stripStaticPrefix(String location) {
-		return location.replaceFirst(Config.StaticLocation, "");
 	}
 	
 	/**
