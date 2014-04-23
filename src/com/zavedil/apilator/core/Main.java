@@ -38,6 +38,11 @@ public class Main {
 			// Init the session storage (load form disk cache)
 			SessionStorage.init();
 			
+			// Start statistics gathering thread
+			ServerStatsScheduler sss = new ServerStatsScheduler();
+			Thread sss_t = new Thread(sss);
+			sss_t.start();		
+			
 			// Start the session storage manager thread for sending
 			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
 			Thread sm_send_t = new Thread(sm_send);
