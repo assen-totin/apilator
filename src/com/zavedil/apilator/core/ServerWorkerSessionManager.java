@@ -41,7 +41,10 @@ import java.util.List;
 public class ServerWorkerSessionManager implements Runnable {
 	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
 	private final String className;
+	private final long created = System.currentTimeMillis();
 	private boolean busy = false;
+	private long exec_time = 0;
+	private long requests = 0;
 	
 	/**
 	 * Constructor. 
@@ -62,6 +65,7 @@ public class ServerWorkerSessionManager implements Runnable {
 	 */
 	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		busy = true;
+		long run_start_time = System.currentTimeMillis();
 		Logger.debug(className, "Entering function processData.");
 		
 		byte[] response;
@@ -113,7 +117,21 @@ public class ServerWorkerSessionManager implements Runnable {
 			queue.add(new ServerDataEvent(server, socketChannel, response));
 			queue.notify();
 		}
-						
+
+		// Stats
+		if (ServerStatsScheduler.sm_requests.containsKey(created)) {
+			requests = ServerStatsScheduler.sm_requests.get(created);
+			requests ++;			
+		}
+		ServerStatsScheduler.sm_requests.put(created, requests);
+		
+		exec_time = System.currentTimeMillis() - run_start_time;
+		if (ServerStatsScheduler.http_exec.containsKey(created))
+			exec_time += ServerStatsScheduler.http_exec.get(created);
+		ServerStatsScheduler.sm_exec.put(created, exec_time);
+				
+		// Ready for new task
+		busy = false;
 		// Ready for new task
 		busy = false;
 	}

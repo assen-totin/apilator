@@ -37,7 +37,7 @@ public class ServerWorkerHttp implements Runnable {
 	private final long created = System.currentTimeMillis();
 	private boolean busy = false;
 	private long exec_time = 0;
-	private long requests = 0;
+	private long requests = 1;
 	
 	/**
 	 * Constructor. 
@@ -151,14 +151,16 @@ public class ServerWorkerHttp implements Runnable {
 		}
 		
 		// Stats
-		long uptime = System.currentTimeMillis() - created;
-		ServerStats.threads_uptime.put(created, uptime);
+		if (ServerStatsScheduler.http_requests.containsKey(created)) {
+			requests = ServerStatsScheduler.http_requests.get(created);
+			requests ++;			
+		}
+		ServerStatsScheduler.http_requests.put(created, requests);
 		
-		requests++;
-		ServerStats.requests.put(created, requests);
-		
-		exec_time += System.currentTimeMillis() - run_start_time;
-		ServerStats.exec_time.put(created, exec_time);
+		exec_time = System.currentTimeMillis() - run_start_time;
+		if (ServerStatsScheduler.http_exec.containsKey(created))
+			exec_time += ServerStatsScheduler.http_exec.get(created);
+		ServerStatsScheduler.http_exec.put(created, exec_time);
 				
 		// Ready for new task
 		busy = false;

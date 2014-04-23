@@ -68,7 +68,7 @@ public class Main {
 			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
 			
 			//Stats: uptime
-			ServerStats.server_boottime = System.currentTimeMillis();
+			ServerStatsScheduler.server_boottime = System.currentTimeMillis();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();

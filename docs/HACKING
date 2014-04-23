@@ -19,6 +19,10 @@ The Endpoint,java class is an abstract class which every API endpoint should ext
 .onCompletion() is called after your method completes and is used to retrieve the output object. If ASM is enabled, it also stored back the session into the storage. 
 There is also a skeleton helper method called .populateNewSession which is called whenever a new session is created. By default this method does nothing. It is intended for you to put there any session initialisation code you wish. 
 
+The Static.java class is ready-to-use an Endpoint for serving static content. In the Config.java class set the desired document root directory. When this endpoint is invoked, it will take the local part of the URL, strip its own name from it, append the remainder to the document root and will serve the resulting resource. If you want the local part of your  static URLs to begin not with /Static but with something else, either rename this class and/or set up a rewrite URL in your reverse proxy (load balancer). 
+
+The Stats.java is an Endpoint providing run-time statistics for the local server. When this endpoint is invoked, it will retrieve the summary data for the specified interval and serve it as text or JSON. If you want the local part of your  static URLs to begin not with /Static but with something else, either rename this class and/or set up a rewrite URL in your reverse proxy (load balancer).
+
 To create your own endpoint, just copy the EndpointExample.java class and use it as template. You will ask find ready-to-use code samples in it. 
 
 THE CORE
@@ -28,7 +32,7 @@ The core package consists of several major parts:
 - HTTP parser which is triggered when new data arrives over TCP: these are the classes which names begin with 'Http'
 - Session manager which takes care of the session storage and its synchronisation between multiple servers: these are the classes which names begin with 'Session'
 - Objects for input and output of HTTP data between the TCP server and HTTP Parser: these are the classes which names begin with 'Task'
-- Auxiliary classes for logging (Logger.class), for service static content (StaticContent.class) and for automatic configuration upon start-up (ConfigAuto.class)
+- Auxiliary classes for logging (Logger.class) and for automatic configuration upon start-up (ConfigAuto.class)
 
 TCP SERVER
 
@@ -36,7 +40,18 @@ The TCP server is built using non-blocking I/O with one thread taking care of th
 
 When a new piece of data arrives, the TCP server will seek a free worker or spawn a new one if all a busy. It will then handle the data to the worker. Because in TCP there is no way to tell when transmission is complete and because with non-blocking I/O data is always received in chunks, it is up to the worker to decide whether the request is complete and should be processed or whether more data is expected. In the latter case, the worker will simply return and the next arriving chunk over the same channel will be appended to the previous by the main server thread. If the former case the worker will process the data and will write back a response; when sending it to the client, the main server thread will clean up the accumulated chunks in the channel, making it ready for next request. 
 
-The TCP server is run in two instances (i.e. two main server threads). One is for serving HTTP data, in which case the server thread spawns ServerWorkerHttp threads. Second is for serving Session Storage Manager for sending sessions when asked by another server and uses a separate TCP socket; in this case worker threads are of type ServerWorkerSessionManager. 
+The TCP server is run in two instances (i.e. two main server threads). One is for serving HTTP data, in which case the server thread spawns ServerWorkerHttp threads. Second is for serving Session Storage Manager for sending sessions when asked by another server and uses a separate TCP socket; in this case worker threads are of type ServerWorkerSessionManager.
+
+The statistics gathering runs at two tiers: 
+- After serving a request, each ServerWorkerHttp or ServerWorkerSessionManager worker will write some statistics in ServerStatsSchedule static hash maps (<Long,Long>): one table for the number of requests served by each worker (incremented per worker after a request is served) and one table for the total execution time (sum per worker). Worker therads use their creation tumestamp as unique key. The ServerStatsSchedule class keeps 2 sets of such maps, one for HTTP workers and one for Session Manager workers. 
+- A separate thread with the ServerStatsSchedule class, which invokes every minute the ServerStatsTask. The task goes over the tables form the previous points and sums up their contents.also counting the number of records. It then writes the sumamry for served requests, busy time and number of workers into three aggregation static hash maps (<Long,Long>) in the ServerStatsSchedule. In these maps the timestamp of the aggregation is the key. When aggregation completes, the ServerStatsTask clears the hash maps used by the workers. It also removes all records that are older than 15 minutes from the aggregation hash maps. The ServerStatsSchedule class keeps 2 sets of aggregation maps, one for HTTP workers and one for Session Manager workers. 
+
+When the Static.java class is invoked to serve statistics, it uses an offset from the current time and fetches all aggregated records within the resulting timeframe. It then calculates several numebrs and gives them back as either text (key/value pais, this is default) or JSON (if format=json is specified in the GET request). By default, the information is returned for the last 5 minutes; you can change this by specifying offset=X where X is the number of minutes (min 1, max 15). By default, the information is returned for the HTTP serving threads; if you are interested in the Session Manager threads, add source=sm to the GET parameters. The following numbers are returned: 
+- server_uptime: number of milliseconds since the server was started
+- total_requests: number of requests served during the specified interval
+- avg_threads: average number of active threads
+- avg_exec_time: average execution time per request in milliseconds
+- avg_busy_percent: average percent of the time each worker was busy
 
 HTTP PARSER
 

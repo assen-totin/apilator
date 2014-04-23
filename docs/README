@@ -39,13 +39,14 @@ Apilator provides a standard access long in the NCSA's Common Format. It's locat
 
 In addition to it, Apilator writes system messages to its STDOUT and STDERR. It implements 7 standard levels of logging, from 0 (meaning no logging at all) to 6 (debug logging). Messages with level 1 (critical) and 2 (error) are written to both STDERR and STDOUT; all messages with levels 3-6 (warning, notice, trace, debug) are only written to STDOUT. It is up to you to decide if and where these messages get sent or written. 
 
-Apilator keeps and provides automated runtime statistics through the API endpoint /Stats in the com.zavedil.apilator.app package. You can rename the Stats.java class to anything else desired. By default, the information is provided in plain text as name-value pairs; if you send format=json in your GET request, the data will be returned as JSON instead. The following numbers are provided: 
-- server_uptime: number of milliseconds taken from the oldest running thread
-- total_threads: number of currently running threads
-- total_requests: number of requests served since power up
-- avg_exec_time: average execution time per request in milliseconds. 
+Apilator keeps and provides automated runtime statistics through the API endpoint /Stats in the com.zavedil.apilator.app package. You can rename the Stats.java class to anything else desired. By default, the information is provided in plain text as name-value pairs; if you send format=json in your GET request, the data will be returned as JSON instead. By default, the information is returned for the last 5 minutes; you can change this with specifying offset=X where X is the number of minutes (min 1, max 15). By default, the information is returned for the HTTP serving threads; if you are interested in the Session Manager threads, add source=sm to the GET parameters. The following numbers are returned: 
+- server_uptime: number of milliseconds since the server was started
+- total_requests: number of requests served during the specified interval
+- avg_threads: average number of active threads
+- avg_exec_time: average execution time per request in milliseconds
+- avg_busy_percent: average percent of the time each worker was busy
 
-All statistics data is gathered since server's power up and is never flushed, hence numbers will always be increasing. Statistics is per-server, so if you run multiple servers, you need to query each separately. Many popular network graphing tools like MRTG, Cacti etc. know how to build nice graphs with per-time-slot numbers from such incremental data. 
+Statistics is per-server, so if you run multiple servers, you need to query each separately.  
 
 
 HTTP INTERFACE
@@ -65,7 +66,7 @@ Apilator speaks HTTP and supports versions 1.0 and 1.1. However, there are certa
 SERVING CONTENT
 ===============
 
-Apilator can serve static content. In the Config.java class set the desired static location (default value is "/static") and the corresponding document root directory in your filesystem. If the local part of the supplied URL in a request begins with the same string as the static location, everything else in it will be mapped 1:1 to the document root directory and, if found, served. 
+Apilator can serve static content. In the Config.java class set the desired document root directory in your filesystem. In the com.zavedil.zapilator.app package you will find a ready to use endpoint named Static.java. When this endpoint is invoked, it will take the local part of the URL, strip its own name from it, append the remainder to the document root and will serve the resulting resource. If you want the local part of your  static URLs to begin not with /Static but with something else, either rename this class and/or set up a rewrite URL in your reverse proxy (load balancer).
 
 When serving static content Apilator will do its best to provide proper MIME type guessed from file's content. MIME type configuration by file name matching (i.e. by filename's "extension") is not supported. 
 
