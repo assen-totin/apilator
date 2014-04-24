@@ -38,42 +38,57 @@ public class Main {
 			// Init the session storage (load form disk cache)
 			SessionStorage.init();
 			
-			// Start statistics gathering thread
-			ServerStatsScheduler sss = new ServerStatsScheduler();
-			Thread sss_t = new Thread(sss);
-			sss_t.start();		
+			// Start Session Manager Clean-upper thread
+			/*
+			SessionManagerCleanup smcs = new SessionManagerCleanup();
+			Thread smcs_t = new Thread (smcs);
+			smcs_t.start();
+			*/
+			SessionManagerCleanup.init();
 			
 			// Start the session storage manager thread for sending
+			/*
 			SessionManagerSendScheduler sm_send = new SessionManagerSendScheduler();
 			Thread sm_send_t = new Thread(sm_send);
 			sm_send_t.start();
-			
+			*/
+			SessionManagerSendScheduler.init();
+					
 			// Start the session storage manager thread for receiving
 			SessionManagerReceive sm_receive = new SessionManagerReceive();
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
 					
 			// Start one worker for Session Manager requests
+			/*
 			ServerWorkerSessionManager worker_sm = new ServerWorkerSessionManager();
 			new Thread(worker_sm).start();
+			*/
 			
 			// Start the Session Manager server 
-			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
-
-			// Start Session Manager Clean-upper thread
-			SessionManagerCleanupScheduler smcs = new SessionManagerCleanupScheduler();
-			Thread smcs_t = new Thread (smcs);
-			smcs_t.start();
+			//new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
+			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort)).start();
 			
 			// Start one worker for HTTP requests
+			/*
 			ServerWorkerHttp worker = new ServerWorkerHttp();
 			new Thread(worker).start();
+			*/
 			
 			// Start the HTTP server
-			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
+			//new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
+			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort)).start();
+			
+			// Start statistics gathering thread
+			/*
+			ServerStatsScheduler sss = new ServerStatsScheduler();
+			Thread sss_t = new Thread(sss);
+			sss_t.start();		
+			*/
+			ServerStats.init();
 			
 			//Stats: uptime
-			ServerStatsScheduler.server_boottime = System.currentTimeMillis();
+			ServerStats.server_boottime = System.currentTimeMillis();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();

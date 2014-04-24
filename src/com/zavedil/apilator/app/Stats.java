@@ -59,22 +59,22 @@ public class Stats extends Endpoint {
 		// Should we report for HTTP or for Session Manager?
 		if (input.data.containsKey("source") && input.data.get("source").toString().equals("sm")) {
 			// Report for Session Manager 
-			total_requests = sum(ServerStatsScheduler.sm_requests_aggr, offset);
-			total_threads = sum(ServerStatsScheduler.sm_threads_aggr, offset) / offset;
-			total_exec = sum(ServerStatsScheduler.sm_exec_aggr, offset);
+			total_requests = sum(ServerStats.sm_requests_aggr, offset);
+			total_threads = sum(ServerStats.sm_threads_aggr, offset) / offset;
+			total_exec = sum(ServerStats.sm_exec_aggr, offset);
 			avg_exec = total_exec / total_requests;
 			avg_busy = 100 * total_exec / (total_threads * offset * 60 * 1000);	// Percentage average per thread
 		}
 		else {
 			// Report for HTTP
-			total_requests = sum(ServerStatsScheduler.http_requests_aggr, offset);
-			total_threads = sum(ServerStatsScheduler.http_threads_aggr, offset) / offset;
-			total_exec = sum(ServerStatsScheduler.http_exec_aggr, offset);
+			total_requests = sum(ServerStats.http_requests_aggr, offset);
+			total_threads = sum(ServerStats.http_threads_aggr, offset) / offset;
+			total_exec = sum(ServerStats.http_exec_aggr, offset);
 			avg_exec = total_exec / total_requests;
 			avg_busy = 100 * total_exec / (total_threads * offset * 60 * 1000);	// Percentage average per thread
 		}
 		
-		server_uptime = System.currentTimeMillis() - ServerStatsScheduler.server_boottime;		
+		server_uptime = System.currentTimeMillis() - ServerStats.server_boottime;		
 		
 		// Should we send in plain text or in JSON?
 		String resp;

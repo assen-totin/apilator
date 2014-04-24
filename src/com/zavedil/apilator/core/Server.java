@@ -68,21 +68,29 @@ public class Server implements Runnable {
 	private final int mode;
 
 	/**
-	 * Constructor for HTTP server
+	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
 	 * @param port int TCP port to bind to.
 	 * @param worker ServerWorkerHttp Initial worker to add to the pool
 	 * @throws IOException
 	 */
-	public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
+	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
+	public Server(int mode, InetAddress hostAddress, int port) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.mode = mode;
 		this.selector = this.initSelector();
-		workers_http.add(worker);
+		//workers_http.add(worker);
 	}
 
-	// Declare the server for HTTP
+	/**
+	 * Constructor for Session Manager server
+	 * @param hostAddress InetAddress Network address to bind to.
+	 * @param port int TCP port to bind to.
+	 * @param worker ServerWorkerHttp Initial worker to add to the pool
+	 * @throws IOException
+	 */
+	/*
 	public Server(int mode, InetAddress hostAddress, int port, ServerWorkerSessionManager worker) throws IOException {
 		this.hostAddress = hostAddress;
 		this.port = port;
@@ -90,7 +98,7 @@ public class Server implements Runnable {
 		this.selector = this.initSelector();
 		workers_sm.add(worker);
 	}
-	
+	*/
 	/**
 	 * Method to send data (reponse) to the remote client
 	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
@@ -276,8 +284,7 @@ public class Server implements Runnable {
 				new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 			}			
 		}
-		
-		
+			
 		//this.worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)

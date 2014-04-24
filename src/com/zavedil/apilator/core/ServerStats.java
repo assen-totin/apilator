@@ -26,8 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class ServerStatsScheduler implements Runnable {
-	private String className;
+//public class ServerStatsScheduler implements Runnable {
+public class ServerStats {
+	public static final String className = "ServerStats";
 	
 	// Server absolute uptime
 	public static long server_boottime = 0;
@@ -67,7 +68,8 @@ public class ServerStatsScheduler implements Runnable {
 	 * Runnable. 
 	 * Create initial storage. 
 	 */
-	public void run() {
+	//public void run() {
+	public static void init() {
 		Logger.trace(className, "Running new as a new thread.");
 			
 		Timer time = new Timer();
@@ -85,57 +87,57 @@ public class ServerStatsScheduler implements Runnable {
 					long sm_exec = 0;
 					
 					// HTTP number of requests for the last minute
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.http_requests.entrySet()) {
+					for (Map.Entry<Long, Long> pair : ServerStats.http_requests.entrySet()) {
 						http_requests += pair.getValue();
 						http_threads++;
 				    }
 					
 					// HTTP exec time for last minute
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.http_exec.entrySet())
+					for (Map.Entry<Long, Long> pair : ServerStats.http_exec.entrySet())
 						http_exec += pair.getValue();
 					
 					// Session Manager number of requests for the last minute
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.sm_requests.entrySet()) {
+					for (Map.Entry<Long, Long> pair : ServerStats.sm_requests.entrySet()) {
 						sm_requests += pair.getValue();
 						sm_threads++;
 				    }
 					
 					// Session Manager exec time for last minute
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.sm_exec.entrySet())
+					for (Map.Entry<Long, Long> pair : ServerStats.sm_exec.entrySet())
 						sm_exec += pair.getValue();	
 					
 					long now = System.currentTimeMillis();
 					
 					// Save results - HTTP
-					ServerStatsScheduler.http_requests_aggr.put(now, http_requests);
-					ServerStatsScheduler.http_exec_aggr.put(now, http_exec);
-					ServerStatsScheduler.http_threads_aggr.put(now, http_threads);
+					ServerStats.http_requests_aggr.put(now, http_requests);
+					ServerStats.http_exec_aggr.put(now, http_exec);
+					ServerStats.http_threads_aggr.put(now, http_threads);
 					// Save results - SM
-					ServerStatsScheduler.sm_requests_aggr.put(now, sm_requests);
-					ServerStatsScheduler.sm_exec_aggr.put(now, sm_exec);
-					ServerStatsScheduler.sm_threads_aggr.put(now, sm_threads);
+					ServerStats.sm_requests_aggr.put(now, sm_requests);
+					ServerStats.sm_exec_aggr.put(now, sm_exec);
+					ServerStats.sm_threads_aggr.put(now, sm_threads);
 					
 					// Cleanup - HTTP
-					ServerStatsScheduler.http_requests.clear();
-					ServerStatsScheduler.http_exec.clear();
+					ServerStats.http_requests.clear();
+					ServerStats.http_exec.clear();
 					// Cleanup - SM
-					ServerStatsScheduler.sm_requests.clear();
-					ServerStatsScheduler.sm_exec.clear();
+					ServerStats.sm_requests.clear();
+					ServerStats.sm_exec.clear();
 					// Cleanup - aggregated - remove everything that is older than 15 minutes
 					long offset = (15 + 1) * 60 * 1000; 
 
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.http_requests_aggr.entrySet())
+					for (Map.Entry<Long, Long> pair : ServerStats.http_requests_aggr.entrySet())
 						if ((now - pair.getKey()) > offset)
-							ServerStatsScheduler.http_requests_aggr.remove(pair.getKey());
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.http_exec_aggr.entrySet())
+							ServerStats.http_requests_aggr.remove(pair.getKey());
+					for (Map.Entry<Long, Long> pair : ServerStats.http_exec_aggr.entrySet())
 						if ((now - pair.getKey()) > offset)
-							ServerStatsScheduler.http_exec_aggr.remove(pair.getKey());
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.sm_requests_aggr.entrySet())
+							ServerStats.http_exec_aggr.remove(pair.getKey());
+					for (Map.Entry<Long, Long> pair : ServerStats.sm_requests_aggr.entrySet())
 						if ((now - pair.getKey()) > offset)
-							ServerStatsScheduler.sm_requests_aggr.remove(pair.getKey());
-					for (Map.Entry<Long, Long> pair : ServerStatsScheduler.sm_exec_aggr.entrySet())
+							ServerStats.sm_requests_aggr.remove(pair.getKey());
+					for (Map.Entry<Long, Long> pair : ServerStats.sm_exec_aggr.entrySet())
 						if ((now - pair.getKey()) > offset)
-							ServerStatsScheduler.sm_exec_aggr.remove(pair.getKey());
+							ServerStats.sm_exec_aggr.remove(pair.getKey());
 				}
 			}, 
 			0, 60000);

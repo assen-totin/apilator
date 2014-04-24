@@ -28,20 +28,24 @@ import com.zavedil.apilator.app.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManagerSendScheduler implements Runnable {
-	private final String className;
-	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
+//public class SessionManagerSendScheduler implements Runnable {
+public class SessionManagerSendScheduler {
+	private static final String className = "SessionManagerSendScheduler";
+	public static final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
 	
+	/*
 	public SessionManagerSendScheduler() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
+	*/
 	
 	/**
 	 * Runnable. 
 	 * Create initial storage. 
 	 */
-	public void run() {
+	//public void run() {
+	public static void init() {
 		Logger.trace(className, "Running new as a new thread.");
 		
 		InetAddress multicast_group;
@@ -51,7 +55,6 @@ public class SessionManagerSendScheduler implements Runnable {
 			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
 			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
 			multicast_socket.joinGroup(multicast_group);
-
 			
 			Timer time = new Timer();
 			SessionManagerSendTask smst = new SessionManagerSendTask(multicast_group, multicast_socket);

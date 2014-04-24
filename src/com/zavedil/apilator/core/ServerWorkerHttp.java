@@ -151,16 +151,16 @@ public class ServerWorkerHttp implements Runnable {
 		}
 		
 		// Stats
-		if (ServerStatsScheduler.http_requests.containsKey(created)) {
-			requests = ServerStatsScheduler.http_requests.get(created);
+		if (ServerStats.http_requests.containsKey(created)) {
+			requests = ServerStats.http_requests.get(created);
 			requests ++;			
 		}
-		ServerStatsScheduler.http_requests.put(created, requests);
+		ServerStats.http_requests.put(created, requests);
 		
 		exec_time = System.currentTimeMillis() - run_start_time;
-		if (ServerStatsScheduler.http_exec.containsKey(created))
-			exec_time += ServerStatsScheduler.http_exec.get(created);
-		ServerStatsScheduler.http_exec.put(created, exec_time);
+		if (ServerStats.http_exec.containsKey(created))
+			exec_time += ServerStats.http_exec.get(created);
+		ServerStats.http_exec.put(created, exec_time);
 				
 		// Ready for new task
 		busy = false;

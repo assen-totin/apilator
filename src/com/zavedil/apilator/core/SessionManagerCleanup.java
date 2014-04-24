@@ -34,20 +34,24 @@ import com.zavedil.apilator.app.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManagerCleanupScheduler implements Runnable {
-	private final String className;
+//public class SessionManagerCleanup implements Runnable {
+public class SessionManagerCleanup {
+	public final static String className = "SessionManagerCleanup";
 	
-	public SessionManagerCleanupScheduler() {
+	/*
+	public SessionManagerCleanup() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
+	*/
 	
 	/**
 	 * Runnable. 
 	 * Create initial storage. 
 	 */
-	public void run() {
-		Logger.trace(className, "Running new as a new thread.");
+	//public void run() {
+	public static void init() {
+		//Logger.trace(className, "Running new as a new thread.");
 			
 		Timer time = new Timer();
 

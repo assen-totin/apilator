@@ -119,16 +119,16 @@ public class ServerWorkerSessionManager implements Runnable {
 		}
 
 		// Stats
-		if (ServerStatsScheduler.sm_requests.containsKey(created)) {
-			requests = ServerStatsScheduler.sm_requests.get(created);
+		if (ServerStats.sm_requests.containsKey(created)) {
+			requests = ServerStats.sm_requests.get(created);
 			requests ++;			
 		}
-		ServerStatsScheduler.sm_requests.put(created, requests);
+		ServerStats.sm_requests.put(created, requests);
 		
 		exec_time = System.currentTimeMillis() - run_start_time;
-		if (ServerStatsScheduler.http_exec.containsKey(created))
-			exec_time += ServerStatsScheduler.http_exec.get(created);
-		ServerStatsScheduler.sm_exec.put(created, exec_time);
+		if (ServerStats.http_exec.containsKey(created))
+			exec_time += ServerStats.http_exec.get(created);
+		ServerStats.sm_exec.put(created, exec_time);
 				
 		// Ready for new task
 		busy = false;
