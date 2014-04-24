@@ -46,7 +46,7 @@ public class SessionManagerSendScheduler {
 	 */
 	//public void run() {
 	public static void init() {
-		Logger.trace(className, "Running new as a new thread.");
+		Logger.trace(className, "Initializing.");
 		
 		InetAddress multicast_group;
 		MulticastSocket multicast_socket;

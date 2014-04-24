@@ -62,17 +62,19 @@ public class Stats extends Endpoint {
 			total_requests = sum(ServerStats.sm_requests_aggr, offset);
 			total_threads = sum(ServerStats.sm_threads_aggr, offset) / offset;
 			total_exec = sum(ServerStats.sm_exec_aggr, offset);
-			avg_exec = total_exec / total_requests;
-			avg_busy = 100 * total_exec / (total_threads * offset * 60 * 1000);	// Percentage average per thread
 		}
 		else {
 			// Report for HTTP
 			total_requests = sum(ServerStats.http_requests_aggr, offset);
 			total_threads = sum(ServerStats.http_threads_aggr, offset) / offset;
 			total_exec = sum(ServerStats.http_exec_aggr, offset);
-			avg_exec = total_exec / total_requests;
-			avg_busy = 100 * total_exec / (total_threads * offset * 60 * 1000);	// Percentage average per thread
+			Logger.debug(className,"TOTAL_THREADS: " + total_threads);
 		}
+		
+		if (total_requests > 0)
+			avg_exec = total_exec / total_requests;
+		if (total_threads > 0)
+			avg_busy = 100 * total_exec / (total_threads * offset * 60 * 1000);	// Percentage average per thread
 		
 		server_uptime = System.currentTimeMillis() - ServerStats.server_boottime;		
 		

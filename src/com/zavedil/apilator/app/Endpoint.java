@@ -153,7 +153,8 @@ public abstract class Endpoint {
 		String output = "";
 		String[] parts = input.location.split("/");
 		
-		for (int i=1; i<parts.length; i++)
+		// Because we have a leading slash, the first element is empty and the second is the endpoint - skip both of them
+		for (int i=2; i<parts.length; i++)
 			output += "/" + parts[i];
 		
 		return output;

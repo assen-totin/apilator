@@ -32,8 +32,8 @@ public class Config {
 	public static final String AccessLog = "/tmp/apilator.log";
 	
 	// DocumentRoot for serving static content
-	//private static final String DocumentRoot = "/Users/assen/Desktop/L";
-	public static final String DocumentRoot = "/root/Desktop/_Pics/L";
+	public static final String DocumentRoot = "/Users/assen/Desktop/L";
+	//public static final String DocumentRoot = "/root/Desktop/_Pics/L";
 		
 	// Log level
 	public static final int LogLevel = 6; // LOG_DEBUG

@@ -75,9 +75,11 @@ public class Static extends Endpoint {
 
             inputStream.close();
             
-            String file_name = fs_part.substring(1);
-            Path path = FileSystems.getDefault().getPath(document_root, file_name);
+            // MIME type detection (not working on OS X, buggy Java)
+            Path path = FileSystems.getDefault().getPath(file);
             output.mime_type = Files.probeContentType(path);
+            if (output.mime_type == null)
+            	output.mime_type = "application/octet-stream";
         }
         catch(IOException ex) {
         	output.http_status = 404;
