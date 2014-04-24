@@ -71,7 +71,7 @@ public class SessionStorage {
 		// Update TTL for locally generated/modified sessions
 		long now = System.currentTimeMillis();
 
-		// Add optional expiration date for a cookie		
+		// Update session TTL?
 		if (Config.SessionCookieExpire > 0)
 			// Extend the cookie life with the specified TTL
 			session.setTtl(now + Config.SessionCookieExpire);
@@ -80,13 +80,16 @@ public class SessionStorage {
 			session.setTtl(session.getCreated() + (-1 * Config.SessionCookieExpire));
 		// else do not touch the TTL
 		
-		// Store locally
-		storage.put(session_id, session);
-		
-		// Add to network queue
-		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
-		session_message.updated = session.getUpdated();
-		queue_multicast.put(session_id, session_message);
+		// Changes to save?
+		if (saveSession(session_id, session.getUpdated())) {
+			// Store locally
+			storage.put(session_id, session);
+			
+			// Add to network queue
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
+			session_message.updated = session.getUpdated();
+			queue_multicast.put(session_id, session_message);	
+		}
 	}
 	
 	/**
