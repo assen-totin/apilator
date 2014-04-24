@@ -1,9 +1,15 @@
 package com.zavedil.apilator.core;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Map;
 import java.util.Timer;
+import java.util.TimerTask;
+
 import com.zavedil.apilator.app.*;
 
 /**
@@ -44,7 +50,32 @@ public class SessionManagerCleanupScheduler implements Runnable {
 		Logger.trace(className, "Running new as a new thread.");
 			
 		Timer time = new Timer();
-		SessionManagerCleanupTask smct = new SessionManagerCleanupTask();
-		time.schedule(smct, 0, Config.SessionManagerCleanupperInterval);
+
+		time.schedule(
+			new TimerTask(){
+				public void run() {
+					long now = System.currentTimeMillis();
+					
+					// Check if there are sessions which have expired: delete and send a notification to peers
+					for (Map.Entry<String,Session> pair : SessionStorage.storage.entrySet()) {
+						if (pair.getValue().getTtl() < now) 				
+							// Delete session from storage (will also send a DELETE message over multicast)
+							SessionStorage.del(pair.getKey());	
+				    }
+					
+					// Dump the storage to disk
+					try {
+						OutputStream fos = new FileOutputStream(Config.SessionManagerDiskCache);
+				        ObjectOutputStream oos = new ObjectOutputStream(fos);			        
+						oos.writeObject(SessionStorage.storage);
+						fos.close();
+					}
+					catch (IOException e) {
+						Logger.warning(className, "Could not write disk cache.");
+					}
+				}
+			}, 
+			0, Config.SessionManagerCleanupperInterval
+		);
     }
 }
