@@ -59,6 +59,8 @@ public class SessionManagerSendTask extends TimerTask {
 				packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
 				multicast_socket.send(packet);
 				
+				Logger.debug(className, "SENDING MULTICAST: " + pair.getKey());
+				
 		        // Remove from queue
 		        SessionStorage.queue_multicast.remove(pair.getKey());	        
 		    }

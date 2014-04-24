@@ -107,8 +107,7 @@ public class ServerWorkerSessionManager implements Runnable {
 			if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
 				Session new_session = sc.getSession();
 				// Make sure we still don't have the session (or it is a lower revision), then save it directly
-				if (SessionStorage.saveSession(new_session.getSessionId(), new_session.getUpdated()))
-						SessionStorage.storage.put(new_session.getSessionId(), new_session);
+				SessionStorage.putFromNetwork(new_session);
 			}
 			
 			SessionMessage msg_out2 = new SessionMessage(msg.session_id, SessionMessage.ACT_NOOP);		        

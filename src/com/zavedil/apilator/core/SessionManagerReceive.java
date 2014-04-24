@@ -96,7 +96,7 @@ public class SessionManagerReceive implements Runnable {
 					// Send the SessionMessage and expect a Session back
 					if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
 						Session new_session = sc.getSession();
-						SessionStorage.putFromNetwork(new_session.getSessionId(), new_session);
+						SessionStorage.putFromNetwork(new_session);
 					}					
 				}
 				break;

@@ -94,12 +94,12 @@ public class SessionStorage {
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void putFromNetwork(String session_id, Session session) {
+	public static void putFromNetwork(Session session) {
 		// Only save the session if it does not exists or  
 		// if the 'updated' field of the supplied session is newer than the 'updated' field in the existing session  
-		if (SessionStorage.saveSession(session_id, session.getUpdated()))
+		if (SessionStorage.saveSession(session.getSessionId(), session.getUpdated()))
 			// Store locally
-			storage.put(session_id, session);
+			storage.put(session.getSessionId(), session);
 	}
 	
 	/**
@@ -117,10 +117,12 @@ public class SessionStorage {
 			queue_multicast.put(session_id, session_message);
 			
 			try {
+				Logger.debug(className, "GOING TO SLEEP...");
 				Thread.sleep(Config.SessionManagerTimeout);
 			} 
 			catch (InterruptedException e) {
 				// There's little we can if our sleep was interrupted - just go on
+				Logger.debug(className, "SLEEP INTERRUPTED!...");
 				;
 			}
 			

@@ -56,6 +56,8 @@ public class SessionClient {
 			  ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			  oos.writeObject(message);
 			  
+			  Logger.debug(className, "SENDING UNCIAST: " + message.type);
+			  
 			  ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 			  try {
 				  switch (answer_type) {
