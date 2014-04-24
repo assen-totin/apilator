@@ -126,6 +126,8 @@ public class SessionStorage {
 				;
 			}
 			
+			Logger.debug(className, "AWAIKENING...");
+			
 			// See if we received the object
 			session = storage.get(session_id);
 		}

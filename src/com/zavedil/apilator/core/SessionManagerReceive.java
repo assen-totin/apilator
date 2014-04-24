@@ -84,6 +84,10 @@ public class SessionManagerReceive implements Runnable {
 		SessionMessage msg_out;
 		SessionClient sc;
 		
+		// If we are the sender, just return
+		if (message.ip.equals(ConfigAuto.ip))
+			return;
+		
 		Logger.debug(className, "GOT MULTICAST WITH TYPE: " + message.type);
 		
 		switch(message.type) {
