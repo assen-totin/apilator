@@ -90,6 +90,8 @@ public class ServerWorkerSessionManager implements Runnable {
 			return;
 		}
 		
+		Logger.debug(className, "GOT UNICAST WITH TYPE: " + msg.type);
+		
 		// Process a GET request for an object ID, return the object if found
 		if ((msg.type == SessionMessage.ACT_GET) && SessionStorage.exists(msg.session_id)) {
 			Session session = SessionStorage.get(msg.session_id);
@@ -97,14 +99,16 @@ public class ServerWorkerSessionManager implements Runnable {
 			oos.writeObject(session);
 		}
 		
-		// Process ISAT response to a multicaset WHOHAS, fetch the object from the originator using GET, then return ACT_NOOP
+		// Process ISAT response to a multicast WHOHAS, fetch the object from the originator using GET, then return ACT_NOOP
 		if (msg.type == SessionMessage.ACT_ISAT) {
 			SessionMessage msg_out = new SessionMessage(msg.session_id, SessionMessage.ACT_GET);
 			SessionClient sc = new SessionClient(msg.ip, msg_out);
 			// Send the SessionMessage and expect a Session back
 			if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
 				Session new_session = sc.getSession();
-				SessionStorage.put(new_session.getSessionId(), new_session);
+				// Make sure we still don't have the session (or it is a lower revision), then save it directly
+				if (SessionStorage.saveSession(new_session.getSessionId(), new_session.getUpdated()))
+						SessionStorage.storage.put(new_session.getSessionId(), new_session);
 			}
 			
 			SessionMessage msg_out2 = new SessionMessage(msg.session_id, SessionMessage.ACT_NOOP);		        

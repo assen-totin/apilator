@@ -84,6 +84,8 @@ public class SessionManagerReceive implements Runnable {
 		SessionMessage msg_out;
 		SessionClient sc;
 		
+		Logger.debug(className, "GOT MULTICAST WITH TYPE: " + message.type);
+		
 		switch(message.type) {
 			case SessionMessage.ACT_STORE:
 				// First check if we already have this or later version before requesting
@@ -103,9 +105,11 @@ public class SessionManagerReceive implements Runnable {
 				SessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.ACT_WHOHAS:
-				// If we have this session, send back a unicast reply that we have it
+				// If we have this session, send back a unicast reply that we have it (adding its updated timestamp)
 				if (SessionStorage.exists(message.session_id)) {
+					Session sess_tmp = SessionStorage.storage.get(message.session_id);
 					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_ISAT);
+					msg_out.updated = sess_tmp.getUpdated();
 					sc = new SessionClient(message.ip, msg_out);
 					// Send the SessionMessage and expect a SessionMessage back
 					// (we don't care for it so won't fetch it)
