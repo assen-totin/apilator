@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-//public class ServerStatsScheduler implements Runnable {
 public class ServerStats {
 	public static final String className = "ServerStats";
 	
@@ -73,8 +72,6 @@ public class ServerStats {
 		Logger.trace(className, "Initializing.");
 			
 		Timer time = new Timer();
-		//ServerStatsTask sst = new ServerStatsTask();
-		//time.schedule(sst, 0, 60000);
 		time.schedule(
 			new TimerTask(){
 				public void run() {

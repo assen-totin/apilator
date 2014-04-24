@@ -58,33 +58,16 @@ public class Main {
 			SessionManagerReceive sm_receive = new SessionManagerReceive();
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
-					
-			// Start one worker for Session Manager requests
-			/*
-			ServerWorkerSessionManager worker_sm = new ServerWorkerSessionManager();
-			new Thread(worker_sm).start();
-			*/
-			
+								
 			// Start the Session Manager server 
 			//new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
 			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort)).start();
-			
-			// Start one worker for HTTP requests
-			/*
-			ServerWorkerHttp worker = new ServerWorkerHttp();
-			new Thread(worker).start();
-			*/
-			
+					
 			// Start the HTTP server
 			//new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
 			new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort)).start();
 			
 			// Start statistics gathering thread
-			/*
-			ServerStatsScheduler sss = new ServerStatsScheduler();
-			Thread sss_t = new Thread(sss);
-			sss_t.start();		
-			*/
 			ServerStats.init();
 			
 			//Stats: uptime
