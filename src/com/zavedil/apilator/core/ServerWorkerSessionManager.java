@@ -92,7 +92,7 @@ public class ServerWorkerSessionManager implements Runnable {
 		Logger.debug(className, "GOT UNICAST WITH TYPE: " + sm_in.type);
 		
 		// Process a STORE request for an object
-		if (sm_in.type == SessionMessage.ACT_STORE) {
+		if (sm_in.type == SessionMessage.ACT_POST) {
 			if (SessionStorage.saveSession(sm_in.session.getSessionId(), sm_in.session.getUpdated()))
 				SessionStorage.putFromNetwork(sm_in.session);
 			
@@ -103,7 +103,7 @@ public class ServerWorkerSessionManager implements Runnable {
 	
 		// Process a GET request for an object ID, return the object if found
 		else if ((sm_in.type == SessionMessage.ACT_GET) && SessionStorage.exists(sm_in.session_id)) {
-			SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_STORE);
+			SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_POST);
 			sm_store.session = SessionStorage.get(sm_in.session_id);
 			// Serialize session and send back		        
 			oos.writeObject(sm_store);

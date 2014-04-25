@@ -30,10 +30,10 @@ public class SessionMessage implements java.io.Serializable {
 	public static final int ACT_NOOP = 0;	// Take no action
 	public static final int ACT_AVAIL = 1;	// Used when multicasting an available update
 	public static final int ACT_DELETE = 2;	// Used when multicasting a deletion
-	public static final int ACT_WHOHAS = 3;	// Used when asking for the value of the specified key
-	public static final int ACT_ISAT = 4;	// Used when announcing key availability for unicast retrieval
-	public static final int ACT_GET = 5;	// Used when requesting a session for unicast retrieval
-	public static final int ACT_STORE = 6;	// Used when sending a session over unicast
+	public static final int ACT_WHOHAS = 3;	// Used when multicasting a question asking who has a specified key
+	public static final int ACT_ISAT = 4;	// Used when unicasting key availability
+	public static final int ACT_GET = 5;	// Used when unicasting session retrieval request
+	public static final int ACT_POST = 6;	// Used when unicasting a sending a session
 	
 	private static final long serialVersionUID = 1L;
 	public final int type;

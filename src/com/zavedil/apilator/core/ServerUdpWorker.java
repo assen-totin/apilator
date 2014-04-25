@@ -39,7 +39,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ServerWorkerUdp implements Runnable {
+public class ServerUdpWorker implements Runnable {
 	private List<ServerUdpDataEvent> queue = new LinkedList<ServerUdpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
@@ -51,7 +51,7 @@ public class ServerWorkerUdp implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerWorkerUdp() {
+	public ServerUdpWorker() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -92,32 +92,26 @@ public class ServerWorkerUdp implements Runnable {
 		
 		Logger.debug(className, "GOT UNICAST WITH TYPE: " + sm_in.type);
 		
-		// Process a STORE request for an object
-		if (sm_in.type == SessionMessage.ACT_STORE) {
+		// Process a POST request for an object
+		if (sm_in.type == SessionMessage.ACT_POST) {
 			if (SessionStorage.saveSession(sm_in.session.getSessionId(), sm_in.session.getUpdated()))
 				SessionStorage.putFromNetwork(sm_in.session);
 			
-			SessionMessage sm_noop = new SessionMessage(sm_in.session_id, SessionMessage.ACT_NOOP);
+			//SessionMessage sm_noop = new SessionMessage(sm_in.session_id, SessionMessage.ACT_NOOP);
 			// Serialize session and send back		        
-			oos.writeObject(sm_noop);
+			//oos.writeObject(sm_noop);
 		}
 	
 		// Process a GET request for an object ID, return the object if found
-		else if ((sm_in.type == SessionMessage.ACT_GET) && SessionStorage.exists(sm_in.session_id)) {
-			SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_STORE);
-			sm_store.session = SessionStorage.get(sm_in.session_id);
-			// Serialize session and send back		        
-			oos.writeObject(sm_store);
+		else if (sm_in.type == SessionMessage.ACT_GET) {
+			if (SessionStorage.exists(sm_in.session_id)) {
+				SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_POST);
+				sm_store.session = SessionStorage.get(sm_in.session_id);
+				// Serialize session and send back		        
+				oos.writeObject(sm_store);				
+			}
 		}
 	
-		/*
-		// Process ISAT response to a multicast WHOHAS - ask the originator to send us the session using ACT_GET
-		else if (sm_in.type == SessionMessage.ACT_ISAT) {
-			SessionMessage sm_get = new SessionMessage(sm_in.session_id, SessionMessage.ACT_GET);
-			oos.writeObject(sm_get);
-		}
-		*/
-		
     	// Push response back
 		response = os.toByteArray();
 		synchronized(queue) {

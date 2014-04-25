@@ -50,7 +50,7 @@ public class ServerUdp implements Runnable {
 	private int byteBufSize = 1500;
 
 	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerWorkerUdp> workers = new LinkedList<ServerWorkerUdp>();
+	private List<ServerUdpWorker> workers = new LinkedList<ServerUdpWorker>();
 
 	// A list of PendingChange instances
 	private List<ServerUdpChangeRequest> pendingChanges = new LinkedList<ServerUdpChangeRequest>();
@@ -200,7 +200,7 @@ public class ServerUdp implements Runnable {
 		boolean got_worker = false;
 		
 		// Worker threads for Session Manager
-		for (ServerWorkerUdp entry : workers) {
+		for (ServerUdpWorker entry : workers) {
 			if (!entry.isBusy()) {
 				got_worker = true;
 				entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
@@ -208,7 +208,7 @@ public class ServerUdp implements Runnable {
 		}
 		if (!got_worker) {
 			// Spawn a new worker thread, add it to the pool
-			ServerWorkerUdp new_worker = new ServerWorkerUdp();
+			ServerUdpWorker new_worker = new ServerUdpWorker();
 			new Thread(new_worker).start();
 			workers.add(new_worker);
 			new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);

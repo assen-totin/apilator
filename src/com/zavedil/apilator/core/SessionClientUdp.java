@@ -22,72 +22,48 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.Socket;
 import com.zavedil.apilator.app.*;
 
-public class SessionClient {
+public class SessionClientUdp {
 	private final String className;
 	private final InetAddress ip;
-	private SessionMessage sm_out, sm_in;
-	private Session session;
-
-	public SessionClient(InetAddress ipaddr, SessionMessage msg) {
+	private SessionMessage session_message;
+	
+	public SessionClientUdp(InetAddress ipaddr, SessionMessage msg) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		ip = ipaddr;
-		sm_out = msg;
+		session_message = msg;
 	}
 	
 	public boolean send() {
 		boolean res = true;
 		
 		try {
-			Socket socket = new Socket(ip, Config.SessionManagerTcpPort);
-			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			oos.writeObject(sm_out);
-			  
-			Logger.debug(className, "SENDING UNCIAST: " + sm_out.type);
-			  
-			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-			try {
-				sm_in = (SessionMessage)ois.readObject();
-			}
-			catch(ClassNotFoundException e) {
-				Logger.warning(className, "Incorrect session received from peer: " + ip.toString());
-				res = false;
-			}
-
-			switch(sm_in.type) {
-			case SessionMessage.ACT_POST:
-				// We have received a session, make it available downstream
-				session = sm_in.session;
-				break;
-			/*
-			  case SessionMessage.ACT_GET:
-				  // We have received invitation to get the session
-				  break;
-			*/
-			  }
-			  
-			 socket.close();			
+			byte[] send_buffer;
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(baos);	
+			oos.writeObject(session_message);
+			
+			send_buffer = baos.toByteArray();
+			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, ConfigAuto.ip, Config.SessionManagerTcpPort);
+			DatagramSocket socket = new DatagramSocket();
+			socket.send(packet);
+			socket.close();
+			 
+			Logger.debug(className, "SENDING UNCIAST: " + session_message.type);
 		}
 		catch (IOException e) {
-			Logger.warning(className, "Failed to obtain session from peer: " + ip.toString());
+			Logger.warning(className, "Failed to send session message to peer: " + ip.toString());
 			res = false;
 		}
 		
 		return res;
-	}
-	
-	public Session getSession() {
-		return session;
-	}
-	
-	public SessionMessage getSessionMessage() {
-		return sm_in;
 	}
 }
