@@ -61,7 +61,8 @@ public class Main {
 								
 			// Start the Session Manager server 
 			//new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort, worker_sm)).start();
-			new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort)).start();
+			//new Thread(new Server(Server.MODE_SESSION_MANAGER, null, Config.SessionManagerTcpPort)).start();
+			new Thread(new ServerUdp(null, Config.SessionManagerTcpPort)).start();
 					
 			// Start the HTTP server
 			//new Thread(new Server(Server.MODE_HTTP, null, Config.TcpPort, worker)).start();
