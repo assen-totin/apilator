@@ -32,47 +32,45 @@ import com.zavedil.apilator.app.*;
 public class SessionClient {
 	private final String className;
 	private final InetAddress ip;
-	private final SessionMessage message;
+	private SessionMessage sm_out, sm_in;
 	private Session session;
-	private SessionMessage session_message;
-	//private final int type;
 
-	public static final int MSG_TYPE_NONE = 0;
-	public static final int MSG_TYPE_SESSION = 1;
-	public static final int MSG_TYPE_SESSION_MESSAGE = 2;
-	
 	public SessionClient(InetAddress ipaddr, SessionMessage msg) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		ip = ipaddr;
-		message = msg;
+		sm_out = msg;
 	}
 	
-	public boolean send(int answer_type) {
+	public boolean send() {
 		boolean res = true;
 		
 		try {
 			  Socket socket = new Socket(ip, Config.SessionManagerTcpPort);
 			  ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			  oos.writeObject(message);
+			  oos.writeObject(sm_out);
 			  
-			  Logger.debug(className, "SENDING UNCIAST: " + message.type);
+			  Logger.debug(className, "SENDING UNCIAST: " + sm_out.type);
 			  
 			  ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 			  try {
-				  switch (answer_type) {
-				  case MSG_TYPE_SESSION:
-					  session = (Session)ois.readObject();
-					  break;
-				  case MSG_TYPE_SESSION_MESSAGE:
-					  session_message = (SessionMessage)ois.readObject();
-					  break;
-				  }
-				  
+				  sm_in = (SessionMessage)ois.readObject();
 			  }
 			  catch(ClassNotFoundException e) {
 				  Logger.warning(className, "Incorrect session received from peer: " + ip.toString());
 				  res = false;
+			  }
+
+			  switch(sm_in.type) {
+			  case SessionMessage.ACT_STORE:
+				  // We have received a session, make it available downstream
+				  session = sm_in.session;
+				  break;
+			/*
+			  case SessionMessage.ACT_GET:
+				  // We have received invitation to get the session
+				  break;
+			*/
 			  }
 			  
 			  socket.close();			
@@ -90,6 +88,6 @@ public class SessionClient {
 	}
 	
 	public SessionMessage getSessionMessage() {
-		return session_message;
+		return sm_in;
 	}
 }

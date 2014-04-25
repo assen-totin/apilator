@@ -86,7 +86,7 @@ public class SessionStorage {
 			storage.put(session_id, session);
 			
 			// Add to network queue
-			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_AVAIL);
 			session_message.updated = session.getUpdated();
 			queue_multicast.put(session_id, session_message);	
 		}

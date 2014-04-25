@@ -28,6 +28,7 @@ import java.util.HashMap;
 public class Session implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 	private final String className;
+	
 	// Key-value storage
 	private HashMap<String, Object> session_item = new HashMap<String, Object>();
 	// UNIX timestamps of creation, update and TTL

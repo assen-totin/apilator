@@ -68,18 +68,17 @@ public class ServerWorkerSessionManager implements Runnable {
 		long run_start_time = System.currentTimeMillis();
 		Logger.debug(className, "Entering function processData.");
 		
-		byte[] response;
-		
+		byte[] response;		
 		InputStream is = new ByteArrayInputStream(data);
-		ObjectInputStream ois = new ObjectInputStream(is);
-
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		
+		ObjectInputStream ois = new ObjectInputStream(is);
 		ObjectOutputStream oos = new ObjectOutputStream(os);
 		
-		SessionMessage msg = null;
+		SessionMessage sm_in = null;
 		
 		try {
-			msg = (SessionMessage)ois.readObject();
+			sm_in = (SessionMessage)ois.readObject();
 		} 
 		catch (ClassNotFoundException e) {
 			// If we got no object (deserialisation failed), just do nothing
@@ -90,30 +89,34 @@ public class ServerWorkerSessionManager implements Runnable {
 			return;
 		}
 		
-		Logger.debug(className, "GOT UNICAST WITH TYPE: " + msg.type);
+		Logger.debug(className, "GOT UNICAST WITH TYPE: " + sm_in.type);
 		
-		// Process a GET request for an object ID, return the object if found
-		if ((msg.type == SessionMessage.ACT_GET) && SessionStorage.exists(msg.session_id)) {
-			Session session = SessionStorage.get(msg.session_id);
-			// Serialize session and send back		        
-			oos.writeObject(session);
-		}
-		
-		// Process ISAT response to a multicast WHOHAS, fetch the object from the originator using GET, then return ACT_NOOP
-		if (msg.type == SessionMessage.ACT_ISAT) {
-			SessionMessage msg_out = new SessionMessage(msg.session_id, SessionMessage.ACT_GET);
-			SessionClient sc = new SessionClient(msg.ip, msg_out);
-			// Send the SessionMessage and expect a Session back
-			if (sc.send(SessionClient.MSG_TYPE_SESSION)) {
-				Session new_session = sc.getSession();
-				// Make sure we still don't have the session (or it is a lower revision), then save it directly
-				SessionStorage.putFromNetwork(new_session);
-			}
+		// Process a STORE request for an object
+		if (sm_in.type == SessionMessage.ACT_STORE) {
+			if (SessionStorage.saveSession(sm_in.session.getSessionId(), sm_in.session.getUpdated()))
+				SessionStorage.putFromNetwork(sm_in.session);
 			
-			SessionMessage msg_out2 = new SessionMessage(msg.session_id, SessionMessage.ACT_NOOP);		        
-			oos.writeObject(msg_out2);
+			SessionMessage sm_noop = new SessionMessage(sm_in.session_id, SessionMessage.ACT_NOOP);
+			// Serialize session and send back		        
+			oos.writeObject(sm_noop);
 		}
 	
+		// Process a GET request for an object ID, return the object if found
+		else if ((sm_in.type == SessionMessage.ACT_GET) && SessionStorage.exists(sm_in.session_id)) {
+			SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_STORE);
+			sm_store.session = SessionStorage.get(sm_in.session_id);
+			// Serialize session and send back		        
+			oos.writeObject(sm_store);
+		}
+	
+		/*
+		// Process ISAT response to a multicast WHOHAS - ask the originator to send us the session using ACT_GET
+		else if (sm_in.type == SessionMessage.ACT_ISAT) {
+			SessionMessage sm_get = new SessionMessage(sm_in.session_id, SessionMessage.ACT_GET);
+			oos.writeObject(sm_get);
+		}
+		*/
+		
     	// Push response back
 		response = os.toByteArray();
 		synchronized(queue) {
