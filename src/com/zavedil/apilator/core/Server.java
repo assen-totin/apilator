@@ -36,7 +36,7 @@ import java.util.*;
 import com.zavedil.apilator.app.*;
 
 public class Server implements Runnable {
-	private String className;
+	private final String className;
 	
 	// The host:port combination to listen on
 	private InetAddress hostAddress;
@@ -76,6 +76,9 @@ public class Server implements Runnable {
 	 */
 	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
 	public Server(int mode, InetAddress hostAddress, int port) throws IOException {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance.");
+		
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.mode = mode;
@@ -130,7 +133,7 @@ public class Server implements Runnable {
 	 * The main loop for the server
 	 */
 	public void run() {
-		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Running as a new thread.");
 		
 		while (true) {
 			try {

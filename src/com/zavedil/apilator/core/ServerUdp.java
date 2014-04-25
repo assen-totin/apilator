@@ -34,7 +34,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
 public class ServerUdp implements Runnable {
-	private String className;
+	private final String className;
 	
 	// The host:port combination to listen on
 	private InetAddress hostAddress;
@@ -66,6 +66,9 @@ public class ServerUdp implements Runnable {
 	 * @throws IOException
 	 */
 	public ServerUdp(InetAddress hostAddress, int port) throws IOException {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance.");
+		
 		this.hostAddress = hostAddress;
 		this.port = port;
 		this.selector = this.initSelector();
@@ -102,7 +105,7 @@ public class ServerUdp implements Runnable {
 	 * The main loop for the server
 	 */
 	public void run() {
-		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Running as a new thread.");
 		
 		while (true) {
 			try {
