@@ -52,7 +52,7 @@ public class Main {
 			Thread sm_send_t = new Thread(sm_send);
 			sm_send_t.start();
 			*/
-			SessionManagerSendScheduler.init();
+			//SessionManagerSendScheduler.init();
 					
 			// Start the session storage manager thread for receiving
 			SessionManagerReceive sm_receive = new SessionManagerReceive();
