@@ -103,7 +103,7 @@ public class SessionManagerReceive implements Runnable {
 				if (SessionStorage.exists(message.session_id)) {
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_ISAT;
-					SessionClientUdp.queue_isat.add(message.session_id);
+					ServerUdpClient.queue.add(message);
 				}
 				break;
 		}

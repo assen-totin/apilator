@@ -1,8 +1,14 @@
 package com.zavedil.apilator.core;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
- * Session client class. 
- * Connects to another server and retrieves a session object.
+ * A UDP client class.
+ * Implemented as a mediator which queues events and pushes them to be send by the UDP server,
+ * so that the responses come back to the same channel.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
@@ -22,73 +28,44 @@ package com.zavedil.apilator.core;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import com.zavedil.apilator.app.*;
-
-public class SessionClientUdp implements Runnable {
+public class ServerUdpClient implements Runnable{
 	private final String className;
+	private final ServerUdp server;
 	private SessionMessage session_message;
-	private byte[] send_buffer;
 	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	DatagramSocket socket = null;
-	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
-	public static LinkedBlockingQueue<SessionMessage> queue_get = new LinkedBlockingQueue<SessionMessage>();
-	public static LinkedBlockingQueue<String> queue_isat = new LinkedBlockingQueue<String>();
+	public static LinkedBlockingQueue<SessionMessage> queue = new LinkedBlockingQueue<SessionMessage>();
 	
-	public SessionClientUdp() {
+	public ServerUdpClient(ServerUdp server) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		
-		try {
-			socket = new DatagramSocket();
-		} 
-		catch (SocketException e) {
-			Logger.warning(className, "Could not create UDP socket.");
-		}
+		this.server = server;
 	}
 	
-	public void run() {	
+	public void run() {
 		Logger.debug(className, "Running in a new thread.");
 		
 		while(true) {
+			// Wait here until a message arrives
 			try {
-				session_message = queue_get.take();
+				session_message = queue.take();
 			} 
 			catch (InterruptedException e1) {
 				;
 			}
 			
-			if (socket == null)
-				continue;
-			
+			// Serialize the object 
 			try {
 				ObjectOutputStream oos = new ObjectOutputStream(baos);	
 				oos.writeObject(session_message);
-				
-				send_buffer = baos.toByteArray();
-				DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerUdpPort);
-				
-				socket.send(packet);
-				
-				Logger.debug(className, "SENDING UNCIAST: " + session_message.type);
 			}
 			catch (IOException e) {
-				Logger.warning(className, "Failed to send session message to peer: " + session_message.ip.toString());
+				Logger.warning(className, "Failed to serialize session message.");
+				continue;
 			}
+			
+			server.clientSend (session_message.ip, baos.toByteArray());
 		}
 	}
 }

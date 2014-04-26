@@ -40,8 +40,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ServerUdpWorker implements Runnable {
-	private List<ServerUdpDataEvent> queue = new LinkedList<ServerUdpDataEvent>();
 	private final String className;
+	private List<ServerUdpDataEvent> queue = new LinkedList<ServerUdpDataEvent>();
 	private final long created = System.currentTimeMillis();
 	private long exec_time = 0;
 	private long requests = 0;

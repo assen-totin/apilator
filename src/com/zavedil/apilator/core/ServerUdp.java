@@ -1,7 +1,7 @@
 package com.zavedil.apilator.core;
 
 /**
- * TCP server class using NIO.
+ * UDP server class using NIO.
  * @author James Greenfield nio@flat502.com
  * @author Assen Totin assen.totin@gmail.com
  * 
@@ -67,7 +67,7 @@ public class ServerUdp implements Runnable {
 	/**
 	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
-	 * @param port int TCP port to bind to.
+	 * @param port int UDP port to bind to.
 	 * @param worker ServerWorkerHttp Initial worker to add to the pool
 	 * @throws IOException
 	 */
@@ -81,7 +81,7 @@ public class ServerUdp implements Runnable {
 	}
 
 	/**
-	 * Method to send data (response) to the remote client
+	 * Method to get the response from the worker thread
 	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
 	 * @param data byte[] The data to send
 	 */
@@ -108,6 +108,49 @@ public class ServerUdp implements Runnable {
 	}
 
 	/**
+	 * Method to get data from the client (outbound queueing) thread
+	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
+	 * @param data byte[] The data to send
+	 */	
+	public void clientSend(InetAddress host, byte[] data) {
+		DatagramChannel socketChannel = null;
+		
+		// Start a new connection
+		try {
+			// Create a non-blocking socket channel
+			socketChannel = DatagramChannel.open();
+			socketChannel.configureBlocking(false);
+				
+			// Kick off connection establishment to where we want to connect to
+			socketChannel.connect(new InetSocketAddress(host, Config.SessionManagerUdpPort));
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Could not create outbound channel.");
+			return;
+		}
+		
+		// Queue a channel registration since the caller is not the selecting thread. 
+		// As part of the registration we'll register an interest in connection events. 
+		// These are raised when a channel is ready to complete connection establishment.
+		synchronized(this.pendingChanges) {
+			this.pendingChanges.add(new ServerUdpChangeRequest(socketChannel, ServerUdpChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+		}
+		
+		// And queue the data we want written
+		synchronized (this.pendingData) {
+			List queue = (List) this.pendingData.get(socketChannel);
+			if (queue == null) {
+				queue = new ArrayList();
+				this.pendingData.put(socketChannel, queue);
+			}
+			queue.add(ByteBuffer.wrap(data));
+		}
+
+		// Finally, wake up our selecting thread so it can make the required changes
+		this.selector.wakeup();
+	}
+		
+	/**
 	 * The main loop for the server
 	 */
 	public void run() {
@@ -119,9 +162,9 @@ public class ServerUdp implements Runnable {
 				synchronized (this.pendingChanges) {
 					Iterator changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						ServerTcpChangeRequest change = (ServerTcpChangeRequest) changes.next();
+						ServerUdpChangeRequest change = (ServerUdpChangeRequest) changes.next();
 						switch (change.type) {
-						case ServerTcpChangeRequest.CHANGEOPS:
+						case ServerUdpChangeRequest.CHANGEOPS:
 							SelectionKey key = change.socket.keyFor(this.selector);
 							key.interestOps(change.ops);
 						}
@@ -229,7 +272,7 @@ public class ServerUdp implements Runnable {
 		
 		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
 		if (!got_worker) {
-			if (workers.size() < Config.MaxWorkers) {
+			if ((Config.MaxWorkers == 0) || (workers.size() < Config.MaxWorkers)) {
 				worker = new ServerUdpWorker();
 				new Thread(worker).start();
 				workers.add(worker);

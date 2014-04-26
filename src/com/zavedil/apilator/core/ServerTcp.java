@@ -83,7 +83,7 @@ public class ServerTcp implements Runnable {
 	}
 
 	/**
-	 * Method to send data (reponse) to the remote client
+	 * Method to get the response from the worker thread
 	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
 	 * @param data byte[] The data to send
 	 */
@@ -255,7 +255,7 @@ public class ServerTcp implements Runnable {
 		
 		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
 		if (!got_worker) {
-			if (workers.size() < Config.MaxWorkers) {
+			if ((Config.MaxWorkers == 0) || (workers.size() < Config.MaxWorkers)) {
 				worker = new ServerTcpWorker();
 				new Thread(worker).start();
 				workers.add(worker);
