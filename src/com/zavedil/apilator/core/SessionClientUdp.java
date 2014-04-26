@@ -73,7 +73,7 @@ public class SessionClientUdp implements Runnable {
 			oos.writeObject(session_message);
 			
 			send_buffer = baos.toByteArray();
-			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerTcpPort);
+			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerUdpPort);
 			
 			socket.send(packet);
 			

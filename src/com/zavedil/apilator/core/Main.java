@@ -45,9 +45,14 @@ public class Main {
 			SessionManagerReceive sm_receive = new SessionManagerReceive();
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
+			
+			// Start the session storage manager thread for sending
+			SessionManagerSend sm_send = new SessionManagerSend();
+			Thread sm_send_t = new Thread(sm_send);
+			sm_send_t.start();
 								
 			// Start the Session Manager server 
-			new Thread(new ServerUdp(null, Config.SessionManagerTcpPort)).start();
+			new Thread(new ServerUdp(null, Config.SessionManagerUdpPort)).start();
 					
 			// Start the HTTP server
 			new Thread(new ServerTcp(null, Config.TcpPort)).start();

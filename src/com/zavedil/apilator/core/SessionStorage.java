@@ -41,25 +41,7 @@ public class SessionStorage {
 	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
 		
 	public static final String className = "SessionStorage";
-	
-	private static InetAddress multicast_group;
-	private static MulticastSocket multicast_socket;
-	private static DatagramPacket packet;
-	private static byte[] send_buffer;
-	private static ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	private static boolean connected = false;
-	static {
-		try {
-			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
-			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
-			multicast_socket.joinGroup(multicast_group);
-			connected = true;
-		}
-		catch (IOException e) {
-			Logger.warning(className, "Unable to join multicast group");
-		}
-	}
-	
+		
 	/**
 	 * Init the session storage from a local cache upon start-up
 	 */
@@ -106,10 +88,10 @@ public class SessionStorage {
 			storage.put(session_id, session);
 			
 			// Add to network queue
-			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_AVAIL);
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
 			session_message.updated = session.getUpdated();
-			//queue_multicast.put(session_id, session_message);
-			send_multicast(session_message);
+			session_message.session = session;
+			SessionManagerSend.queue_multicast.add(session_message);
 		}
 	}
 	
@@ -139,7 +121,7 @@ public class SessionStorage {
 			// Query the network if key not found
 			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_WHOHAS);
 			//queue_multicast.put(session_id, session_message);
-			send_multicast(session_message);
+			SessionManagerSend.queue_multicast.add(session_message);
 			
 			try {
 				Logger.debug(className, "GOING TO SLEEP...");
@@ -168,7 +150,7 @@ public class SessionStorage {
 		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
 		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_DELETE);
 		//queue_multicast.put(session_id, session_message);
-		send_multicast(session_message);
+		SessionManagerSend.queue_multicast.add(session_message);
 		
 		// Remove locally
 		storage.remove(session_id);
@@ -202,29 +184,5 @@ public class SessionStorage {
 			return true;
 		
 		return false;
-	}
-	
-	/**
-	 * Method to send a Session Message over multicast
-	 * @param session_message SessionMessage The message to send
-	 */
-	private static synchronized void send_multicast(SessionMessage session_message) {
-		if (!connected)
-			return;
-		
-		try {
-			// Check if there are pending outgoing, serialize and send
-	        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
-			oos.writeObject(session_message);
-				
-			send_buffer = baos.toByteArray();
-			packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-			multicast_socket.send(packet);
-				
-			Logger.debug(className, "SENDING MULTICAST: " + session_message.session.getSessionId());        
-		}
-		catch(IOException e) {
-			Logger.warning(className, "Unable to send multicast packet");
-		}
 	}
 }

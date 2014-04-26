@@ -38,6 +38,9 @@ public class Config {
 	// Log level
 	public static final int LogLevel = 6; // LOG_DEBUG
 	
+	// Sessoin size in bytes
+	public static final int SessionSize = 8192;
+	
 	// Session cookie name; set to empty to disable auto-search and auto-dispatch of session ID as cookie.
 	public static final String SessionCookie = "apilator";
 	
@@ -54,7 +57,7 @@ public class Config {
 	public static final int SessionManagerMulticastPort = 12345;
 	
 	// Unicast TCP Port for Session Manager
-	public static final int SessionManagerTcpPort = 54321;
+	public static final int SessionManagerUdpPort = 54321;
 	
 	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
 	public static final int SessionManagerTimeout = 10;

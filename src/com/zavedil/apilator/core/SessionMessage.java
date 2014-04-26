@@ -28,7 +28,7 @@ public class SessionMessage implements java.io.Serializable {
 	private final String className;
 	// Network actions
 	public static final int ACT_NOOP = 0;	// Take no action
-	public static final int ACT_AVAIL = 1;	// Used when multicasting an available update
+	public static final int ACT_STORE = 1;	// Used when multicasting an available update
 	public static final int ACT_DELETE = 2;	// Used when multicasting a deletion
 	public static final int ACT_WHOHAS = 3;	// Used when multicasting a question asking who has a specified key
 	public static final int ACT_ISAT = 4;	// Used when unicasting key availability

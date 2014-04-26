@@ -34,11 +34,24 @@ import com.zavedil.apilator.app.*;
 
 public class SessionManagerReceive implements Runnable {
 	private final String className;
-	public final int MAX_PACKET_SIZE= 1500; // Try to fit in single Ethernet packet	
+	
+	InetAddress multicast_group;
+	MulticastSocket socket;
+	byte[] receive_buffer = new byte[Config.SessionSize];
+	DatagramPacket packet = new DatagramPacket(receive_buffer, receive_buffer.length);	
 	
 	public SessionManagerReceive() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
+		
+		try {
+			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
+			socket = new MulticastSocket(Config.SessionManagerMulticastPort);
+			socket.joinGroup(multicast_group);
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Unable to join multicast group");
+		}
 	}
 	
 	/**
@@ -48,28 +61,15 @@ public class SessionManagerReceive implements Runnable {
 	public void run() {
 		Logger.trace(className, "Running new as a new thread.");
 		
-		InetAddress multicast_group;
-		MulticastSocket multicast_socket;
-		DatagramPacket packet;
-		byte[] receive_buffer;
-		
 		try {
-			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
-			multicast_socket = new MulticastSocket(Config.SessionManagerMulticastPort);
-			multicast_socket.joinGroup(multicast_group);
-
 			// Prepare to read and unserialize incoming packets: we can reuse these
-			receive_buffer = new byte[MAX_PACKET_SIZE];
-			packet = new DatagramPacket(receive_buffer, receive_buffer.length);			
-			multicast_socket.receive(packet);				
+			socket.receive(packet);				
 			InputStream is = new ByteArrayInputStream(packet.getData());
 			
-			while (true) {	
-				// We need new ObjectInputStream for each datagram				
-				ObjectInputStream ois = new ObjectInputStream(is);
-				SessionMessage msg = (SessionMessage)ois.readObject();	
-				processIncoming(msg);
-			} 
+			// We need new ObjectInputStream for each datagram				
+			ObjectInputStream ois = new ObjectInputStream(is);
+			SessionMessage msg = (SessionMessage)ois.readObject();	
+			processIncoming(msg);
 		}
 		catch (IOException e) {
 			Logger.warning(className, "Unable to bind to multicast packet");
@@ -88,13 +88,9 @@ public class SessionManagerReceive implements Runnable {
 		Logger.debug(className, "GOT MULTICAST WITH TYPE: " + message.type);
 		
 		switch(message.type) {
-			case SessionMessage.ACT_AVAIL:
+			case SessionMessage.ACT_STORE:
 				// First check if we already have this or later version before requesting
-				if (SessionStorage.saveSession(message.session_id, message.updated)) {
-					// Queue a unicast request to get it
-					message.type = SessionMessage.ACT_GET;
-					SessionClientUdp.queue_get.add(message);
-				}
+				SessionStorage.putFromNetwork(message.session);
 				break;
 			case SessionMessage.ACT_DELETE:
 				// Delete the session from local storage
