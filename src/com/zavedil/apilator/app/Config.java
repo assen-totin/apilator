@@ -25,6 +25,9 @@ public class Config {
 	// System name
 	public static final String SystemName = "Apilator";
 	
+	// Maximum number of workers, set to 0 to disable upper limit
+	public static final int MaxWorkers = 100;
+	
 	// TCP port to listen at
 	public static final int TcpPort = 8080;
 

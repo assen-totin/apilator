@@ -72,20 +72,21 @@ public class SessionManagerSend implements Runnable {
 		
 		if (socket == null)
 			return;
-		
-		try {
-			// Check if there are pending outgoing, serialize and send
-	        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
-			oos.writeObject(session_message);
-				
-			send_buffer = baos.toByteArray();
-			packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-			socket.send(packet);
-				
-			Logger.debug(className, "SENDING MULTICAST: " + session_message.session.getSessionId());        
-		}
-		catch(IOException e) {
-			Logger.warning(className, "Unable to send multicast packet");
+		while(true) {
+			try {
+				// Check if there are pending outgoing, serialize and send
+		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
+				oos.writeObject(session_message);
+					
+				send_buffer = baos.toByteArray();
+				packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
+				socket.send(packet);
+					
+				Logger.debug(className, "SENDING MULTICAST: " + session_message.session.getSessionId());        
+			}
+			catch(IOException e) {
+				Logger.warning(className, "Unable to send multicast packet");
+			}
 		}
 	}
 }

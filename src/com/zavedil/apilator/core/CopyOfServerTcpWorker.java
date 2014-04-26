@@ -31,10 +31,11 @@ import java.util.LinkedList;
 import java.util.List;
 import com.zavedil.apilator.app.*;
 
-public class ServerTcpWorker implements Runnable {
+public class CopyOfServerTcpWorker implements Runnable {
 	private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
+	private boolean busy = false;
 	private long exec_time = 0;
 	private long requests = 1;
 	
@@ -42,7 +43,7 @@ public class ServerTcpWorker implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerTcpWorker() {
+	public CopyOfServerTcpWorker() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -55,17 +56,8 @@ public class ServerTcpWorker implements Runnable {
 	 * @param count int The number of bytes received
 	 * @throws IOException
 	 */
-	public void queueData(ServerTcp server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
-	    byte[] dataCopy = new byte[count];
-	    System.arraycopy(data, 0, dataCopy, 0, count);
-		
-		synchronized(queue) {
-			queue.add(new ServerTcpDataEvent(server, socketChannel, dataCopy));
-			queue.notify();
-		}
-	}
-		
-	private byte[] processData(byte[] data, String ip) {		
+	public void processData(ServerTcp server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
+		busy = true;
 		long run_start_time = System.currentTimeMillis();
 		
 		Logger.debug(className, "Entering function processData.");
@@ -80,11 +72,11 @@ public class ServerTcpWorker implements Runnable {
 		boolean headers_ok = false;
 		
 		try {
-			http_parser = new HttpParser(data, data.length);
+			http_parser = new HttpParser(data, count);
 			output.http_status = http_parser.parseRequest();
 			
 			if (output.http_status == 0)
-				return null;
+				return;
 			else if (output.http_status == 200)
 				headers_ok = true;
 		}
@@ -134,7 +126,7 @@ public class ServerTcpWorker implements Runnable {
 		// Log the request
 		// Note: we don't handle authentication, hence user is always "-"
 		// Who's there?
-		Logger.log_access(ip, "-", http_parser.getFirstLine(), output.http_status, output.data.length);
+		Logger.log_access(socketChannel.socket().getInetAddress().getHostAddress(), "-", http_parser.getFirstLine(), output.http_status, output.data.length);
 		
 		// Prepare headers
 		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
@@ -151,7 +143,13 @@ public class ServerTcpWorker implements Runnable {
 		response = new byte[headers_len + output.data.length];
     	System.arraycopy(headers.getBytes(), 0, response, 0, headers_len);
     	System.arraycopy(output.data, 0, response, headers_len, output.data.length);
-			
+	
+    	// Push response back
+		synchronized(queue) {
+			queue.add(new ServerTcpDataEvent(server, socketChannel, response));
+			queue.notify();
+		}
+		
 		// Stats
 		if (ServerStats.http_requests.containsKey(created)) {
 			requests = ServerStats.http_requests.get(created);
@@ -163,8 +161,9 @@ public class ServerTcpWorker implements Runnable {
 		if (ServerStats.http_exec.containsKey(created))
 			exec_time += ServerStats.http_exec.get(created);
 		ServerStats.http_exec.put(created, exec_time);
-		
-		return response;
+				
+		// Ready for new task
+		busy = false;
 	}
 	
 	/**
@@ -187,10 +186,8 @@ public class ServerTcpWorker implements Runnable {
 				dataEvent = (ServerTcpDataEvent) queue.remove(0);
 			}
 			
-			// Process and return to sender
-			byte[] res = processData(dataEvent.data, dataEvent.socket.socket().getInetAddress().getHostAddress());
-			if (res != null)
-				dataEvent.server.send(dataEvent.socket, res);
+			// Return to sender
+			dataEvent.server.send(dataEvent.socket, dataEvent.data);
 		}
 	}
 	
@@ -219,10 +216,10 @@ public class ServerTcpWorker implements Runnable {
 	}
 		
 	/**
-	 * Getter for the size of the queue
-	 * @return int The size of the queue
+	 * Getter for the 'busy' property
+	 * @return
 	 */
-	public int getQueueSize() {
-		return queue.size();
+	public boolean isBusy() {
+		return busy;
 	}
 }

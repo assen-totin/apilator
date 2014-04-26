@@ -63,24 +63,27 @@ public class SessionClientUdp implements Runnable {
 	
 	public void run() {	
 		Logger.debug(className, "Running in a new thread.");
-		try {
-			session_message = queue_get.remove();
-			
-			if (socket == null)
-				return;
-			
-			ObjectOutputStream oos = new ObjectOutputStream(baos);	
-			oos.writeObject(session_message);
-			
-			send_buffer = baos.toByteArray();
-			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerUdpPort);
-			
-			socket.send(packet);
-			
-			Logger.debug(className, "SENDING UNCIAST: " + session_message.type);
-		}
-		catch (IOException e) {
-			Logger.warning(className, "Failed to send session message to peer: " + session_message.ip.toString());
+		
+		while(true) {
+			try {
+				session_message = queue_get.remove();
+				
+				if (socket == null)
+					return;
+				
+				ObjectOutputStream oos = new ObjectOutputStream(baos);	
+				oos.writeObject(session_message);
+				
+				send_buffer = baos.toByteArray();
+				DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerUdpPort);
+				
+				socket.send(packet);
+				
+				Logger.debug(className, "SENDING UNCIAST: " + session_message.type);
+			}
+			catch (IOException e) {
+				Logger.warning(className, "Failed to send session message to peer: " + session_message.ip.toString());
+			}
 		}
 	}
 }

@@ -61,22 +61,24 @@ public class SessionManagerReceive implements Runnable {
 	public void run() {
 		Logger.trace(className, "Running new as a new thread.");
 		
-		try {
-			// Prepare to read and unserialize incoming packets: we can reuse these
-			socket.receive(packet);				
-			InputStream is = new ByteArrayInputStream(packet.getData());
-			
-			// We need new ObjectInputStream for each datagram				
-			ObjectInputStream ois = new ObjectInputStream(is);
-			SessionMessage msg = (SessionMessage)ois.readObject();	
-			processIncoming(msg);
-		}
-		catch (IOException e) {
-			Logger.warning(className, "Unable to bind to multicast packet");
-			e.printStackTrace();
-		}
-		catch (ClassNotFoundException e) {
-			Logger.warning(className, "Unable to process inbound multicast packet");
+		while(true) {
+			try {
+				// Prepare to read and unserialize incoming packets: we can reuse these
+				socket.receive(packet);				
+				InputStream is = new ByteArrayInputStream(packet.getData());
+				
+				// We need new ObjectInputStream for each datagram				
+				ObjectInputStream ois = new ObjectInputStream(is);
+				SessionMessage msg = (SessionMessage)ois.readObject();	
+				processIncoming(msg);
+			}
+			catch (IOException e) {
+				Logger.warning(className, "Unable to bind to multicast packet");
+				e.printStackTrace();
+			}
+			catch (ClassNotFoundException e) {
+				Logger.warning(className, "Unable to process inbound multicast packet");
+			}
 		}
     }
 	
@@ -98,8 +100,11 @@ public class SessionManagerReceive implements Runnable {
 				break;
 			case SessionMessage.ACT_WHOHAS:
 				// If we have this session, queue a unicast response that we have it (adding its updated timestamp)
-				if (SessionStorage.exists(message.session_id))
+				if (SessionStorage.exists(message.session_id)) {
+					message.ip = ConfigAuto.ip;
+					message.type = SessionMessage.ACT_ISAT;
 					SessionClientUdp.queue_isat.add(message.session_id);
+				}
 				break;
 		}
 	}

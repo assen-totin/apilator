@@ -33,6 +33,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
+import com.zavedil.apilator.app.Config;
+
 public class ServerUdp implements Runnable {
 	private final String className;
 	
@@ -49,15 +51,19 @@ public class ServerUdp implements Runnable {
 	// The buffer into which we'll read data when it's available
 	private int byteBufSize = 1500;
 
-	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerUdpWorker> workers = new LinkedList<ServerUdpWorker>();
+	// Arrays of workers
+	private List<ServerUdpWorker> workers = new ArrayList<ServerUdpWorker>();
+	private ServerUdpWorker worker = null;
+	// Workers pool management
+	int min_queue_size, curr_queue_size;
+	boolean got_worker;
 
 	// A list of PendingChange instances
 	private List<ServerUdpChangeRequest> pendingChanges = new LinkedList<ServerUdpChangeRequest>();
 
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
-	
+		
 	/**
 	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
@@ -199,23 +205,37 @@ public class ServerUdp implements Runnable {
 		key.attach(tmpBuffer);
 		tmpBuffer.flip();
 		
-		// Hand the data off to a worker thread
-		boolean got_worker = false;
-		
 		// Worker threads for Session Manager
+		min_queue_size = workers.get(0).getQueueSize();
+		worker = workers.get(0);;
+		got_worker = false;
 		for (ServerUdpWorker entry : workers) {
-			if (!entry.isBusy()) {
+			curr_queue_size = entry.getQueueSize();
+			// If queue size is 0, then the worker is not busy - assign to it;
+			if (curr_queue_size == 0) {
+				worker = entry;
 				got_worker = true;
-				entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+				break;
 			}
+			// If not, record the queue size and set potential worker
+			if (min_queue_size > curr_queue_size) {
+				min_queue_size = curr_queue_size;
+				worker = entry;
+			}
+			
 		}
+		
+		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
 		if (!got_worker) {
-			// Spawn a new worker thread, add it to the pool
-			ServerUdpWorker new_worker = new ServerUdpWorker();
-			new Thread(new_worker).start();
-			workers.add(new_worker);
-			new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-		}			
+			if (workers.size() < Config.MaxWorkers) {
+				ServerUdpWorker worker = new ServerUdpWorker();
+				new Thread(worker).start();
+				workers.add(worker);
+			}
+			// else the task foes to the worker with the shortest queue as selected above
+		}
+				
+		worker.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);

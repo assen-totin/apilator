@@ -43,7 +43,6 @@ public class ServerUdpWorker implements Runnable {
 	private List<ServerUdpDataEvent> queue = new LinkedList<ServerUdpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
-	private boolean busy = false;
 	private long exec_time = 0;
 	private long requests = 0;
 	
@@ -64,32 +63,48 @@ public class ServerUdpWorker implements Runnable {
 	 * @param count int The number of bytes received
 	 * @throws IOException
 	 */
-	public void processData(ServerUdp server, DatagramChannel socketChannel, byte[] data, int count) throws IOException {
-		busy = true;
+	public void queueData(ServerUdp server, DatagramChannel socketChannel, byte[] data, int count) {
+	    byte[] dataCopy = new byte[count];
+	    System.arraycopy(data, 0, dataCopy, 0, count);
+		
+		synchronized(queue) {
+			queue.add(new ServerUdpDataEvent(server, socketChannel, dataCopy));
+			queue.notify();
+		}
+	}
+		
+	public byte[] processData(byte[] data) {		
 		long run_start_time = System.currentTimeMillis();
 		Logger.debug(className, "Entering function processData.");
+
+		SessionMessage sm_in = null;
+		ObjectOutputStream oos = null;
 		
 		byte[] response;		
 		InputStream is = new ByteArrayInputStream(data);
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		
-		ObjectInputStream ois = new ObjectInputStream(is);
-		ObjectOutputStream oos = new ObjectOutputStream(os);
-		
-		SessionMessage sm_in = null;
-		
+			
 		try {
+			ObjectInputStream ois = new ObjectInputStream(is);
+			oos = new ObjectOutputStream(os);
+			
 			sm_in = (SessionMessage)ois.readObject();
 		} 
 		catch (ClassNotFoundException e) {
 			// If we got no object (deserialisation failed), just do nothing
 			Logger.warning(className, "Received empty or broken session retrieval request.");
+			return null;
 		}
 		catch (StreamCorruptedException e) {
 			// This exception means there is more data yet to come, so just return for now.
-			return;
+			return null;
 		}
-		
+
+		catch (IOException e) {
+			// This exception means there is more data yet to come, so just return for now.
+			return null;
+		}
+
 		Logger.debug(className, "GOT UNICAST WITH TYPE: " + sm_in.type);
 		
 		// Process a POST request for an object
@@ -108,17 +123,18 @@ public class ServerUdpWorker implements Runnable {
 				SessionMessage sm_store = new SessionMessage(sm_in.session_id, SessionMessage.ACT_POST);
 				sm_store.session = SessionStorage.get(sm_in.session_id);
 				// Serialize session and send back		        
-				oos.writeObject(sm_store);				
+				try {
+					oos.writeObject(sm_store);
+				} 
+				catch (IOException e) {
+					Logger.warning(className, "Unable to serialize object.");
+					return null;
+				}				
 			}
 		}
-	
-    	// Push response back
-		response = os.toByteArray();
-		synchronized(queue) {
-			queue.add(new ServerUdpDataEvent(server, socketChannel, response));
-			queue.notify();
-		}
 
+		response = os.toByteArray();
+		
 		// Stats
 		if (ServerStats.sm_requests.containsKey(created)) {
 			requests = ServerStats.sm_requests.get(created);
@@ -130,11 +146,8 @@ public class ServerUdpWorker implements Runnable {
 		if (ServerStats.http_exec.containsKey(created))
 			exec_time += ServerStats.http_exec.get(created);
 		ServerStats.sm_exec.put(created, exec_time);
-				
-		// Ready for new task
-		busy = false;
-		// Ready for new task
-		busy = false;
+		
+		return response;
 	}
 	
 	/**
@@ -157,16 +170,18 @@ public class ServerUdpWorker implements Runnable {
 				dataEvent = (ServerUdpDataEvent) queue.remove(0);
 			}
 			
-			// Return to sender
-			dataEvent.server.send(dataEvent.socket, dataEvent.data);
+			// Process and return to sender
+			byte[] res = processData(dataEvent.data);
+			if (res != null)
+				dataEvent.server.send(dataEvent.socket, res);
 		}
 	}
 	
 	/**
-	 * Getter for the 'busy' property
-	 * @return
+	 * Getter for the size of the queue
+	 * @return int The size of the queue
 	 */
-	public boolean isBusy() {
-		return busy;
+	public int getQueueSize() {
+		return queue.size();
 	}
 }

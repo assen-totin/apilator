@@ -52,7 +52,11 @@ public class ServerTcp implements Runnable {
 	private int byteBufSize = 8192;
 
 	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerTcpWorker> workers_http = new LinkedList<ServerTcpWorker>();
+	private List<ServerTcpWorker> workers = new ArrayList<ServerTcpWorker>();
+	private ServerTcpWorker worker = null;
+	// Workers pool management
+	int min_queue_size, curr_queue_size;
+	boolean got_worker;
 
 	// A list of PendingChange instances
 	private List<ServerTcpChangeRequest> pendingChanges = new LinkedList<ServerTcpChangeRequest>();
@@ -227,23 +231,37 @@ public class ServerTcp implements Runnable {
 		key.attach(tmpBuffer);
 		tmpBuffer.flip();
 		
-		// Hand the data off to a worker thread
-		boolean got_worker = false;
-
-		// Worker threads for HTTP
-		for (ServerTcpWorker entry : workers_http) {
-			if (!entry.isBusy()) {
+		// Worker threads for Session Manager
+		min_queue_size = workers.get(0).getQueueSize();
+		worker = workers.get(0);;
+		got_worker = false;
+		for (ServerTcpWorker entry : workers) {
+			curr_queue_size = entry.getQueueSize();
+			// If queue size is 0, then the worker is not busy - assign to it;
+			if (curr_queue_size == 0) {
+				worker = entry;
 				got_worker = true;
-				entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+				break;
 			}
+			// If not, record the queue size and set potential worker
+			if (min_queue_size > curr_queue_size) {
+				min_queue_size = curr_queue_size;
+				worker = entry;
+			}
+			
 		}
+		
+		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
 		if (!got_worker) {
-			// Spawn a new worker thread, add it to the pool
-			ServerTcpWorker new_worker = new ServerTcpWorker();
-			new Thread(new_worker).start();
-			workers_http.add(new_worker);
-			new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-		}			
+			if (workers.size() < Config.MaxWorkers) {
+				ServerTcpWorker worker = new ServerTcpWorker();
+				new Thread(worker).start();
+				workers.add(worker);
+			}
+			// else the task foes to the worker with the shortest queue as selected above
+		}
+				
+		worker.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);
