@@ -6,6 +6,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+import com.zavedil.apilator.app.Config;
+
 /**
  * Automatic configuration class.
  * Settings stored upon start-up. 
@@ -29,45 +31,60 @@ import java.util.Enumeration;
  */
 
 public class ConfigAuto {
-	public static final InetAddress ip;
+	public static InetAddress ip;
 	//public static final short netmask;
 	
 	// Get a local IP address
-	static {	
-		InetAddress ip_tmp = null;
-		boolean have_ip = false; 
-		try {
-			// Often our name should point to a public IP...
-			ip_tmp = InetAddress.getLocalHost();
-
-			// but sometimes it does not, so walk around searching for a good IP to use
-			if (!isRoutedIp(ip_tmp)) {
-			    Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
-			    for (; n.hasMoreElements();) {
-			        NetworkInterface e = n.nextElement();
-			        Enumeration<InetAddress> a = e.getInetAddresses();
-			        for (; a.hasMoreElements();) {
-			            InetAddress addr = a.nextElement();
-			            if (isRoutedIp(addr)) {	
-			            	ip_tmp = addr;
-			            	have_ip = true;
-			            	break;
-			            }
-			        }
-			        if (have_ip)
-			        	break;
-			    }
+	static {
+		// Configure dynamically?
+		if (Config.IpAddress.equals("")) {
+			InetAddress ip_tmp = null;
+			boolean have_ip = false;
+			try {
+				// Often our name should point to a public IP...
+				ip_tmp = InetAddress.getLocalHost();
+	
+				// but sometimes it does not, so walk around searching for a good IP to use
+				if (!isRoutedIp(ip_tmp)) {
+				    Enumeration<NetworkInterface> n = NetworkInterface.getNetworkInterfaces();
+				    for (; n.hasMoreElements();) {
+				        NetworkInterface e = n.nextElement();
+				        Enumeration<InetAddress> a = e.getInetAddresses();
+				        for (; a.hasMoreElements();) {
+				            InetAddress addr = a.nextElement();
+				            if (isRoutedIp(addr)) {	
+				            	ip_tmp = addr;
+				            	have_ip = true;
+				            	break;
+				            }
+				        }
+				        if (have_ip)
+				        	break;
+				    }
+				}
+			}
+			catch (SocketException e) {
+				Logger.critical("ConfigAuto", "Unable to obtain NIC list. Exiting");
+				System.exit(255);
+			}
+			catch (UnknownHostException e) {
+				Logger.critical("ConfigAuto", "Unable to obtain local IP address. Exiting");
+				System.exit(255);
+			}
+			ip = ip_tmp;
+		}
+		
+		// Or use pre-decined IP address?
+		else {
+			try {
+				ip = InetAddress.getByName(Config.IpAddress);
+			}
+			catch (UnknownHostException e) {
+				Logger.critical("ConfigAuto", "Unable to use the configured IP address. Exiting");
+				System.exit(255);
 			}
 		}
-		catch (SocketException e) {
-			Logger.critical("ConfigAuto", "Unable to obtain NIC list. Exiting");
-			System.exit(255);
-		}
-		catch (UnknownHostException e) {
-			Logger.critical("ConfigAuto", "Unable to obtain local IP address. Exiting");
-			System.exit(255);
-		}
-		ip = ip_tmp;
+		
 		Logger.notice("ConfigAuto", "Using IP address: " + ip.getHostAddress());
 	}
 	

@@ -40,7 +40,6 @@ public class ServerTcp implements Runnable {
 	
 	// The host:port combination to listen on
 	private InetAddress hostAddress;
-	private int port;
 
 	// The channel on which we'll accept connections
 	private ServerSocketChannel serverChannel;
@@ -72,14 +71,12 @@ public class ServerTcp implements Runnable {
 	 * @throws IOException
 	 */
 	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
-	public ServerTcp(InetAddress hostAddress, int port) throws IOException {
+	public ServerTcp(InetAddress hostAddress) throws IOException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance.");
 		
 		this.hostAddress = hostAddress;
-		this.port = port;
 		this.selector = this.initSelector();
-		//workers_http.add(worker);
 	}
 
 	/**
@@ -326,7 +323,7 @@ public class ServerTcp implements Runnable {
 		serverChannel.configureBlocking(false);
 
 		// Bind the server socket to the specified address and port
-		InetSocketAddress isa = new InetSocketAddress(this.hostAddress, this.port);
+		InetSocketAddress isa = new InetSocketAddress(this.hostAddress, Config.TcpPort);
 		serverChannel.socket().bind(isa);
 
 		// Register the server socket channel, indicating an interest in 

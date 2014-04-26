@@ -22,6 +22,8 @@ package com.zavedil.apilator.core;
  */
 
 import java.io.IOException;
+import java.net.InetAddress;
+
 import com.zavedil.apilator.app.Config;
 
 public class Main {
@@ -34,6 +36,9 @@ public class Main {
 		try {
 			// Automatic configuration
 			new ConfigAuto();
+			InetAddress ip = null;
+			if (! Config.IpAddress.equals(""))
+				ip = InetAddress.getByName(Config.IpAddress);
 			
 			// Init the session storage (load form disk cache)
 			SessionStorage.init();
@@ -52,7 +57,7 @@ public class Main {
 			sm_send_t.start();
 								
 			// Start the Session Manager server
-			ServerUdp su = new ServerUdp(null, Config.SessionManagerUdpPort);
+			ServerUdp su = new ServerUdp(ip);
 			Thread su_t = new Thread(su);
 			su_t.start();
 			
@@ -62,7 +67,7 @@ public class Main {
 			suc_t.start();
 					
 			// Start the HTTP server
-			new Thread(new ServerTcp(null, Config.TcpPort)).start();
+			new Thread(new ServerTcp(ip)).start();
 			
 			// Start statistics gathering thread
 			ServerStats.init();

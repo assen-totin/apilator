@@ -38,9 +38,8 @@ import com.zavedil.apilator.app.Config;
 public class ServerUdp implements Runnable {
 	private final String className;
 	
-	// The host:port combination to listen on
+	// The host to listen at (null for all)
 	private InetAddress hostAddress;
-	private int port;
 
 	// The channel on which we'll accept data
 	private DatagramChannel serverChannel;
@@ -67,16 +66,14 @@ public class ServerUdp implements Runnable {
 	/**
 	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
-	 * @param port int UDP port to bind to.
 	 * @param worker ServerWorkerHttp Initial worker to add to the pool
 	 * @throws IOException
 	 */
-	public ServerUdp(InetAddress hostAddress, int port) throws IOException {
+	public ServerUdp(InetAddress hostAddress) throws IOException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance.");
 		
 		this.hostAddress = hostAddress;
-		this.port = port;
 		this.selector = this.initSelector();
 	}
 
@@ -346,7 +343,7 @@ public class ServerUdp implements Runnable {
 		serverChannel.configureBlocking(false);
 
 		// Bind the server socket to the specified address and port
-		InetSocketAddress isa = new InetSocketAddress(this.hostAddress, this.port);
+		InetSocketAddress isa = new InetSocketAddress(this.hostAddress, Config.SessionManagerUdpPort);
 		serverChannel.socket().bind(isa);
 
 		// Register the server socket channel, indicating an interest in 

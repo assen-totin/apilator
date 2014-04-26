@@ -25,12 +25,15 @@ public class Config {
 	// System name
 	public static final String SystemName = "Apilator";
 	
-	// Maximum number of workers, set to 0 to disable upper limit
-	public static final int MaxWorkers = 100;
+	// IP address to listen at. Leave empty for all
+	public static final String IpAddress = "";
 	
 	// TCP port to listen at
 	public static final int TcpPort = 8080;
 
+	// Maximum number of workers, set to 0 to disable upper limit
+	public static final int MaxWorkers = 100;
+	
 	// Filename for access log
 	public static final String AccessLog = "/tmp/apilator.log";
 	
