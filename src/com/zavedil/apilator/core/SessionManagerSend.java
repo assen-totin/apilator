@@ -47,7 +47,7 @@ public class SessionManagerSend implements Runnable {
 	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
-	public static LinkedBlockingQueue<SessionMessage> queue_multicast = new LinkedBlockingQueue<SessionMessage>();
+	public static LinkedBlockingQueue<SessionMessage> queue = new LinkedBlockingQueue<SessionMessage>();
 	
 	public SessionManagerSend() {
 		className = this.getClass().getSimpleName();
@@ -70,7 +70,7 @@ public class SessionManagerSend implements Runnable {
 	public void run() {
 		while(true) {
 			try {
-				session_message = queue_multicast.take();
+				session_message = queue.take();
 			}
 			catch (InterruptedException e) {
 				;
@@ -79,16 +79,16 @@ public class SessionManagerSend implements Runnable {
 			if (socket == null)
 				continue;
 
+			Logger.debug(className, "SENDING MULTICAST: " + session_message.updated); 
+			
 			try {
 				// Check if there are pending outgoing, serialize and send
 		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
 				oos.writeObject(session_message);
-					
+				
 				send_buffer = baos.toByteArray();
 				packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-				socket.send(packet);
-					
-				Logger.debug(className, "SENDING MULTICAST: " + session_message.session.getSessionId());        
+				socket.send(packet);       
 			}
 			catch(IOException e) {
 				Logger.warning(className, "Unable to send multicast packet");

@@ -113,19 +113,22 @@ public class ServerUdp implements Runnable {
 	 * @param data byte[] The data to send
 	 */	
 	public void clientSend(InetAddress host, byte[] data) {
-		DatagramChannel socketChannel = null;
+		DatagramChannel socketChannel = serverChannel;
 		
 		// Start a new connection
 		try {
 			// Create a non-blocking socket channel
-			socketChannel = DatagramChannel.open();
-			socketChannel.configureBlocking(false);
+			//socketChannel = DatagramChannel.open();
+			//socketChannel.configureBlocking(false);
 				
 			// Kick off connection establishment to where we want to connect to
+			//socketChannel.bind(new InetSocketAddress(ConfigAuto.ip, Config.SessionManagerUdpPort));
 			socketChannel.connect(new InetSocketAddress(host, Config.SessionManagerUdpPort));
+			Logger.debug(className, "TRY ENDED");
 		}
 		catch (IOException e) {
 			Logger.warning(className, "Could not create outbound channel.");
+			e.printStackTrace();
 			return;
 		}
 		

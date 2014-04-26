@@ -51,8 +51,15 @@ public class Main {
 			Thread sm_send_t = new Thread(sm_send);
 			sm_send_t.start();
 								
-			// Start the Session Manager server 
-			new Thread(new ServerUdp(null, Config.SessionManagerUdpPort)).start();
+			// Start the Session Manager server
+			ServerUdp su = new ServerUdp(null, Config.SessionManagerUdpPort);
+			Thread su_t = new Thread(su);
+			su_t.start();
+			
+			// Start the Session Manager Client
+			ServerUdpClient suc = new ServerUdpClient(su);
+			Thread suc_t = new Thread(suc);
+			suc_t.start();
 					
 			// Start the HTTP server
 			new Thread(new ServerTcp(null, Config.TcpPort)).start();
