@@ -25,8 +25,8 @@ package com.zavedil.apilator.core;
 
 import java.nio.channels.SocketChannel;
 
-class ServerDataEvent {
-	public Server server;
+class ServerTcpDataEvent {
+	public ServerTcp server;
 	public SocketChannel socket;
 	public byte[] data;
 	
@@ -36,7 +36,7 @@ class ServerDataEvent {
 	 * @param socket SocketChannel The SocketChannel to use
 	 * @param data byte[] The data to write to the channel
 	 */
-	public ServerDataEvent(Server server, SocketChannel socket, byte[] data) {
+	public ServerTcpDataEvent(ServerTcp server, SocketChannel socket, byte[] data) {
 		this.server = server;
 		this.socket = socket;
 		this.data = data;

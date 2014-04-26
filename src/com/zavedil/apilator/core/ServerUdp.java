@@ -113,9 +113,9 @@ public class ServerUdp implements Runnable {
 				synchronized (this.pendingChanges) {
 					Iterator changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						ServerChangeRequest change = (ServerChangeRequest) changes.next();
+						ServerTcpChangeRequest change = (ServerTcpChangeRequest) changes.next();
 						switch (change.type) {
-						case ServerChangeRequest.CHANGEOPS:
+						case ServerTcpChangeRequest.CHANGEOPS:
 							SelectionKey key = change.socket.keyFor(this.selector);
 							key.interestOps(change.ops);
 						}

@@ -31,8 +31,8 @@ import java.util.LinkedList;
 import java.util.List;
 import com.zavedil.apilator.app.*;
 
-public class ServerWorkerHttp implements Runnable {
-	private List<ServerDataEvent> queue = new LinkedList<ServerDataEvent>();
+public class ServerTcpWorker implements Runnable {
+	private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
 	private boolean busy = false;
@@ -43,7 +43,7 @@ public class ServerWorkerHttp implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerWorkerHttp() {
+	public ServerTcpWorker() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -56,7 +56,7 @@ public class ServerWorkerHttp implements Runnable {
 	 * @param count int The number of bytes received
 	 * @throws IOException
 	 */
-	public void processData(Server server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
+	public void processData(ServerTcp server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
 		busy = true;
 		long run_start_time = System.currentTimeMillis();
 		
@@ -146,7 +146,7 @@ public class ServerWorkerHttp implements Runnable {
 	
     	// Push response back
 		synchronized(queue) {
-			queue.add(new ServerDataEvent(server, socketChannel, response));
+			queue.add(new ServerTcpDataEvent(server, socketChannel, response));
 			queue.notify();
 		}
 		
@@ -171,7 +171,7 @@ public class ServerWorkerHttp implements Runnable {
 	 */
 	public void run() {
 		Logger.trace(className, "Running new as a new thread.");
-		ServerDataEvent dataEvent;
+		ServerTcpDataEvent dataEvent;
 		
 		while(true) {
 			// Wait for data to become available
@@ -183,7 +183,7 @@ public class ServerWorkerHttp implements Runnable {
 					catch (InterruptedException e) {
 					}
 				}
-				dataEvent = (ServerDataEvent) queue.remove(0);
+				dataEvent = (ServerTcpDataEvent) queue.remove(0);
 			}
 			
 			// Return to sender

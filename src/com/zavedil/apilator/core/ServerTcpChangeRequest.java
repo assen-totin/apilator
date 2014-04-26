@@ -25,7 +25,7 @@ package com.zavedil.apilator.core;
 
 import java.nio.channels.SocketChannel;
 
-public class ServerChangeRequest {
+public class ServerTcpChangeRequest {
 	public static final int REGISTER = 1;
 	public static final int CHANGEOPS = 2;
 	
@@ -39,7 +39,7 @@ public class ServerChangeRequest {
 	 * @param type int The request type
 	 * @param ops int The request ops
 	 */
-	public ServerChangeRequest(SocketChannel socket, int type, int ops) {
+	public ServerTcpChangeRequest(SocketChannel socket, int type, int ops) {
 		this.socket = socket;
 		this.type = type;
 		this.ops = ops;

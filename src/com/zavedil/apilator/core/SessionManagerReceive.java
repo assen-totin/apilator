@@ -82,7 +82,7 @@ public class SessionManagerReceive implements Runnable {
 	
 	private void processIncoming(SessionMessage message) {
 		SessionMessage msg_out;
-		SessionClient sc;
+		SessionClientUdp sc;
 		
 		// If we are the sender, just return
 		if (message.ip.equals(ConfigAuto.ip))
@@ -104,7 +104,7 @@ public class SessionManagerReceive implements Runnable {
 					*/
 					// Tell the peer we want this session
 					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_GET);
-					sc = new SessionClient(message.ip, msg_out);
+					sc = new SessionClientUdp(message.ip, msg_out);
 					sc.send();
 				}
 				break;
@@ -118,7 +118,7 @@ public class SessionManagerReceive implements Runnable {
 					Session sess_tmp = SessionStorage.storage.get(message.session_id);
 					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_ISAT);
 					msg_out.updated = sess_tmp.getUpdated();
-					sc = new SessionClient(message.ip, msg_out);
+					sc = new SessionClientUdp(message.ip, msg_out);
 					// Send the SessionMessage (we don't care for it so won't fetch it)
 					sc.send();
 				}

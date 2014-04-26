@@ -35,7 +35,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 import com.zavedil.apilator.app.*;
 
-public class Server implements Runnable {
+public class ServerTcp implements Runnable {
 	private final String className;
 	
 	// The host:port combination to listen on
@@ -52,21 +52,14 @@ public class Server implements Runnable {
 	private int byteBufSize = 8192;
 
 	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerWorkerHttp> workers_http = new LinkedList<ServerWorkerHttp>();
-	private List<ServerWorkerSessionManager> workers_sm = new LinkedList<ServerWorkerSessionManager>();
+	private List<ServerTcpWorker> workers_http = new LinkedList<ServerTcpWorker>();
 
 	// A list of PendingChange instances
-	private List<ServerChangeRequest> pendingChanges = new LinkedList<ServerChangeRequest>();
+	private List<ServerTcpChangeRequest> pendingChanges = new LinkedList<ServerTcpChangeRequest>();
 
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 	
-	// Operaton modes
-	public final static int MODE_NONE = 0;
-	public final static int MODE_HTTP = 1;
-	public final static int MODE_SESSION_MANAGER = 2;
-	private final int mode;
-
 	/**
 	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
@@ -75,33 +68,16 @@ public class Server implements Runnable {
 	 * @throws IOException
 	 */
 	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
-	public Server(int mode, InetAddress hostAddress, int port) throws IOException {
+	public ServerTcp(InetAddress hostAddress, int port) throws IOException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance.");
 		
 		this.hostAddress = hostAddress;
 		this.port = port;
-		this.mode = mode;
 		this.selector = this.initSelector();
 		//workers_http.add(worker);
 	}
 
-	/**
-	 * Constructor for Session Manager server
-	 * @param hostAddress InetAddress Network address to bind to.
-	 * @param port int TCP port to bind to.
-	 * @param worker ServerWorkerHttp Initial worker to add to the pool
-	 * @throws IOException
-	 */
-	/*
-	public Server(int mode, InetAddress hostAddress, int port, ServerWorkerSessionManager worker) throws IOException {
-		this.hostAddress = hostAddress;
-		this.port = port;
-		this.mode = mode;
-		this.selector = this.initSelector();
-		workers_sm.add(worker);
-	}
-	*/
 	/**
 	 * Method to send data (reponse) to the remote client
 	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
@@ -112,7 +88,7 @@ public class Server implements Runnable {
 		
 		synchronized (this.pendingChanges) {
 			// Indicate we want the interest ops set changed
-			this.pendingChanges.add(new ServerChangeRequest(socket, ServerChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+			this.pendingChanges.add(new ServerTcpChangeRequest(socket, ServerTcpChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
 
 			// And queue the data we want written
 			synchronized (this.pendingData) {
@@ -141,9 +117,9 @@ public class Server implements Runnable {
 				synchronized (this.pendingChanges) {
 					Iterator changes = this.pendingChanges.iterator();
 					while (changes.hasNext()) {
-						ServerChangeRequest change = (ServerChangeRequest) changes.next();
+						ServerTcpChangeRequest change = (ServerTcpChangeRequest) changes.next();
 						switch (change.type) {
-						case ServerChangeRequest.CHANGEOPS:
+						case ServerTcpChangeRequest.CHANGEOPS:
 							SelectionKey key = change.socket.keyFor(this.selector);
 							key.interestOps(change.ops);
 						}
@@ -255,40 +231,19 @@ public class Server implements Runnable {
 		boolean got_worker = false;
 
 		// Worker threads for HTTP
-		if (this.mode == Server.MODE_HTTP) {
-			for (ServerWorkerHttp entry : workers_http) {
-				if (!entry.isBusy()) {
-					got_worker = true;
-					entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-				}
+		for (ServerTcpWorker entry : workers_http) {
+			if (!entry.isBusy()) {
+				got_worker = true;
+				entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 			}
-			if (!got_worker) {
-				// Span a new worker thread, add it to the pool
-				ServerWorkerHttp new_worker = new ServerWorkerHttp();
-				new Thread(new_worker).start();
-				workers_http.add(new_worker);
-				new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-			}			
 		}
-		
-		// Worker threads for Session Manager
-		if (this.mode == Server.MODE_SESSION_MANAGER) {
-			for (ServerWorkerSessionManager entry : workers_sm) {
-				if (!entry.isBusy()) {
-					got_worker = true;
-					entry.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-				}
-			}
-			if (!got_worker) {
-				// Span a new worker thread, add it to the pool
-				ServerWorkerSessionManager new_worker = new ServerWorkerSessionManager();
-				new Thread(new_worker).start();
-				workers_sm.add(new_worker);
-				new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-			}			
-		}
-			
-		//this.worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		if (!got_worker) {
+			// Spawn a new worker thread, add it to the pool
+			ServerTcpWorker new_worker = new ServerTcpWorker();
+			new Thread(new_worker).start();
+			workers_http.add(new_worker);
+			new_worker.processData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		}			
 		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);
