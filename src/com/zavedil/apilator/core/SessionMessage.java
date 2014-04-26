@@ -36,9 +36,9 @@ public class SessionMessage implements java.io.Serializable {
 	public static final int ACT_POST = 6;	// Used when unicasting a sending a session
 	
 	private static final long serialVersionUID = 1L;
-	public final int type;
+	public int type;
 	public final String session_id;
-	public final InetAddress ip;
+	public InetAddress ip;
 	public long updated=0;
 	public Session session=null;
 	

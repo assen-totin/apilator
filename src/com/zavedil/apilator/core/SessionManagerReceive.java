@@ -80,10 +80,7 @@ public class SessionManagerReceive implements Runnable {
 		}
     }
 	
-	private void processIncoming(SessionMessage message) {
-		SessionMessage msg_out;
-		SessionClientUdp sc;
-		
+	private void processIncoming(SessionMessage message) {	
 		// If we are the sender, just return
 		if (message.ip.equals(ConfigAuto.ip))
 			return;
@@ -94,18 +91,9 @@ public class SessionManagerReceive implements Runnable {
 			case SessionMessage.ACT_AVAIL:
 				// First check if we already have this or later version before requesting
 				if (SessionStorage.saveSession(message.session_id, message.updated)) {
-					/*
-					// Fetch the session from the peer using unicast
-					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_GET);
-					sc = new SessionClient(message.ip, msg_out);
-					// Send the SessionMessage and expect a Session back
-					if (sc.send())
-						SessionStorage.putFromNetwork(sc.getSession());
-					*/
-					// Tell the peer we want this session
-					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_GET);
-					sc = new SessionClientUdp(message.ip, msg_out);
-					sc.send();
+					// Queue a unicast request to get it
+					message.type = SessionMessage.ACT_GET;
+					SessionClientUdp.queue_get.add(message);
 				}
 				break;
 			case SessionMessage.ACT_DELETE:
@@ -113,15 +101,9 @@ public class SessionManagerReceive implements Runnable {
 				SessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.ACT_WHOHAS:
-				// If we have this session, send back a unicast reply that we have it (adding its updated timestamp)
-				if (SessionStorage.exists(message.session_id)) {
-					Session sess_tmp = SessionStorage.storage.get(message.session_id);
-					msg_out = new SessionMessage(message.session_id, SessionMessage.ACT_ISAT);
-					msg_out.updated = sess_tmp.getUpdated();
-					sc = new SessionClientUdp(message.ip, msg_out);
-					// Send the SessionMessage (we don't care for it so won't fetch it)
-					sc.send();
-				}
+				// If we have this session, queue a unicast response that we have it (adding its updated timestamp)
+				if (SessionStorage.exists(message.session_id))
+					SessionClientUdp.queue_isat.add(message.session_id);
 				break;
 		}
 	}

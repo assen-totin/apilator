@@ -28,42 +28,59 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import com.zavedil.apilator.app.*;
 
-public class SessionClientUdp {
+public class SessionClientUdp implements Runnable {
 	private final String className;
-	private final InetAddress ip;
 	private SessionMessage session_message;
+	private byte[] send_buffer;
+	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	DatagramSocket socket = null;
 	
-	public SessionClientUdp(InetAddress ipaddr, SessionMessage msg) {
+	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
+	// thus relieving us from the need to periodically check for new elements or implement notifications.
+	public static Queue<SessionMessage> queue_get = new LinkedBlockingQueue<SessionMessage>();
+	public static Queue<String> queue_isat = new LinkedBlockingQueue<String>();
+	
+	public SessionClientUdp() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		ip = ipaddr;
-		session_message = msg;
-	}
-	
-	public boolean send() {
-		boolean res = true;
 		
 		try {
-			byte[] send_buffer;
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			socket = new DatagramSocket();
+		} 
+		catch (SocketException e) {
+			Logger.warning(className, "Could not create UDP socket.");
+		}
+	}
+	
+	public void run() {	
+		Logger.debug(className, "Running in a new thread.");
+		try {
+			session_message = queue_get.remove();
+			
+			if (socket == null)
+				return;
+			
 			ObjectOutputStream oos = new ObjectOutputStream(baos);	
 			oos.writeObject(session_message);
 			
 			send_buffer = baos.toByteArray();
-			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, ConfigAuto.ip, Config.SessionManagerTcpPort);
-			DatagramSocket socket = new DatagramSocket();
+			DatagramPacket packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerTcpPort);
+			
 			socket.send(packet);
-			socket.close();
-			 
+			
 			Logger.debug(className, "SENDING UNCIAST: " + session_message.type);
 		}
 		catch (IOException e) {
-			Logger.warning(className, "Failed to send session message to peer: " + ip.toString());
-			res = false;
+			Logger.warning(className, "Failed to send session message to peer: " + session_message.ip.toString());
 		}
-		
-		return res;
 	}
 }

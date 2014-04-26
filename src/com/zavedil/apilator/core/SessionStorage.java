@@ -39,10 +39,7 @@ import com.zavedil.apilator.app.*;
 public class SessionStorage {
 	// Create initial storage for 1000 sessions, expand when 90% full and use only 1 shard
 	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
-	
-	// Create internal queue for network updates: 100 objects, expand when 90% full and use only 1 shard
-	//public static ConcurrentHashMap<String, SessionMessage> queue_multicast = new ConcurrentHashMap<String, SessionMessage>(100, 0.9f, 1);	
-	
+		
 	public static final String className = "SessionStorage";
 	
 	private static InetAddress multicast_group;
