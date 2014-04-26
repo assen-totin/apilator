@@ -206,8 +206,10 @@ public class ServerUdp implements Runnable {
 		tmpBuffer.flip();
 		
 		// Worker threads for Session Manager
-		min_queue_size = workers.get(0).getQueueSize();
-		worker = workers.get(0);;
+		if (!workers.isEmpty()){
+			min_queue_size = workers.get(0).getQueueSize();
+			worker = workers.get(0);
+		}
 		got_worker = false;
 		for (ServerUdpWorker entry : workers) {
 			curr_queue_size = entry.getQueueSize();
@@ -228,11 +230,11 @@ public class ServerUdp implements Runnable {
 		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
 		if (!got_worker) {
 			if (workers.size() < Config.MaxWorkers) {
-				ServerUdpWorker worker = new ServerUdpWorker();
+				worker = new ServerUdpWorker();
 				new Thread(worker).start();
 				workers.add(worker);
 			}
-			// else the task foes to the worker with the shortest queue as selected above
+			// else the task goes to the worker with the shortest queue as selected above
 		}
 				
 		worker.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);

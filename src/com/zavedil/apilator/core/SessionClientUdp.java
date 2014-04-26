@@ -46,8 +46,8 @@ public class SessionClientUdp implements Runnable {
 	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
-	public static Queue<SessionMessage> queue_get = new LinkedBlockingQueue<SessionMessage>();
-	public static Queue<String> queue_isat = new LinkedBlockingQueue<String>();
+	public static LinkedBlockingQueue<SessionMessage> queue_get = new LinkedBlockingQueue<SessionMessage>();
+	public static LinkedBlockingQueue<String> queue_isat = new LinkedBlockingQueue<String>();
 	
 	public SessionClientUdp() {
 		className = this.getClass().getSimpleName();
@@ -66,11 +66,16 @@ public class SessionClientUdp implements Runnable {
 		
 		while(true) {
 			try {
-				session_message = queue_get.remove();
-				
-				if (socket == null)
-					return;
-				
+				session_message = queue_get.take();
+			} 
+			catch (InterruptedException e1) {
+				;
+			}
+			
+			if (socket == null)
+				continue;
+			
+			try {
 				ObjectOutputStream oos = new ObjectOutputStream(baos);	
 				oos.writeObject(session_message);
 				

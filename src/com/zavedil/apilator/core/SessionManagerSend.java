@@ -47,7 +47,7 @@ public class SessionManagerSend implements Runnable {
 	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
-	public static Queue<SessionMessage> queue_multicast = new LinkedBlockingQueue<SessionMessage>();
+	public static LinkedBlockingQueue<SessionMessage> queue_multicast = new LinkedBlockingQueue<SessionMessage>();
 	
 	public SessionManagerSend() {
 		className = this.getClass().getSimpleName();
@@ -68,11 +68,17 @@ public class SessionManagerSend implements Runnable {
 	 * @param session_message SessionMessage The message to send
 	 */
 	public void run() {
-		session_message = queue_multicast.remove();
-		
-		if (socket == null)
-			return;
 		while(true) {
+			try {
+				session_message = queue_multicast.take();
+			}
+			catch (InterruptedException e) {
+				;
+			}
+			
+			if (socket == null)
+				continue;
+
 			try {
 				// Check if there are pending outgoing, serialize and send
 		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
