@@ -27,13 +27,13 @@ Apliator requires Java 7 to run. Beside this, it only needs a minimal system env
 
 By itself, Apilator does not require any system privileges, so it can be run from any zero-privileges account like 'nobody' or any other you wish. It does need, however, a write access to a log file and permission to bind to a TCP port; both can be configured at system level. Do note that on UNIX system using TCP ports below 1024 requires effective UID=0 (i.e. superuser privileges) and Apilator does not provide privilege separation. 
 
-By default, Apilator will bind to all available network interfaces. This is currently non-configurable. You can specify in the configuration the TCP port used for serving requests (it has a default value of 8080). 
+By default, Apilator will bind to all available network interfaces, but you can specify a single IP address to use. You can specify in the configuration the TCP port used for serving requests (it has a default value of 8080). 
 
 If you run a cluster, the Apliatgor servers exchange messages to update their session storages in two ways: 
 - A multicast group is established between all servers. Your network equipment should support and allow multicast. The multicast address and port can be configured in Apilator's settings. This group is used for exchanging notices when a session is added, updated or deleted. 
 - Additional TCP port is used for unicast exchange of actual session data between servers. The TCP port used for this purpose is also configurable. Because session information is sensitive, do not forget to firewall off this port at the border of your network.  
 
-Pilator will periodically dump the contents of its session storage on disk; when starting up, this dump will be used to populate the session storage in order to reduce network load. The location of the dump file is configurable. but you should make sure the directory is writable by the UID of the server.   
+Apilator will periodically dump the contents of its session storage on disk; when starting up, this dump will be used to populate the session storage in order to reduce network load. The location of the dump file is configurable. but you should make sure the directory is writable by the UID of the server.   
 
 Apilator provides a standard access long in the NCSA's Common Format. It's location and name is configurable. Apilator will always append to this file and will never attempt to rotate it; it is left to your OS to do so. 
 

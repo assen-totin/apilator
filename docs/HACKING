@@ -27,20 +27,22 @@ To create your own endpoint, just copy the EndpointExample.java class and use it
 
 THE CORE
 =========
-The core package consists of several major parts: 
-- TCP server which handles all the inbound TCP connections: these are the classes which names begin with 'Server'
-- HTTP parser which is triggered when new data arrives over TCP: these are the classes which names begin with 'Http'
-- Session manager which takes care of the session storage and its synchronisation between multiple servers: these are the classes which names begin with 'Session'
-- Objects for input and output of HTTP data between the TCP server and HTTP Parser: these are the classes which names begin with 'Task'
-- Auxiliary classes for logging (Logger.class) and for automatic configuration upon start-up (ConfigAuto.class)
 
-TCP SERVER
+The core package consists of several major parts: 
+- TCP server which handles all the inbound TCP connections: these are the classes which names begin with 'ServerTcp'
+- HTTP parser which is triggered when new data arrives over TCP: these are the classes which names begin with 'Http'
+- Objects for input and output of HTTP data between the TCP server and HTTP Parser: these are the classes which names begin with 'Task'
+- Session manager which takes care of the session storage and its synchronisation between multiple servers: these are the classes which names begin with 'Session' or 'Client' (it also uses an instance of the ServerTcp)
+- Auxiliary classes for automatic configuration upon start-up (ConfigAuto.java), logging (Logger.java) and statistics gathering (ServerStats.java) 
+
+
+TCP SERVER FOR HTTP
 
 The TCP server is built using non-blocking I/O with one thread taking care of the socket and multiple threads processing requests. Unlike blocking I/O here one thread is not bound to one client, hence threads utilisation can be much higher and fewer threads (read: system resources) are needed to serve same amount of data. 
 
-When a new piece of data arrives, the TCP server will seek a free worker or spawn a new one if all a busy. It will then handle the data to the worker. Because in TCP there is no way to tell when transmission is complete and because with non-blocking I/O data is always received in chunks, it is up to the worker to decide whether the request is complete and should be processed or whether more data is expected. In the latter case, the worker will simply return and the next arriving chunk over the same channel will be appended to the previous by the main server thread. If the former case the worker will process the data and will write back a response; when sending it to the client, the main server thread will clean up the accumulated chunks in the channel, making it ready for next request. 
+When a new piece of data arrives, the TCP server will seek a free worker. If all workers are busy and but the maximum number of workers has not been exceeded, a new worker will be spawn; if the maximum number of workers have been reached, the worker with shortest internal queue will be used. Next the data will be handled to the worker. Because in TCP there is no way to tell when transmission is complete and because with non-blocking I/O data is always received in chunks, it is up to the worker to decide whether the request is complete and should be processed or whether more data is expected. In the latter case, the worker will simply return and the next arriving chunk over the same channel will be appended to the previous by the main server thread. If the former case the worker will process the data and will write back a response; when sending it to the client, the main server thread will clean up the accumulated chunks in the channel, making it ready for next request. 
 
-The TCP server is run in two instances (i.e. two main server threads). One is for serving HTTP data, in which case the server thread spawns ServerWorkerHttp threads. Second is for serving Session Storage Manager for sending sessions when asked by another server and uses a separate TCP socket; in this case worker threads are of type ServerWorkerSessionManager.
+The TCP server is run in two instances (i.e. two main server threads). One is for serving HTTP data, in which case the server thread spawns ServerWorkerHttp threads. Second is for serving Session Storage Manager for sending sessions when asked by another server and uses a separate TCP socket; in this case worker threads are of type ServerWorkerSm.
 
 The statistics gathering runs at two tiers: 
 - After serving a request, each ServerWorkerHttp or ServerWorkerSessionManager worker will write some statistics in ServerStats static hash maps (<Long,Long>): one table for the number of requests served by each worker (incremented per worker after a request is served) and one table for the total execution time (sum per worker). Worker threads use their creation timestamp as unique key. The ServerStatsSchedule class keeps 2 sets of such maps, one for HTTP workers and one for Session Manager workers. 
@@ -52,6 +54,7 @@ When the Static.java class is invoked to serve statistics, it uses an offset fro
 - avg_threads: average number of active threads
 - avg_exec_time: average execution time per request in milliseconds
 - avg_busy_percent: average percent of the time each worker was busy
+
 
 HTTP PARSER
 
@@ -69,42 +72,80 @@ All the business logic should be developed inside the endpoint's method.
 
 When the method completes, the ServerWorkerHttp invokes the .onCompletion() method from the reflected class which stored the session back (if ASM is enabled) and returns the TaskOutput object. The data from the TaskOutput object is then used to construct the HTTP reply to the client. 
 
+
 SESSION MANAGER
 
-The session is a local object that contains a hash map (<String, Object>) as primary storage for key/value pairs as well as some timestamps. You can store whatever objects you want inside the session ,but need to separately rack their type and cast them back properly upon retrieval. The session provides methods like .put(), .get() and .del() to add, fetch and remove key/value pairs. 
+The session is a local object that contains a hash map (<String, Object>) as primary storage for key/value pairs as well as some timestamps. You can store whatever objects you want inside the session, but need to separately track their type and cast them back properly upon retrieval. The session provides methods .put(), .get() and .del() to add, fetch and remove key/value pairs. 
 
 The session has three internal timestamps: 
 - created: set to the UNIX timestamp in milliseconds of session's creation; available read-only via the .getCreated() method.
 - updated:set to the UNIX timestamp in milliseconds of session's last update (i.e. invocation of .put() or .delete()); available read-only through the .getUpdated() method.
-- ttl: set to the UNIX timestamp in milliseconds of session's expiration time. If ASM is enabled, when saving the session to storage the expiration time will be re-calculated from a pre-defined TTL constant: if the constant is positive, the expiration will be set to current time plus TTL (thus effectively extending the session's expiration time each time it is used); if it is negative, expiration will be set to session's created time plus TTL (thus effectively fixing session's life span); if it is zero, expiration will not be touched (and because default is 0, if you have not changed it, the session will likely be destroyed by the Session Manager within a minute). Expiration is available to get and set using the .getTtl() and .setTtl(milliseconds) methods. 
+- ttl: set to the UNIX timestamp in milliseconds of session's expiration time. If ASM is enabled, when saving the session to storage the expiration time will be re-calculated using a pre-defined TTL constant: if the constant is positive, the expiration will be set to current time plus TTL (thus effectively extending the session's expiration time each time it is used); if it is negative, expiration will be set to session's creation time plus TTL (thus effectively fixing session's life span); if it is zero, expiration will not be touched (and because default is 0, if you have not changed it, the session will likely be destroyed by the Session Manager within a minute). Expiration is available to manually get and set using the .getTtl() and .setTtl(milliseconds) methods. 
 
 The SessionManagerCleanup runs a clean-up task at predefined intervals (by default each minute). The task compares the TTL time in each session in the storage with the current time and remove the expired sessions from the storage. The same process dumps the session storage to a file; when the Session Manager is starting, it checks the file and if present, loads the session storage form it, allowing sessions to survive server restarts. 
 
 When running multiple servers in parallel, they will synchronise their session storages so that no matter where the request goes, its session is always available. Part of the exchange (announcements and availability queries) is made over multicast allowing to run the cluster of servers without any configuration and also allowing on-the-fly addition and removal of servers. The actual session transfer is made over TCP. 
 
-When a new session is created locally or deleted, the corresponding server will create an instance of SessionMessage, set inside the session's ID and an action flag (AVAIL for added, DELETE for removed), and will serilalise and send the message over multicast to the pre-defined groups and port. 
+When a new session is created or deleted, the corresponding server will create an instance of SessionMessage, set inside the session's ID and an action flag (AVAIL for added, DELETE for removed), will serilalise and queue it for sending over multicast to a pre-defined group and port. For this, the ClientMulticast isused; it runs in a separate thread and holds a static blocking queue (FIFO). When a message is added to the queue, the ClientMulticast will send it over the network using multicast.
 
-The SessionManager also runs in a separate thread a multicast listener, attached to the same address and port. When a request arrives, the listener deserialises it and acts depending on the content: 
-if action is STORE, it will check whether the local storage has the specified key; if it does, it will further check if the updated field in the incoming messages i newer than the updated field of the stored session. If yes (or if session was not found), a new SessionMessage will be created with the same session ID and an action of GET. The message will be send over TCP (unicast) to the originator of the multicast message, which should respond over TCP with the actual session; the received session object will then be stored locally. 
-if action is DELETE, it will check whether the local storage has the specified key and if so, the key will be deleted. 
+In a separate thread a multicast server ServerMulticast runs, attached to the same multicast group and port. When a request arrives, the ServerMulticast deserialises it and acts depending on the content: 
+- if message type is DELETE, it will check whether the local storage has the specified key and if so, the key will be deleted. 
+- if message type is AVAIL, it will use the same message, but substitute the IP address with its own, will set the message type to GET and will place it in the ClientTcp's queue. 
+- if message type is WHOHAS, it will check if the local storage has the session_id from the message; if yes, it will substitute the IP address with its own, will set the message type to ISAT and will place it in the ClientMulticast's queue.
+- if message type is ISAT, it will check whether it needs this sesson (i.e. misisng form local storage or present, but with older updated values) and if yes, it will use the same message, but substitute the IP address with its own, will set the message type to GET and will place it in the ClientTcp's queue. 
 
-The unicast session retrieval requests (action GET) are handled by a separate TCP server instance running multiple ServerWorkerSessionManager workers. They behave much like their HTTP counterparts: receive chunks of incoming data and try to deserialise it into SessionMessage object; if attempt fails, then more data is expected and the worker returns; if they succeed, they extract the action from the deserialised object and act upon it: the worker checks if the the specified key is available in the local storage and, if so, serialises it and send it back. 
+The unicast session retrieval requests (messages of type GET) are handled by a ClientTcp running in a separate process which holds a static blocking queue (FIFO). When a message is added to the queue, the ClientTcp will send it over the network using TCP to the IP address, specified in the message and to the pre-configured Session Manager's TCP port.
 
-The describe mechanism allows propagation of created and deleted sessions between servers, but does not allow a newly added server to catch up with existing sessions To cope with this case, when a worker invokes the .get() method from session storage and the storage lacks the key, the .get() method will not immediately return NULL, but will also perform the following actions: 
-- Create a new SessionMessage with an action WHOHAS and place it in the outbound multicast queue; from there it will be picked up and sent to all other servers. The .get() method will then sleep for 10 ms.
-- When a multicast listener receives such message, it will create a new SessionMessage with action set to ISAT and will send it back to the multicast originator via unicast. 
-- When a ISAT message is received by a ServerWorkerSessionManager worker, it will retrieve the session object the same way to does with STOR requests and will make it available locally. 
-- The .get() method will awake from the 10 ms sleep and check whether the session Id is now available in the local storage. If it is not, it is considered non-existent and NULL is returned. 
+Session manager runs an instance of the ServerTcp similar to the one used for HTTP, but listening at a different port. It has its own worker type, ServerTcpWorkerSm which receives chunks of incoming data and try to deserialise it into SessionMessage object; if attempt fails, then more data is expected and the worker returns; if they succeed, they extract the action from the deserialised object and act upon it: the worker checks if the the specified key is available in the local storage and, if so, gets the session, serialises it and sends it back with a messag type set to POST. 
+
+The AVAIL -> GET -> POST sequence allows any server in the cluster to receive a new or updated session from another server. 
+
+To allow a newly added server to obtain existing sessions which are misisng from its storage, the .get() method will not immediately return NULL, but will also perform the following actions: 
+- Create a new SessionMessage with a type of WHOHAS and place it in the queue of the ClientMulticast; from there it will be picked up and sent to all other servers. The .get() method will then sleep for 10 ms.
+- When ServerMulticast receives a WHOHAS message, it will check session ID availability in local storage and if found, will change messages type to ISAT and will send it back using multicast. 
+- When ServerMulticast receives a ISAT message, it will check if we still need this session (i.e. missing from lcoal storage or present, but with older value of updated field) and if needed will change messages type to GET and will handle it to the ClientTcp for retrieval.
+- When ClientTcp get the GET message from its queue, it will send the message to the server specified in it using TCP.
+- When ServerTcp receives the GET message, it will check if session ID availability in local storage and if found will attach it to the same message, change mesage type to POST and send it back the ClientTcp. 
+- When ClientTcp receives the POST message, it will check if we still need this session (i.e. missing from lcoal storage or present, but with older value of updated field) and if needed will store it in the local storage.
+- When the .get() method awakes from the sleep it will check whether the session ID is now available in the local storage. If it is missing, it is considered non-existent and NULL is returned. 
+
+The following diagrams illustrate the three scnearios for storage update: 
+
+Server A							Server B
+-----------------------------------------------
+// Session deleted
+(Multicast client) DELETE	---> 	(Multicast server) deletes session
+
+
+//  Session created or updated
+(Multicast client) AVAIL	---> 	(Multicast server)
+												|
+(TCP server)				<--- 	(TCP client) GET
+|
+(TCP server) POST			--->	(TCP client) saves session
+
+
+//  Session missing in local storage when.get() is called
+(Multicast client) WHOHAS	---> 	(Multicast server)
+													|
+(Multicast server)			<--- 	(Multicast client) ISAT
+|
+(TCP client) GET			---> 	(TCP server)	
+												|
+(TCP client) saves session	<--- 	(TCP server) POST
+
 
 STATIC CONTENT
 
 Static content is served by a separate class StaticContent.java. It takes the same TaskInput object and yields back a TaskOutput object. Note that this class will not serve directory listings; if a request resource is a directory,it will return 404 Not Found instead of 501 Forbidden. 
+
 
 LOGGING
 
 Logging is provided by a set of static methods in the Logger.java class. The logger has two main functions: 
 - Provide logging for each served request in the NCSA Common Log Format; the records are appended to a log file which name and location is configurable. The log will not be rotated by Apilator, it is up to your OS to do so. There records are created automatically by Apilator. 
 - Provide logging of system events. Events are classified to 7 standard levels of severity: none, critical, error, warning, notice, trace, debug. The system is configured with one of these level and will only log events which are of same or higher level. Events with severity critical and error will be written to both STDERR and STDOUT while events from all other levels will be written to STDOUT. It is up to your OS to decide where to put the actual output (if you run Apilator from a supervisor like you should, check with its documentation). If you want to add logging to your custom part of the API, use the public methods from Logger class which correspond to the desired level: from Logger.critical() to Logger.debug(). These methods take two arguments, class name and sting to log. See the ExndpoitnExample on how the class name can be automatically obtained.  
+
 
 AUTOMATIC CONFIGURATION
 

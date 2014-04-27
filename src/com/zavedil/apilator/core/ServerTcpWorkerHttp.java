@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import com.zavedil.apilator.app.*;
 
-public class ServerTcpWorker implements Runnable {
+public class ServerTcpWorkerHttp implements Runnable {
 	private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
@@ -42,7 +42,7 @@ public class ServerTcpWorker implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerTcpWorker() {
+	public ServerTcpWorkerHttp() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 	}
@@ -206,6 +206,10 @@ public class ServerTcpWorker implements Runnable {
 		return parts[1];
 	}
 	
+	/**
+	 * Helper method to get the prefix of the package name
+	 * @return String The prefix of the current package name
+	 */
 	private String getPackageName() {
 		String[] parts = this.getClass().getPackage().toString().split(" ");
 		String[] parts2 = parts[1].split("\\.");

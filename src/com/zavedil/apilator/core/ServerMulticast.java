@@ -69,12 +69,12 @@ public class ServerMulticast implements Runnable {
 				
 				// We need new ObjectInputStream for each datagram				
 				ObjectInputStream ois = new ObjectInputStream(is);
-				SessionMessage msg = (SessionMessage)ois.readObject();	
-				processIncoming(msg);
+				SessionMessage session_message = (SessionMessage)ois.readObject();	
+				processIncoming(session_message);
 			}
 			catch (IOException e) {
 				Logger.warning(className, "Unable to bind to multicast packet");
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 			catch (ClassNotFoundException e) {
 				Logger.warning(className, "Unable to process inbound multicast packet");
@@ -105,9 +105,15 @@ public class ServerMulticast implements Runnable {
 				if (SessionStorage.exists(message.session_id)) {
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_ISAT;
-					ClientUdp.queue.add(message);
+					ClientMulticast.queue.add(message);
 				}
 				break;
+			case SessionMessage.ACT_ISAT:
+				if (SessionStorage.saveSession(message.session_id, message.updated)) {
+					message.ip = ConfigAuto.ip;
+					message.type = SessionMessage.ACT_GET;
+					ClientTcp.queue.add(message);
+				}
 		}
 	}
 }

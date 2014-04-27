@@ -46,28 +46,26 @@ public class Main {
 			// Start Session Manager Clean-upper thread
 			SessionStorageCleanup.init();
 							
-			// Start the session storage manager thread for receiving
+			// Start the Session Manager multicast server thread
 			ServerMulticast sm_receive = new ServerMulticast();
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
 			
-			// Start the session storage manager thread for sending
-			ClientMulticast sm_send = new ClientMulticast();
-			Thread sm_send_t = new Thread(sm_send);
-			sm_send_t.start();
-								
-			// Start the Session Manager server
-			ServerUdp su = new ServerUdp(ip);
-			Thread su_t = new Thread(su);
-			su_t.start();
+			// Start the Session Manager multicast client thread
+			ClientMulticast cm = new ClientMulticast();
+			Thread cm_t = new Thread(cm);
+			cm_t.start();
+	
+			// Start the Session Manager TCP client thread
+			ClientTcp ct = new ClientTcp();
+			Thread ct_t = new Thread(ct);
+			ct_t.start();
 			
-			// Start the Session Manager Client
-			ServerUdpClient suc = new ServerUdpClient(su);
-			Thread suc_t = new Thread(suc);
-			suc_t.start();
-					
+			// Start the Session Manager TCP server thread
+			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_SM , ip)).start();
+			
 			// Start the HTTP server
-			new Thread(new ServerTcp(ip)).start();
+			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_HTTP , ip)).start();
 			
 			// Start statistics gathering thread
 			ServerStats.init();

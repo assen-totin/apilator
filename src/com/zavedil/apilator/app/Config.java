@@ -31,8 +31,12 @@ public class Config {
 	// TCP port to listen at
 	public static final int TcpPort = 8080;
 
-	// Maximum number of workers, set to 0 to disable upper limit
-	public static final int MaxWorkers = 100;
+	// Maximum number of workers for serving HTTP, set to 0 to disable upper limit
+	public static final int MaxWorkersHttp = 100;
+
+	// Maximum number of workers for Session Manager, set to 0 to disable upper limit
+	// As many as the servers in the cluster is enough
+	public static final int MaxWorkersSm = 10;
 	
 	// Filename for access log
 	public static final String AccessLog = "/tmp/apilator.log";

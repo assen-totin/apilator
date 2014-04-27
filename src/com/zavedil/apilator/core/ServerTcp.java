@@ -37,9 +37,14 @@ import com.zavedil.apilator.app.*;
 
 public class ServerTcp implements Runnable {
 	private final String className;
+
+	// Server type: HTTP or Session Manager
+	public final static int SERVER_TYPE_HTTP = 1;
+	public final static int SERVER_TYPE_SM = 2;
+	private final int server_type;
 	
-	// The host:port combination to listen on
-	private InetAddress hostAddress;
+	// The IP address to listen on (or null for all IP addresses)
+	private final InetAddress hostAddress;
 
 	// The channel on which we'll accept connections
 	private ServerSocketChannel serverChannel;
@@ -51,8 +56,11 @@ public class ServerTcp implements Runnable {
 	private int byteBufSize = 8192;
 
 	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerTcpWorker> workers = new ArrayList<ServerTcpWorker>();
-	private ServerTcpWorker worker = null;
+	private List<ServerTcpWorkerHttp> workers_http = new ArrayList<ServerTcpWorkerHttp>();
+	private ServerTcpWorkerHttp worker_http = null;
+	private List<ServerTcpWorkerSm> workers_sm = new ArrayList<ServerTcpWorkerSm>();
+	private ServerTcpWorkerSm worker_sm = null;
+
 	// Workers pool management
 	int min_queue_size, curr_queue_size;
 	boolean got_worker;
@@ -71,10 +79,10 @@ public class ServerTcp implements Runnable {
 	 * @throws IOException
 	 */
 	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
-	public ServerTcp(InetAddress hostAddress) throws IOException {
+	public ServerTcp(int server_type, InetAddress hostAddress) throws IOException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance.");
-		
+		this.server_type = server_type;
 		this.hostAddress = hostAddress;
 		this.selector = this.initSelector();
 	}
@@ -228,39 +236,73 @@ public class ServerTcp implements Runnable {
 		key.attach(tmpBuffer);
 		tmpBuffer.flip();
 		
-		// Worker threads for Session Manager
-		got_worker = false;
-		if (!workers.isEmpty()){
-			min_queue_size = workers.get(0).getQueueSize();
-			worker = workers.get(0);
-		}
-		for (ServerTcpWorker entry : workers) {
-			curr_queue_size = entry.getQueueSize();
-			// If queue size is 0, then the worker is not busy - assign to it;
-			if (curr_queue_size == 0) {
-				worker = entry;
-				got_worker = true;
-				break;
+		if (server_type == SERVER_TYPE_HTTP) {
+			// Worker threads for HTTP
+			got_worker = false;
+			if (!workers_http.isEmpty()){
+				min_queue_size = workers_http.get(0).getQueueSize();
+				worker_http = workers_http.get(0);
 			}
-			// If not, record the queue size and set potential worker
-			if (min_queue_size > curr_queue_size) {
-				min_queue_size = curr_queue_size;
-				worker = entry;
+			for (ServerTcpWorkerHttp entry : workers_http) {
+				curr_queue_size = entry.getQueueSize();
+				// If queue size is 0, then the worker is not busy - assign to it;
+				if (curr_queue_size == 0) {
+					worker_http = entry;
+					got_worker = true;
+					break;
+				}
+				// If not, record the queue size and set potential worker
+				if (min_queue_size > curr_queue_size) {
+					min_queue_size = curr_queue_size;
+					worker_http = entry;
+				}
+				
+			}		
+			// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
+			if (!got_worker) {
+				if ((Config.MaxWorkersHttp == 0) || (workers_http.size() < Config.MaxWorkersHttp)) {
+					worker_http = new ServerTcpWorkerHttp();
+					new Thread(worker_http).start();
+					workers_http.add(worker_http);
+				}
+				// else the task goes to the worker with the shortest queue as selected above
 			}
-			
+			worker_http.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
 		}
 		
-		// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
-		if (!got_worker) {
-			if ((Config.MaxWorkers == 0) || (workers.size() < Config.MaxWorkers)) {
-				worker = new ServerTcpWorker();
-				new Thread(worker).start();
-				workers.add(worker);
+		else if (server_type == SERVER_TYPE_SM) {
+			// Worker threads for Sm
+			got_worker = false;
+			if (!workers_sm.isEmpty()){
+				min_queue_size = workers_sm.get(0).getQueueSize();
+				worker_sm = workers_sm.get(0);
 			}
-			// else the task goes to the worker with the shortest queue as selected above
-		}
+			for (ServerTcpWorkerSm entry : workers_sm) {
+				curr_queue_size = entry.getQueueSize();
+				// If queue size is 0, then the worker is not busy - assign to it;
+				if (curr_queue_size == 0) {
+					worker_sm = entry;
+					got_worker = true;
+					break;
+				}
+				// If not, record the queue size and set potential worker
+				if (min_queue_size > curr_queue_size) {
+					min_queue_size = curr_queue_size;
+					worker_sm = entry;
+				}
 				
-		worker.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+			}		
+			// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
+			if (!got_worker) {
+				if ((Config.MaxWorkersSm == 0) || (workers_sm.size() < Config.MaxWorkersSm)) {
+					worker_sm = new ServerTcpWorkerSm();
+					new Thread(worker_sm).start();
+					workers_sm.add(worker_sm);
+				}
+				// else the task goes to the worker with the shortest queue as selected above
+			}
+			worker_sm.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
+		}
 		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);
@@ -315,6 +357,8 @@ public class ServerTcp implements Runnable {
 	 * @throws IOException
 	 */
 	private Selector initSelector() throws IOException {
+		InetSocketAddress isa = null;
+		
 		// Create a new selector
 		Selector socketSelector = SelectorProvider.provider().openSelector();
 
@@ -323,7 +367,10 @@ public class ServerTcp implements Runnable {
 		serverChannel.configureBlocking(false);
 
 		// Bind the server socket to the specified address and port
-		InetSocketAddress isa = new InetSocketAddress(this.hostAddress, Config.TcpPort);
+		if (server_type == SERVER_TYPE_HTTP)
+			isa = new InetSocketAddress(this.hostAddress, Config.TcpPort);
+		else if (server_type == SERVER_TYPE_SM)
+			isa = new InetSocketAddress(this.hostAddress, Config.SessionManagerTcpPort);
 		serverChannel.socket().bind(isa);
 
 		// Register the server socket channel, indicating an interest in 
