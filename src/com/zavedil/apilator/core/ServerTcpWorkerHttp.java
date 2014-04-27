@@ -108,6 +108,7 @@ public class ServerTcpWorkerHttp implements Runnable {
 			
 			// API call using reflection
 			String endpoint = getEndpoint(input.location);
+		
 			try {
 				Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
 				Constructor api_constr = api_class.getConstructor(TaskInput.class);

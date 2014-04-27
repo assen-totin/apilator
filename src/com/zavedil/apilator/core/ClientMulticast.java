@@ -68,6 +68,8 @@ public class ClientMulticast implements Runnable {
 	 * @param session_message SessionMessage The message to send
 	 */
 	public void run() {
+		Logger.debug(className, "Running as a new thread.");
+		
 		while(true) {
 			try {
 				session_message = queue.take();
