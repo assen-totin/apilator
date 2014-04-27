@@ -89,24 +89,9 @@ public class SessionStorage {
 			storage.put(session_id, session);
 			
 			// Add to network queue
-			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_STORE);
+			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_AVAIL);
 			session_message.updated = session.getUpdated();
-			session_message.session = session;
-			SessionManagerSend.queue.add(session_message);
-			
-			// TEST: ADD TO UDP QUEUE
-			/*
-			session_message.session = null;
-			try {
-				session_message.ip = InetAddress.getByName("217.75.128.8");
-			} 
-			catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			ServerUdpClient.queue.add(session_message);
-			Logger.debug(className, "ADDED TO ServerUdpClient");
-			*/
+			ClientMulticast.queue.add(session_message);
 		}
 	}
 	
@@ -135,8 +120,7 @@ public class SessionStorage {
 		if (session == null) {
 			// Query the network if key not found
 			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_WHOHAS);
-			//queue_multicast.put(session_id, session_message);
-			SessionManagerSend.queue.add(session_message);
+			ClientMulticast.queue.add(session_message);
 			
 			try {
 				Logger.debug(className, "GOING TO SLEEP...");
@@ -165,7 +149,7 @@ public class SessionStorage {
 		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
 		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_DELETE);
 		//queue_multicast.put(session_id, session_message);
-		SessionManagerSend.queue.add(session_message);
+		ClientMulticast.queue.add(session_message);
 		
 		// Remove locally
 		storage.remove(session_id);

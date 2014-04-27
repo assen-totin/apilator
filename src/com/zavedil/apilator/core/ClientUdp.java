@@ -3,12 +3,19 @@ package com.zavedil.apilator.core;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.SocketException;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.zavedil.apilator.app.Config;
+
 /**
- * A UDP client class.
- * Implemented as a mediator which queues events and pushes them to be send by the UDP server,
- * so that the responses come back to the same channel.
+ * Multicast queue and sender for Session Storage. 
+ * Defines a local session storage.
  * @author Assen Totin assen.totin@gmail.com
  * 
  * Created for the Apilator project, copyright (C) 2014 Assen Totin, assen.totin@gmail.com 
@@ -28,44 +35,61 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class ServerUdpClient implements Runnable{
+public class ClientUdp implements Runnable {
 	private final String className;
-	private final ServerUdp server;
 	private SessionMessage session_message;
+	private byte[] send_buffer;
 	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	
+	private DatagramSocket socket = null;
+	private DatagramPacket packet;
+	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
 	public static LinkedBlockingQueue<SessionMessage> queue = new LinkedBlockingQueue<SessionMessage>();
 	
-	public ServerUdpClient(ServerUdp server) {
+	public ClientUdp() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		this.server = server;
+		
+		try {
+			socket = new DatagramSocket();
+		}
+		catch (IOException e) {
+			Logger.warning(className, "Unable to join multicast group");
+		}
 	}
 	
+	/**
+	 * Method to send a Session Message over multicast
+	 * @param session_message SessionMessage The message to send
+	 */
 	public void run() {
-		Logger.debug(className, "Running in a new thread.");
-		
 		while(true) {
-			// Wait here until a message arrives
 			try {
 				session_message = queue.take();
-			} 
-			catch (InterruptedException e1) {
+			}
+			catch (InterruptedException e) {
 				;
 			}
 			
-			// Serialize the object 
-			try {
-				ObjectOutputStream oos = new ObjectOutputStream(baos);	
-				oos.writeObject(session_message);
-			}
-			catch (IOException e) {
-				Logger.warning(className, "Failed to serialize session message.");
+			if (socket == null)
 				continue;
-			}
+
+			Logger.debug(className, "SENDING UDP: " + session_message.updated); 
 			
-			server.clientSend (session_message.ip, baos.toByteArray());
+			try {
+				// Check if there are pending outgoing, serialize and send
+		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
+				oos.writeObject(session_message);
+				
+				send_buffer = baos.toByteArray();
+				packet = new DatagramPacket(send_buffer, send_buffer.length, session_message.ip, Config.SessionManagerMulticastPort);
+				socket.send(packet);       
+			}
+			catch(IOException e) {
+				Logger.warning(className, "Unable to send multicast packet");
+			}
 		}
 	}
 }

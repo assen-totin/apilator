@@ -28,7 +28,7 @@ public class SessionMessage implements java.io.Serializable {
 	private final String className;
 	// Network actions
 	public static final int ACT_NOOP = 0;	// Take no action
-	public static final int ACT_STORE = 1;	// Used when multicasting an available update
+	public static final int ACT_AVAIL = 1;	// Used when multicasting an available update
 	public static final int ACT_DELETE = 2;	// Used when multicasting a deletion
 	public static final int ACT_WHOHAS = 3;	// Used when multicasting a question asking who has a specified key
 	public static final int ACT_ISAT = 4;	// Used when unicasting key availability
@@ -42,11 +42,28 @@ public class SessionMessage implements java.io.Serializable {
 	public long updated=0;
 	public Session session=null;
 	
+	/**
+	 * Main constructor for new session message
+	 * @param session_id String The sesson id for which this message will be used
+	 * @param type int The action ID of the message
+	 */
 	public SessionMessage(String session_id, int type) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		this.session_id = session_id;
 		this.type = type;	
+		this.ip = ConfigAuto.ip;
+	}
+	
+	/**
+	 * Copy constructor
+	 * @param that SessionMessage The session message to be copied.
+	 */
+	public SessionMessage(SessionMessage that) {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
+		this.session_id = that.session_id;
+		this.type = that.type;	
 		this.ip = ConfigAuto.ip;
 	}
 }

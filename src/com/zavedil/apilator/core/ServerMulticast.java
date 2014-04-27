@@ -32,7 +32,7 @@ import com.zavedil.apilator.app.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManagerReceive implements Runnable {
+public class ServerMulticast implements Runnable {
 	private final String className;
 	
 	InetAddress multicast_group;
@@ -40,7 +40,7 @@ public class SessionManagerReceive implements Runnable {
 	byte[] receive_buffer = new byte[Config.SessionSize];
 	DatagramPacket packet = new DatagramPacket(receive_buffer, receive_buffer.length);	
 	
-	public SessionManagerReceive() {
+	public ServerMulticast() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		
@@ -90,9 +90,11 @@ public class SessionManagerReceive implements Runnable {
 		Logger.debug(className, "GOT MULTICAST WITH TYPE: " + message.type);
 		
 		switch(message.type) {
-			case SessionMessage.ACT_STORE:
-				// First check if we already have this or later version before requesting
-				SessionStorage.putFromNetwork(message.session);
+			case SessionMessage.ACT_AVAIL:
+				// Queue a message to retrieve this session 
+				message.ip = ConfigAuto.ip;
+				message.type = SessionMessage.ACT_GET;
+				ClientTcp.queue.add(message);
 				break;
 			case SessionMessage.ACT_DELETE:
 				// Delete the session from local storage
@@ -103,7 +105,7 @@ public class SessionManagerReceive implements Runnable {
 				if (SessionStorage.exists(message.session_id)) {
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_ISAT;
-					ServerUdpClient.queue.add(message);
+					ClientUdp.queue.add(message);
 				}
 				break;
 		}

@@ -35,7 +35,7 @@ import com.zavedil.apilator.app.*;
  */
 
 //public class SessionManagerCleanup implements Runnable {
-public class SessionManagerCleanup {
+public class SessionStorageCleanup {
 	public final static String className = "SessionManagerCleanup";
 	
 	/*

@@ -2,11 +2,14 @@ package com.zavedil.apilator.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,32 +38,18 @@ import com.zavedil.apilator.app.Config;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-public class SessionManagerSend implements Runnable {
+public class ClientTcp implements Runnable {
 	private final String className;
-	private SessionMessage session_message;
-	private byte[] send_buffer;
-	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	
-	private InetAddress multicast_group;
-	private MulticastSocket socket = null;
-	private DatagramPacket packet;
+	private SessionMessage sm_in, sm_out;
+	private Socket socket = null;
 	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
 	public static LinkedBlockingQueue<SessionMessage> queue = new LinkedBlockingQueue<SessionMessage>();
 	
-	public SessionManagerSend() {
+	public ClientTcp() {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-		
-		try {
-			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
-			socket = new MulticastSocket(Config.SessionManagerMulticastPort);
-			socket.joinGroup(multicast_group);
-		}
-		catch (IOException e) {
-			Logger.warning(className, "Unable to join multicast group");
-		}
 	}
 	
 	/**
@@ -70,28 +59,49 @@ public class SessionManagerSend implements Runnable {
 	public void run() {
 		while(true) {
 			try {
-				session_message = queue.take();
+				sm_out = queue.take();
 			}
 			catch (InterruptedException e) {
-				;
-			}
-			
-			if (socket == null)
 				continue;
-
-			Logger.debug(className, "SENDING MULTICAST: " + session_message.updated); 
+			}
 			
 			try {
-				// Check if there are pending outgoing, serialize and send
-		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
-				oos.writeObject(session_message);
-				
-				send_buffer = baos.toByteArray();
-				packet = new DatagramPacket(send_buffer, send_buffer.length, multicast_group, Config.SessionManagerMulticastPort);
-				socket.send(packet);       
+				socket = new Socket(sm_out.ip.toString(), Config.SessionManagerTcpPort);
+			}
+			catch (IOException e) {
+				Logger.warning(className, "Unable to create TCP socket");
+				continue;
+			}
+			
+			Logger.debug(className, "SENDING TCP GET: " + sm_out.updated); 
+			
+			try {
+				// Serialize and send
+		        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());			        
+				oos.writeObject(sm_out);
 			}
 			catch(IOException e) {
-				Logger.warning(className, "Unable to send multicast packet");
+				Logger.warning(className, "Unable to send TCP packet");
+				continue;
+			}
+			
+			// Fetch a response
+			try {
+				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+				sm_in = (SessionMessage) ois.readObject();
+				
+				Logger.debug(className, "RECEIVED TCP POST: " + sm_in.updated); 
+				
+				if (sm_in.type == SessionMessage.ACT_POST)
+					SessionStorage.putFromNetwork(sm_in.session);
+			}
+			catch (IOException e) {
+				Logger.warning(className, "Unable to receive TCP packet");
+				continue;
+			}
+			catch (ClassNotFoundException e) {
+				Logger.warning(className, "Unable to deserialize TCP packet");
+				continue;
 			}
 		}
 	}
