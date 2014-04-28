@@ -22,6 +22,7 @@ package com.zavedil.apilator.app;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.zavedil.apilator.core.*;
 
@@ -180,6 +181,7 @@ public class EndpointExample extends Endpoint {
 		
 		// We use ASM in the example, so session should be preloaded for us from a session cookie (if supplied). 
 		
+		/*
 		// If this is a blank session...
 		if (session.getUpdated() == session.getCreated()) {
 			// Just store some key and return the value of the session ID
@@ -195,8 +197,13 @@ public class EndpointExample extends Endpoint {
 			else 
 				output.data = "Sorry, could nod find key some_key!".getBytes();
 		}
-
+		*/
 		
+		JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", "987654321" ).add("document_path", "www.boza.com").add("trip_id", "321");
+		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("document_path", "www.online.bg").add("trip_id", "123");
+		JsonArray jsonArray = new JsonArray().add(jsonObject1).add(jsonObject2);
+		String json = jsonArray.toString();
+		output.data = json.getBytes();
 	}
 	
 	/**

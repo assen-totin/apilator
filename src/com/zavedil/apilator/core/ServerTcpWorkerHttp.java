@@ -141,6 +141,8 @@ public class ServerTcpWorkerHttp implements Runnable {
 		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
 		headers += "Content-Length: " + output.data.length + "\n";
 		
+		headers += "Access-Control-Allow-Origin: *\n";
+		
 		output.buildCookies();
 		if (output.cookies != null)
 			headers += output.cookies;
