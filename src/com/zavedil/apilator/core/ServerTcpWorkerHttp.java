@@ -29,6 +29,8 @@ import java.lang.reflect.Method;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import com.zavedil.apilator.app.*;
 
 public class ServerTcpWorkerHttp implements Runnable {
@@ -141,7 +143,9 @@ public class ServerTcpWorkerHttp implements Runnable {
 		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
 		headers += "Content-Length: " + output.data.length + "\n";
 		
-		headers += "Access-Control-Allow-Origin: *\n";
+		// Additional headers if supplied by the TaskOutput
+		for (Map.Entry<String, String> entry: output.headers.entrySet())
+			headers += entry.getKey() + ": " + entry.getValue() + "\n";
 		
 		output.buildCookies();
 		if (output.cookies != null)

@@ -136,6 +136,9 @@ public abstract class Endpoint {
 			// Send the session to the SessionStorage
 			SessionStorage.put(session.getSessionId(), session);
 		
+		// Additional headers that we always want to have:
+		output.headers.put("Access-Control-Allow-Origin", "*");
+		
 		return output;
 	}
 	

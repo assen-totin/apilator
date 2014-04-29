@@ -33,9 +33,10 @@ public class TaskOutput {
 	private final String className;
 	public byte[] data=null;						// Output data
 	public int http_status=200; 					// Default HTTP status from processing
-	public String mime_type="text/plain";		// Default output MIME type
+	public String mime_type="text/plain";			// Default output MIME type
 	public Hashtable<String,String> cookies_data = new Hashtable<String,String>();	// Output cookies name/values (optional)
 	public Hashtable<String, Long> cookies_expire = new Hashtable<String,Long>();	// Output cookies name/expiration (optional)
+	public Hashtable<String, String> headers = new Hashtable<String,String>();		// Output additional headers (optional)
 	public String cookies="";						// Output HTTP headers for cookies (optional)
 	
 	public TaskOutput() {

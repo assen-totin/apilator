@@ -200,7 +200,7 @@ public class EndpointExample extends Endpoint {
 		*/
 		
 		JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", "987654321" ).add("document_path", "www.boza.com").add("trip_id", "321");
-		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("document_path", "www.online.bg").add("trip_id", "123");
+		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("document_path", "www.online.bg").add("trip_id", "123").add("pending","1");
 		JsonArray jsonArray = new JsonArray().add(jsonObject1).add(jsonObject2);
 		String json = jsonArray.toString();
 		output.data = json.getBytes();
