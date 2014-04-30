@@ -122,7 +122,6 @@ public class HttpParser {
 	    
 	    // Parse first line and obtain method and protocol (URL will be retrieved later depending on method)
 	    first_line = reader.readLine();
-	    Logger.debug(className, "SO LINE: " + first_line);
 
 	    if (first_line == null || first_line.length() == 0) 
 	    	return 0;
@@ -589,7 +588,6 @@ public class HttpParser {
 	 * @return String The first line of the HTTP request
 	 */
 	public String getFirstLine() {
-		Logger.debug(className, "FIRST LINE: " + first_line);
 		return first_line;
 	}
 	
