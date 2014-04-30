@@ -34,7 +34,7 @@ import java.util.Map;
 import com.zavedil.apilator.app.*;
 
 public class ServerTcpWorkerHttp implements Runnable {
-	private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
+	private LinkedList<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
 	private long exec_time = 0;
@@ -191,7 +191,7 @@ public class ServerTcpWorkerHttp implements Runnable {
 					catch (InterruptedException e) {
 					}
 				}
-				dataEvent = (ServerTcpDataEvent) queue.remove(0);
+				dataEvent = (ServerTcpDataEvent) queue.removeFirst();
 			}
 			
 			// Process and return to sender

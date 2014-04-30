@@ -199,9 +199,13 @@ public class EndpointExample extends Endpoint {
 		}
 		*/
 		
-		JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", "987654321" ).add("document_path", "www.boza.com").add("trip_id", "321");
-		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("document_path", "www.online.bg").add("trip_id", "123").add("pending","1");
+		int randomNum = 1000 + (int)(Math.random() * 2000);
+		String aaa = "" + randomNum;
+		
+		JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", aaa ).add("invoice_type", "misc").add("document_path", "www.boza.com").add("trip_id", "321").add("status","completed");
+		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("invoice_type", "transport").add("trip_id", "123").add("status","completed");
 		JsonArray jsonArray = new JsonArray().add(jsonObject1).add(jsonObject2);
+		
 		String json = jsonArray.toString();
 		output.data = json.getBytes();
 	}

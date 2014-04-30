@@ -345,8 +345,10 @@ public class ServerTcp implements Runnable {
 				// data.
 				key.interestOps(SelectionKey.OP_READ);
 				
-				// Remove the attachment.
-				key.attachment();
+				// Prepare a clean buffer
+				ByteBuffer tmpBuff = ByteBuffer.allocate(byteBufSize);
+				key.attach(tmpBuff);
+				
 			}
 		}
 	}
