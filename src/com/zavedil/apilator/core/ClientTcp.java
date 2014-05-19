@@ -68,7 +68,7 @@ public class ClientTcp implements Runnable {
 			}
 			
 			try {
-				socket = new Socket(sm_out.ip.toString(), Config.SessionManagerTcpPort);
+				socket = new Socket(sm_out.ip_remote.toString(), Config.SessionManagerTcpPort);
 			}
 			catch (IOException e) {
 				Logger.warning(className, "Unable to create TCP socket");

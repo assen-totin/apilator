@@ -181,7 +181,7 @@ public class EndpointExample extends Endpoint {
 		
 		// We use ASM in the example, so session should be preloaded for us from a session cookie (if supplied). 
 		
-		/*
+
 		// If this is a blank session...
 		if (session.getUpdated() == session.getCreated()) {
 			// Just store some key and return the value of the session ID
@@ -197,17 +197,7 @@ public class EndpointExample extends Endpoint {
 			else 
 				output.data = "Sorry, could nod find key some_key!".getBytes();
 		}
-		*/
 		
-		int randomNum = 1000 + (int)(Math.random() * 2000);
-		String aaa = "" + randomNum;
-		
-		JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", aaa ).add("invoice_type", "misc").add("document_path", "www.boza.com").add("trip_id", "321").add("status","completed");
-		JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("invoice_type", "transport").add("trip_id", "123").add("status","completed");
-		JsonArray jsonArray = new JsonArray().add(jsonObject1).add(jsonObject2);
-		
-		String json = jsonArray.toString();
-		output.data = json.getBytes();
 	}
 	
 	/**

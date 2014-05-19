@@ -39,6 +39,7 @@ public class SessionMessage implements java.io.Serializable {
 	public int type;
 	public final String session_id;
 	public InetAddress ip;
+	public InetAddress ip_remote;
 	public long updated=0;
 	public Session session=null;
 	

@@ -91,7 +91,8 @@ public class ServerMulticast implements Runnable {
 		
 		switch(message.type) {
 			case SessionMessage.ACT_AVAIL:
-				// Queue a message to retrieve this session 
+				// Queue a message to retrieve this session
+				message.ip_remote = message.ip;
 				message.ip = ConfigAuto.ip;
 				message.type = SessionMessage.ACT_GET;
 				ClientTcp.queue.add(message);
@@ -103,6 +104,7 @@ public class ServerMulticast implements Runnable {
 			case SessionMessage.ACT_WHOHAS:
 				// If we have this session, queue a unicast response that we have it (adding its updated timestamp)
 				if (SessionStorage.exists(message.session_id)) {
+					message.ip_remote = message.ip; 
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_ISAT;
 					ClientMulticast.queue.add(message);
@@ -110,6 +112,7 @@ public class ServerMulticast implements Runnable {
 				break;
 			case SessionMessage.ACT_ISAT:
 				if (SessionStorage.saveSession(message.session_id, message.updated)) {
+					message.ip_remote = message.ip;
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_GET;
 					ClientTcp.queue.add(message);
