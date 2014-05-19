@@ -81,7 +81,8 @@ public class ClientMulticast implements Runnable {
 			if (socket == null)
 				continue;
 
-			Logger.debug(className, "SENDING MULTICAST: " + session_message.updated); 
+			Logger.debug(className, "SENDING MULTICAST TYPE: " + session_message.type);
+			Logger.debug(className, "SENDING MULTICAST SESSION_ID: " + session_message.session_id);
 			
 			try {
 				// Check if there are pending outgoing, serialize and send

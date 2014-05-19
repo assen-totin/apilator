@@ -88,6 +88,7 @@ public class ServerMulticast implements Runnable {
 			return;
 		
 		Logger.debug(className, "GOT MULTICAST WITH TYPE: " + message.type);
+		Logger.debug(className, "GOT MULTICAST WITH SESSION_ID: " + message.session_id);
 		
 		switch(message.type) {
 			case SessionMessage.ACT_AVAIL:

@@ -68,14 +68,14 @@ public class ClientTcp implements Runnable {
 			}
 			
 			try {
-				socket = new Socket(sm_out.ip_remote.toString(), Config.SessionManagerTcpPort);
+				socket = new Socket(sm_out.ip_remote, Config.SessionManagerTcpPort);
 			}
 			catch (IOException e) {
 				Logger.warning(className, "Unable to create TCP socket");
 				continue;
 			}
 			
-			Logger.debug(className, "SENDING TCP GET: " + sm_out.updated); 
+			Logger.debug(className, "SENDING TCP GET FOR SESSION_ID: " + sm_out.session_id); 
 			
 			try {
 				// Serialize and send
@@ -91,8 +91,8 @@ public class ClientTcp implements Runnable {
 			try {
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 				sm_in = (SessionMessage) ois.readObject();
-				
-				Logger.debug(className, "RECEIVED TCP POST: " + sm_in.updated); 
+
+				Logger.debug(className, "RECEIVED TCP POST WITH SESSION_ID: " + sm_in.session_id);
 				
 				if (sm_in.type == SessionMessage.ACT_POST)
 					SessionStorage.putFromNetwork(sm_in.session);
