@@ -39,7 +39,7 @@ public class ClientMulticast implements Runnable {
 	private final String className;
 	private SessionMessage session_message;
 	private byte[] send_buffer;
-	private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	//private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	
 	private InetAddress multicast_group;
 	private MulticastSocket socket = null;
@@ -86,6 +86,7 @@ public class ClientMulticast implements Runnable {
 			
 			try {
 				// Check if there are pending outgoing, serialize and send
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		        ObjectOutputStream oos = new ObjectOutputStream(baos);			        
 				oos.writeObject(session_message);
 				
