@@ -118,6 +118,7 @@ public class SessionStorage {
 		Session session;
 		
 		session = storage.get(session_id);
+		
 		if (session == null) {
 			// Query the network if key not found
 			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_WHOHAS);
@@ -125,14 +126,22 @@ public class SessionStorage {
 			
 			long now = System.currentTimeMillis();
 			
-			try {
-				Logger.debug(className, "GOING TO SLEEP...");
-				Thread.sleep(Config.SessionManagerTimeout);
-			} 
-			catch (InterruptedException e) {
-				// There's little we can if our sleep was interrupted - just go on
-				Logger.debug(className, "SLEEP INTERRUPTED!...");
-				;
+			while (System.currentTimeMillis() < (now + Config.SessionManagerTimeout)) {
+				try {
+					Logger.debug(className, "GOING TO SLEEP...");
+					//Thread.sleep(Config.SessionManagerTimeout);
+					trigger.wait(Config.SessionManagerTimeout);
+				} 
+				catch (InterruptedException e) {
+					// There's little we can if our sleep was interrupted - just go on
+					Logger.debug(className, "SLEEP INTERRUPTED!...");
+					;
+				}
+				
+				// Was the session we are waiting for delivered? 
+				// If yes, break free; if now, check time and continue sleeping until timeout
+				if(exists(session_id))
+					break;
 			}
 			
 			Logger.debug(className, "AWAIKENING...");

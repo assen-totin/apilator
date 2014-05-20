@@ -36,8 +36,8 @@ public class Static extends Endpoint {
 	 * Constructor method
 	 * @param api_task TaskInput The input data from the HTTP request
 	 */
-	public Static(TaskInput api_task, SessionStorage ss) {
-		super(api_task, ss);
+	public Static(TaskInput api_task) {
+		super(api_task);
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating a new instance.");
 	}

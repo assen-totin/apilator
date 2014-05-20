@@ -69,7 +69,7 @@ public class Config {
 	public static final int SessionManagerTcpPort = 54321;
 	
 	// Timeout waiting for peers to respond to 'who has' multicast query, milliseconds
-	public static final int SessionManagerTimeout = 10;
+	public static final int SessionManagerTimeout = 100;
 	
 	// Time interval to run the Session Manager clean-upper thread, in milliseconds (1 minute by default)
 	public static final int SessionManagerCleanupperInterval = 60000;

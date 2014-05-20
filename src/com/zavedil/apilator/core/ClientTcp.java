@@ -91,7 +91,7 @@ public class ClientTcp implements Runnable {
 				if (sm_in.type == SessionMessage.ACT_POST) {
 					sessionStorage.putFromNetwork(sm_in.session);
 					synchronized (sessionStorage.trigger) {
-						sessionStorage.trigger.notify();	
+						sessionStorage.trigger.notifyAll();	
 					}
 				}
 			}

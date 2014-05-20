@@ -87,14 +87,15 @@ public class ServerTcpWorkerHttp implements Runnable {
 			input.data = http_parser.getParams();
 			input.cookies = http_parser.getCookies();
 			input.location = http_parser.getLocation();
+			input.sessionStorage = sessionStorage;
 			
 			// API call using reflection
 			String endpoint = getEndpoint(input.location);
 		
 			try {
 				Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
-				Constructor api_constr = api_class.getConstructor(TaskInput.class, SessionStorage.class);
-				Object api_obj = api_constr.newInstance(input, sessionStorage);
+				Constructor api_constr = api_class.getConstructor(TaskInput.class);
+				Object api_obj = api_constr.newInstance(input);
 					
 				// Call the method which corresponds to the HTTP method
 				String method = http_parser.getMethod();
