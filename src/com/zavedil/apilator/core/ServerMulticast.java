@@ -68,7 +68,7 @@ public class ServerMulticast implements Runnable {
 		while(true) {
 			try {
 				// Prepare to read and unserialize incoming packets: we can reuse these
-				socket.receive(packet);				
+				socket.receive(packet);
 				InputStream is = new ByteArrayInputStream(packet.getData());
 				
 				// We need new ObjectInputStream for each datagram				

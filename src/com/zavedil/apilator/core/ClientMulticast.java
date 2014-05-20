@@ -36,7 +36,6 @@ public class ClientMulticast implements Runnable {
 	private final String className;
 	private SessionMessage session_message;
 	private byte[] send_buffer;
-	//private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	
 	private InetAddress multicast_group;
 	private MulticastSocket socket = null;

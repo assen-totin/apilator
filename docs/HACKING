@@ -7,12 +7,15 @@ com.zavedil.apilator.core: the core package, which (normally) needs no modificat
 com.zavedil.apilator.app: the main API application
 com.eclipsesource.json: JSON encoding/decoding library, used as s drop-in. 
 
+
 THE APP
 =======
 
 Most of the information you need to build your own API is already in the README file. Here is just brief summary:
 
 The Config.java class is where all configurable parameters reside. They are reasonable defaults, but some (like session storage cache and access log file) will be better off at another, less exposed (read: non-world-readable) location.
+
+Site-specific values can be specified in /etc/apilator.ini and will override the defaults. See the provided sample apilator.ini file. 
 
 The Endpoint,java class is an abstract class which every API endpoint should extend. It provides 4 main methods, each invoked depending on the HTTP method used: .get(), .post(), .put(), .delete(). It also has two methods called by the core package: 
 .onLoad() is called when a new task has arrived. It is main purpose is to be part of the Automated Session Management (ASM), i.e. out check whether a session cookie name is configured and if so, whether such cookie was supplied. On the later case the session with the corresponding ID is automatically retrieved and made available to your method. If no session coke was found or if the session has expired a blank session is reared for you. 
@@ -24,6 +27,7 @@ The Static.java class is ready-to-use an Endpoint for serving static content. In
 The Stats.java is an Endpoint providing run-time statistics for the local server. When this endpoint is invoked, it will retrieve the summary data for the specified interval and serve it as text or JSON. If you want the local part of your  static URLs to begin not with /Static but with something else, either rename this class and/or set up a rewrite URL in your reverse proxy (load balancer).
 
 To create your own endpoint, just copy the EndpointExample.java class and use it as template. You will ask find ready-to-use code samples in it. 
+
 
 THE CORE
 =========
@@ -38,6 +42,7 @@ The core package consists of several major parts:
 
 
 TCP SERVER FOR HTTP
+===================
 
 The TCP server is built using non-blocking I/O with one thread taking care of the socket and multiple threads processing requests. Unlike blocking I/O here one thread is not bound to one client, hence threads utilisation can be much higher and fewer threads (read: system resources) are needed to serve same amount of data. 
 
@@ -58,6 +63,7 @@ When the Static.java class is invoked to serve statistics, it uses an offset fro
 
 
 HTTP PARSER
+===========
 
 The HTTP parser first tries to parse HTTP headers and, for POST/PUT requests, if the size of the headers plus the provided Content-Length match the size of the available data, to parse the body. The parser duplicates the input data and creates two readers from the two copies, one text and one binary. The text ones is used for faster parsing of headers and for all sections of the body except those which have Content-Transfer-Encoding set to "binary", "8-bit" or not set at all. The HTTP parser keeps a track for the number of bytes the text readers has yielded and uses this count to read binary data form the binary reader. When binary data is read, first all data from the current position to the end of the input is read and the first occurrence of the boundary is sought. Then the same read is repeated but only to the beginning of the boundary. Next the last occurrence of CRLF inside this fragment is sought and the read from input is once again repeated, this time to the detected CRLF and the extracted is completed. 
 
@@ -75,6 +81,7 @@ When the method completes, the ServerWorkerHttp invokes the .onCompletion() meth
 
 
 SESSION MANAGER
+===============
 
 The session is a local object that contains a hash map (<String, Object>) as primary storage for key/value pairs as well as some timestamps. You can store whatever objects you want inside the session, but need to separately track their type and cast them back properly upon retrieval. The session provides methods .put(), .get() and .del() to add, fetch and remove key/value pairs. 
 
@@ -137,11 +144,13 @@ Server A							Server B
 
 
 STATIC CONTENT
+==============
 
 Static content is served by a separate class StaticContent.java. It takes the same TaskInput object and yields back a TaskOutput object. Note that this class will not serve directory listings; if a request resource is a directory,it will return 404 Not Found instead of 501 Forbidden. 
 
 
 LOGGING
+=======
 
 Logging is provided by a set of static methods in the Logger.java class. The logger has two main functions: 
 - Provide logging for each served request in the NCSA Common Log Format; the records are appended to a log file which name and location is configurable. The log will not be rotated by Apilator, it is up to your OS to do so. There records are created automatically by Apilator. 
@@ -149,5 +158,6 @@ Logging is provided by a set of static methods in the Logger.java class. The log
 
 
 AUTOMATIC CONFIGURATION
+=======================
 
 Upon star-up Apilator will run once the .init() method from ConfigAuto.java class. This method will attempt to auto detect a unicast IP address of a system which will the be used by the ASM. Failure to do so will be considered a critical error and Apilator will abort. 

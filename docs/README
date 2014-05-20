@@ -27,6 +27,8 @@ Apliator requires Java 7 to run. Beside this, it only needs a minimal system env
 
 By itself, Apilator does not require any system privileges, so it can be run from any zero-privileges account like 'nobody' or any other you wish. It does need, however, a write access to a log file and permission to bind to a TCP port; both can be configured at system level. Do note that on UNIX system using TCP ports below 1024 requires effective UID=0 (i.e. superuser privileges) and Apilator does not provide privilege separation. 
 
+The API package should provide system-wide default values for certain parameters. See Config.java for details. Site-specific values can be specified in /etc/apilator.ini and will override the defaults. See the provided sample apilator.ini file. 
+
 By default, Apilator will bind to all available network interfaces, but you can specify a single IP address to use. You can specify in the configuration the TCP port used for serving requests (it has a default value of 8080). 
 
 If you run a cluster, the Apilator servers exchange messages to update their session storages in two ways: 

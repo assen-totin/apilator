@@ -34,6 +34,9 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		try {
+			// Load external configuration
+			new Config(); 
+			
 			// Automatic configuration
 			new ConfigAuto();
 			InetAddress ip = null;
