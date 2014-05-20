@@ -32,6 +32,9 @@ public abstract class Endpoint {
 	// Input data
 	protected final TaskInput input;
 
+	// Session Storage
+	private final SessionStorage sessionStorage;
+	
 	// Session
 	protected Session session;
 	
@@ -41,8 +44,9 @@ public abstract class Endpoint {
 	/**
 	 * Constructor method
 	 */
-	public Endpoint(TaskInput api_task) {
+	public Endpoint(TaskInput api_task, SessionStorage ss) {
 		input = api_task;
+		sessionStorage = ss;
 		output = new TaskOutput();
 		output.mime_type = "application/json";
 	}
@@ -94,7 +98,7 @@ public abstract class Endpoint {
 				session_id = input.cookies.get(Config.SessionCookie);
 				
 				// Get the session; null will be returned on session not found
-				session = SessionStorage.get(session_id);
+				session = sessionStorage.get(session_id);
 				
 				// Create session if missing
 				if (session == null) {
@@ -134,7 +138,7 @@ public abstract class Endpoint {
 		// If session cookies are disabled, we have nothing to do here
 		if (!Config.SessionCookie.equals(""))
 			// Send the session to the SessionStorage
-			SessionStorage.put(session.getSessionId(), session);
+			sessionStorage.put(session.getSessionId(), session);
 		
 		// Additional headers that we always want to have:
 		output.headers.put("Access-Control-Allow-Origin", "*");

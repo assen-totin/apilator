@@ -34,14 +34,16 @@ public class ClientTcp implements Runnable {
 	private final String className;
 	private SessionMessage sm_in, sm_out;
 	private Socket socket = null;
+	private final SessionStorage sessionStorage;
 	
 	// We prefer LinkedBlockingQueue because it blocks the read until element is available, 
 	// thus relieving us from the need to periodically check for new elements or implement notifications.
 	public static LinkedBlockingQueue<SessionMessage> queue = new LinkedBlockingQueue<SessionMessage>();
 	
-	public ClientTcp() {
+	public ClientTcp(SessionStorage ss) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
+		sessionStorage = ss;
 	}
 	
 	/**
@@ -86,8 +88,12 @@ public class ClientTcp implements Runnable {
 
 				Logger.debug(className, "RECEIVED TCP POST WITH SESSION_ID: " + sm_in.session_id);
 				
-				if (sm_in.type == SessionMessage.ACT_POST)
-					SessionStorage.putFromNetwork(sm_in.session);
+				if (sm_in.type == SessionMessage.ACT_POST) {
+					sessionStorage.putFromNetwork(sm_in.session);
+					synchronized (sessionStorage.trigger) {
+						sessionStorage.trigger.notify();	
+					}
+				}
 			}
 			catch (IOException e) {
 				Logger.warning(className, "Unable to receive TCP packet");

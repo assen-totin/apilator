@@ -35,6 +35,7 @@ public class ServerTcpWorkerSm implements Runnable {
 	private final String className;
 	private final long created = System.currentTimeMillis();
 	private final Queue queue;
+	private final SessionStorage sessionStorage;
 	private long exec_time = 0;
 	private long requests = 1;
 	
@@ -42,10 +43,11 @@ public class ServerTcpWorkerSm implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerTcpWorkerSm(Queue queue) {
+	public ServerTcpWorkerSm(Queue queue, SessionStorage ss) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		this.queue = queue;
+		this.sessionStorage = ss;
 	}
 		
 	private byte[] processData(byte[] data, String ip) {		
@@ -81,7 +83,7 @@ public class ServerTcpWorkerSm implements Runnable {
 		
 		// Process the message
 		if (session_message.type == SessionMessage.ACT_GET) {
-			Session session = SessionStorage.storage.get(session_message.session_id);
+			Session session = sessionStorage.storage.get(session_message.session_id);
 			if (session != null) {
 				session_message.type = SessionMessage.ACT_POST;
 				session_message.session = session;

@@ -163,8 +163,8 @@ public class EndpointExample extends Endpoint {
 	 * Constructor method
 	 * @param api_task TaskInput The input data from the HTTP request
 	 */
-	public EndpointExample(TaskInput api_task) {
-		super(api_task);
+	public EndpointExample(TaskInput api_task, SessionStorage ss) {
+		super(api_task, ss);
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating a new instance.");
 	}

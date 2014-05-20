@@ -39,19 +39,19 @@ public class Main {
 			InetAddress ip = null;
 			if (! Config.IpAddress.equals(""))
 				ip = InetAddress.getByName(Config.IpAddress);
-			
-			// Init the session storage (load form disk cache)
-			SessionStorage.init();
-			
+				
 			// Start the queues
 			Queue queueHttp = new Queue();
 			Queue queueSm = new Queue();
 			
-			// Start Session Manager Clean-upper thread
-			SessionStorageCleanup.init();
+			// Init the session storage (load form disk cache)
+			SessionStorage sessionStorage = new SessionStorage();
+			
+			// Start Session Manager Clean-upper timer
+			new SessionStorageCleanup(sessionStorage);
 							
 			// Start the Session Manager multicast server thread
-			ServerMulticast sm_receive = new ServerMulticast();
+			ServerMulticast sm_receive = new ServerMulticast(sessionStorage);
 			Thread sm_receive_t = new Thread(sm_receive);
 			sm_receive_t.start();
 			
@@ -61,20 +61,20 @@ public class Main {
 			cm_t.start();
 	
 			// Start the Session Manager TCP client thread
-			ClientTcp ct = new ClientTcp();
+			ClientTcp ct = new ClientTcp(sessionStorage);
 			Thread ct_t = new Thread(ct);
 			ct_t.start();
 			
 			// Start the Session Manager Worker threads
 			for (int i=0; i<Config.NumWorkersSm; i++)
-				new Thread(new ServerTcpWorkerSm(queueSm)).start();
+				new Thread(new ServerTcpWorkerSm(queueSm, sessionStorage)).start();
 			
 			// Start the Session Manager TCP server thread
 			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_SM , ip, queueSm)).start();
 			
 			// Start the HTTP Worker threads
 			for (int i=0; i<Config.NumWorkersHttp; i++)
-				new Thread(new ServerTcpWorkerHttp(queueHttp)).start();
+				new Thread(new ServerTcpWorkerHttp(queueHttp, sessionStorage)).start();
 			
 			// Start the HTTP server
 			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_HTTP, ip, queueHttp)).start();

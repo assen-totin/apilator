@@ -32,6 +32,7 @@ public class ServerTcpWorkerHttp implements Runnable {
 	private final String className;
 	private final long created = System.currentTimeMillis();
 	private final Queue queue;
+	private final SessionStorage sessionStorage;
 	private long exec_time = 0;
 	private long requests = 1;
 	
@@ -39,10 +40,11 @@ public class ServerTcpWorkerHttp implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerTcpWorkerHttp(Queue queue) {
+	public ServerTcpWorkerHttp(Queue queue, SessionStorage ss) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
 		this.queue = queue;
+		this.sessionStorage = ss;
 	}
 		
 	private byte[] processData(byte[] data, String ip) {		
@@ -91,8 +93,8 @@ public class ServerTcpWorkerHttp implements Runnable {
 		
 			try {
 				Class api_class = Class.forName(getPackageName() + ".app." + endpoint);
-				Constructor api_constr = api_class.getConstructor(TaskInput.class);
-				Object api_obj = api_constr.newInstance(input);
+				Constructor api_constr = api_class.getConstructor(TaskInput.class, SessionStorage.class);
+				Object api_obj = api_constr.newInstance(input, sessionStorage);
 					
 				// Call the method which corresponds to the HTTP method
 				String method = http_parser.getMethod();

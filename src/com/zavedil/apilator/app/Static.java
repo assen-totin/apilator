@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import com.zavedil.apilator.core.*;
 
 public class Static extends Endpoint {
@@ -35,8 +36,8 @@ public class Static extends Endpoint {
 	 * Constructor method
 	 * @param api_task TaskInput The input data from the HTTP request
 	 */
-	public Static(TaskInput api_task) {
-		super(api_task);
+	public Static(TaskInput api_task, SessionStorage ss) {
+		super(api_task, ss);
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating a new instance.");
 	}

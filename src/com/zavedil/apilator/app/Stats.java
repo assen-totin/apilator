@@ -34,8 +34,8 @@ public class Stats extends Endpoint {
 	/**
 	 * Constructor method
 	 */
-	public Stats(TaskInput api_task) {
-		super(api_task);
+	public Stats(TaskInput api_task, SessionStorage ss) {
+		super(api_task, ss);
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating a new instance.");
 	}

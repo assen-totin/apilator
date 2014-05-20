@@ -32,25 +32,15 @@ import com.zavedil.apilator.app.*;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-//public class SessionManagerCleanup implements Runnable {
 public class SessionStorageCleanup {
-	public final static String className = "SessionManagerCleanup";
+	private final String className;
+	private final SessionStorage sessionStorage;	
 	
-	/*
-	public SessionManagerCleanup() {
+	public SessionStorageCleanup(SessionStorage ss) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-	}
-	*/
-	
-	/**
-	 * Runnable. 
-	 * Create initial storage. 
-	 */
-	//public void run() {
-	public static void init() {
-		Logger.trace(className, "Initializing.");
-			
+		sessionStorage = ss;
+		
 		Timer time = new Timer();
 
 		time.schedule(
@@ -59,17 +49,17 @@ public class SessionStorageCleanup {
 					long now = System.currentTimeMillis();
 					
 					// Check if there are sessions which have expired: delete and send a notification to peers
-					for (Map.Entry<String,Session> pair : SessionStorage.storage.entrySet()) {
+					for (Map.Entry<String,Session> pair : sessionStorage.storage.entrySet()) {
 						if (pair.getValue().getTtl() < now) 				
 							// Delete session from storage (will also send a DELETE message over multicast)
-							SessionStorage.del(pair.getKey());	
+							sessionStorage.del(pair.getKey());	
 				    }
 					
 					// Dump the storage to disk
 					try {
 						OutputStream fos = new FileOutputStream(Config.SessionManagerDiskCache);
 				        ObjectOutputStream oos = new ObjectOutputStream(fos);			        
-						oos.writeObject(SessionStorage.storage);
+						oos.writeObject(sessionStorage.storage);
 						fos.close();
 					}
 					catch (IOException e) {
@@ -79,5 +69,5 @@ public class SessionStorageCleanup {
 			}, 
 			0, Config.SessionManagerCleanupperInterval
 		);
-    }
+	}
 }

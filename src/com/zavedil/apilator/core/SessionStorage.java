@@ -33,14 +33,21 @@ import com.zavedil.apilator.app.*;
 
 public class SessionStorage {
 	// Create initial storage for 1000 sessions, expand when 90% full and use only 1 shard
-	public static ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
-		
-	public static final String className = "SessionStorage";
+	public ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
+	
+	// Object to use as a trigger for wait/notify when a new session is received by the TCP client.
+	public Object trigger;
+	
+	//public static final String className = "SessionStorage";
+	private final String className;
 		
 	/**
 	 * Init the session storage from a local cache upon start-up
 	 */
-	public static void init() {
+	public SessionStorage() {
+		className = this.getClass().getSimpleName();
+		Logger.debug(className, "Creating new instance of the class.");
+		
 		// Load the storage from disk
 		try {
 			InputStream fis = new FileInputStream(Config.SessionManagerDiskCache);
@@ -64,7 +71,7 @@ public class SessionStorage {
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void put(String session_id, Session session) {
+	public void put(String session_id, Session session) {
 		// Update TTL for locally generated/modified sessions
 		long now = System.currentTimeMillis();
 
@@ -94,10 +101,10 @@ public class SessionStorage {
 	 * @param key String Session ID, used as key
 	 * @param value Object The Object to store associated with the key
 	 */
-	public static void putFromNetwork(Session session) {
+	public void putFromNetwork(Session session) {
 		// Only save the session if it does not exists or  
 		// if the 'updated' field of the supplied session is newer than the 'updated' field in the existing session  
-		if (SessionStorage.saveSession(session.getSessionId(), session.getUpdated()))
+		if (saveSession(session.getSessionId(), session.getUpdated()))
 			// Store locally
 			storage.put(session.getSessionId(), session);
 	}
@@ -107,7 +114,7 @@ public class SessionStorage {
 	 * @param key String The key to search for.
 	 * @return Object The Object found in the storage or null if not found.
 	 */
-	public static Session get(String session_id) {
+	public Session get(String session_id) {
 		Session session;
 		
 		session = storage.get(session_id);
@@ -115,6 +122,8 @@ public class SessionStorage {
 			// Query the network if key not found
 			SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_WHOHAS);
 			ClientMulticast.queue.add(session_message);
+			
+			long now = System.currentTimeMillis();
 			
 			try {
 				Logger.debug(className, "GOING TO SLEEP...");
@@ -139,7 +148,7 @@ public class SessionStorage {
 	 * Delete object from the session storage by its session ID
 	 * @param session_id String The session ID to delete. 
 	 */
-	public static void del(String session_id) {	
+	public void del(String session_id) {	
 		// Add to network queue; set the action to ACTION_STORE so that the peers delete it too
 		SessionMessage session_message = new SessionMessage(session_id, SessionMessage.ACT_DELETE);
 		//queue_multicast.put(session_id, session_message);
@@ -154,8 +163,8 @@ public class SessionStorage {
 	 * @param session_id String The session ID to check.
 	 * @return boolean TRUE if key exists, FALSE otherwise. 
 	 */
-	public static boolean exists(String session_id) {
-		Session session = SessionStorage.get(session_id);
+	public boolean exists(String session_id) {
+		Session session = get(session_id);
 		if (session == null)
 			return false;
 		return true;
@@ -166,9 +175,9 @@ public class SessionStorage {
 	 * @param session The session to check.
 	 * @return TRUE if object should be added, FALSE otherwise.
 	 */
-	public static boolean saveSession(String session_id, long updated) {
+	public boolean saveSession(String session_id, long updated) {
 		Session stored_session;
-		stored_session = SessionStorage.storage.get(session_id);
+		stored_session = storage.get(session_id);
 		// If the session does not exists, we should save it - return true
 		if (stored_session == null)
 			return true;

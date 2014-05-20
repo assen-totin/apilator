@@ -35,14 +35,18 @@ import com.zavedil.apilator.app.*;
 public class ServerMulticast implements Runnable {
 	private final String className;
 	
-	InetAddress multicast_group;
-	MulticastSocket socket;
-	byte[] receive_buffer = new byte[Config.SessionSize];
-	DatagramPacket packet = new DatagramPacket(receive_buffer, receive_buffer.length);	
+	private final SessionStorage sessionStorage;
 	
-	public ServerMulticast() {
+	private InetAddress multicast_group;
+	private MulticastSocket socket;
+	private byte[] receive_buffer = new byte[Config.SessionSize];
+	private DatagramPacket packet = new DatagramPacket(receive_buffer, receive_buffer.length);	
+	
+	public ServerMulticast(SessionStorage ss) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
+		
+		sessionStorage = ss;
 		
 		try {
 			multicast_group = InetAddress.getByName(Config.SessionManagerMulticastIp);
@@ -100,11 +104,11 @@ public class ServerMulticast implements Runnable {
 				break;
 			case SessionMessage.ACT_DELETE:
 				// Delete the session from local storage
-				SessionStorage.del(message.session_id);
+				sessionStorage.del(message.session_id);
 				break;
 			case SessionMessage.ACT_WHOHAS:
 				// If we have this session, queue a unicast response that we have it (adding its updated timestamp)
-				if (SessionStorage.exists(message.session_id)) {
+				if (sessionStorage.exists(message.session_id)) {
 					message.ip_remote = message.ip; 
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_ISAT;
@@ -112,7 +116,7 @@ public class ServerMulticast implements Runnable {
 				}
 				break;
 			case SessionMessage.ACT_ISAT:
-				if (SessionStorage.saveSession(message.session_id, message.updated)) {
+				if (sessionStorage.saveSession(message.session_id, message.updated)) {
 					message.ip_remote = message.ip;
 					message.ip = ConfigAuto.ip;
 					message.type = SessionMessage.ACT_GET;
