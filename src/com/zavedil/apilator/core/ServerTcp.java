@@ -43,6 +43,9 @@ public class ServerTcp implements Runnable {
 	public final static int SERVER_TYPE_SM = 2;
 	private final int server_type;
 	
+	// The queue object
+	private final Queue queue;
+	
 	// The IP address to listen on (or null for all IP addresses)
 	private final InetAddress hostAddress;
 
@@ -54,16 +57,6 @@ public class ServerTcp implements Runnable {
 
 	// The buffer into which we'll read data when it's available
 	private int byteBufSize = 8192;
-
-	// Arrays of workers (for HTTP and SessionManager)
-	private List<ServerTcpWorkerHttp> workers_http = new ArrayList<ServerTcpWorkerHttp>();
-	private ServerTcpWorkerHttp worker_http = null;
-	private List<ServerTcpWorkerSm> workers_sm = new ArrayList<ServerTcpWorkerSm>();
-	private ServerTcpWorkerSm worker_sm = null;
-
-	// Workers pool management
-	int min_queue_size, curr_queue_size;
-	boolean got_worker;
 
 	// A list of PendingChange instances
 	private List<ServerTcpChangeRequest> pendingChanges = new LinkedList<ServerTcpChangeRequest>();
@@ -78,13 +71,13 @@ public class ServerTcp implements Runnable {
 	 * @param worker ServerWorkerHttp Initial worker to add to the pool
 	 * @throws IOException
 	 */
-	//public Server(int mode, InetAddress hostAddress, int port, ServerWorkerHttp worker) throws IOException {
-	public ServerTcp(int server_type, InetAddress hostAddress) throws IOException {
+	public ServerTcp(int server_type, InetAddress hostAddress, Queue queue) throws IOException {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance.");
 		this.server_type = server_type;
 		this.hostAddress = hostAddress;
 		this.selector = this.initSelector();
+		this.queue = queue;
 	}
 
 	/**
@@ -180,7 +173,6 @@ public class ServerTcp implements Runnable {
 
 		// Accept the connection and make it non-blocking
 		SocketChannel socketChannel = serverSocketChannel.accept();
-		//Socket socket = socketChannel.socket();
 		socketChannel.configureBlocking(false);
 
 		// Register the new SocketChannel with our Selector, indicating
@@ -236,74 +228,9 @@ public class ServerTcp implements Runnable {
 		key.attach(tmpBuffer);
 		tmpBuffer.flip();
 		
-		if (server_type == SERVER_TYPE_HTTP) {
-			// Worker threads for HTTP
-			got_worker = false;
-			if (!workers_http.isEmpty()){
-				min_queue_size = workers_http.get(0).getQueueSize();
-				worker_http = workers_http.get(0);
-			}
-			for (ServerTcpWorkerHttp entry : workers_http) {
-				curr_queue_size = entry.getQueueSize();
-				// If queue size is 0, then the worker is not busy - assign to it;
-				if (curr_queue_size == 0) {
-					worker_http = entry;
-					got_worker = true;
-					break;
-				}
-				// If not, record the queue size and set potential worker
-				if (min_queue_size > curr_queue_size) {
-					min_queue_size = curr_queue_size;
-					worker_http = entry;
-				}
+		// Enqueue the task for a worker to pick up
+		queue.enqueue(this, socketChannel, tmpBuffer.array(), buffer_pos);
 				
-			}		
-			// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
-			if (!got_worker) {
-				if ((Config.MaxWorkersHttp == 0) || (workers_http.size() < Config.MaxWorkersHttp)) {
-					worker_http = new ServerTcpWorkerHttp();
-					new Thread(worker_http).start();
-					workers_http.add(worker_http);
-				}
-				// else the task goes to the worker with the shortest queue as selected above
-			}
-			worker_http.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-		}
-		
-		else if (server_type == SERVER_TYPE_SM) {
-			// Worker threads for Sm
-			got_worker = false;
-			if (!workers_sm.isEmpty()){
-				min_queue_size = workers_sm.get(0).getQueueSize();
-				worker_sm = workers_sm.get(0);
-			}
-			for (ServerTcpWorkerSm entry : workers_sm) {
-				curr_queue_size = entry.getQueueSize();
-				// If queue size is 0, then the worker is not busy - assign to it;
-				if (curr_queue_size == 0) {
-					worker_sm = entry;
-					got_worker = true;
-					break;
-				}
-				// If not, record the queue size and set potential worker
-				if (min_queue_size > curr_queue_size) {
-					min_queue_size = curr_queue_size;
-					worker_sm = entry;
-				}
-				
-			}		
-			// If we don't have a worker, see if we should spawn a new one or just queue with the least busy one.
-			if (!got_worker) {
-				if ((Config.MaxWorkersSm == 0) || (workers_sm.size() < Config.MaxWorkersSm)) {
-					worker_sm = new ServerTcpWorkerSm();
-					new Thread(worker_sm).start();
-					workers_sm.add(worker_sm);
-				}
-				// else the task goes to the worker with the shortest queue as selected above
-			}
-			worker_sm.queueData(this, socketChannel, tmpBuffer.array(), buffer_pos);
-		}
-		
 		// Restore the tmpBuffer to its original position (because it is now attached to the key)
 		tmpBuffer.position(buffer_pos);
 	}

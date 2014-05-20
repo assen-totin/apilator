@@ -26,22 +26,15 @@ package com.zavedil.apilator.core;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.StreamCorruptedException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.nio.channels.SocketChannel;
-import java.util.LinkedList;
-import java.util.List;
-import com.zavedil.apilator.app.*;
 
 public class ServerTcpWorkerSm implements Runnable {
-	private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
+	//private List<ServerTcpDataEvent> queue = new LinkedList<ServerTcpDataEvent>();
 	private final String className;
 	private final long created = System.currentTimeMillis();
+	private final Queue queue;
 	private long exec_time = 0;
 	private long requests = 1;
 	
@@ -49,27 +42,10 @@ public class ServerTcpWorkerSm implements Runnable {
 	 * Constructor. 
 	 * @param sst Thread Handler to the thread that manages the session storage
 	 */
-	public ServerTcpWorkerSm() {
+	public ServerTcpWorkerSm(Queue queue) {
 		className = this.getClass().getSimpleName();
 		Logger.debug(className, "Creating new instance of the class.");
-	}
-	
-	/**
-	 * Main function to be called when packet(s) arrive over a SocketChannel
-	 * @param server Server The server which originated the packets 
-	 * @param socketChannel SocketChannel The SocketChannel (NIO socket) which originated the packets
-	 * @param data byte[] The data from the packets
-	 * @param count int The number of bytes received
-	 * @throws IOException
-	 */
-	public void queueData(ServerTcp server, SocketChannel socketChannel, byte[] data, int count) throws IOException {
-	    byte[] dataCopy = new byte[count];
-	    System.arraycopy(data, 0, dataCopy, 0, count);
-		
-		synchronized(queue) {
-			queue.add(new ServerTcpDataEvent(server, socketChannel, dataCopy));
-			queue.notify();
-		}
+		this.queue = queue;
 	}
 		
 	private byte[] processData(byte[] data, String ip) {		
@@ -155,7 +131,7 @@ public class ServerTcpWorkerSm implements Runnable {
 					catch (InterruptedException e) {
 					}
 				}
-				dataEvent = (ServerTcpDataEvent) queue.remove(0);
+				dataEvent = queue.dequeue();
 			}
 			
 			// Process and return to sender
@@ -163,13 +139,5 @@ public class ServerTcpWorkerSm implements Runnable {
 			if (res != null)
 				dataEvent.server.send(dataEvent.socket, res);
 		}
-	}
-		
-	/**
-	 * Getter for the size of the queue
-	 * @return int The size of the queue
-	 */
-	public int getQueueSize() {
-		return queue.size();
 	}
 }

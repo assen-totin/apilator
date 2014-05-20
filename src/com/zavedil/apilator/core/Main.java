@@ -43,6 +43,10 @@ public class Main {
 			// Init the session storage (load form disk cache)
 			SessionStorage.init();
 			
+			// Start the queues
+			Queue queueHttp = new Queue();
+			Queue queueSm = new Queue();
+			
 			// Start Session Manager Clean-upper thread
 			SessionStorageCleanup.init();
 							
@@ -61,11 +65,19 @@ public class Main {
 			Thread ct_t = new Thread(ct);
 			ct_t.start();
 			
+			// Start the Session Manager Worker threads
+			for (int i=0; i<Config.NumWorkersSm; i++)
+				new Thread(new ServerTcpWorkerSm(queueSm)).start();
+			
 			// Start the Session Manager TCP server thread
-			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_SM , ip)).start();
+			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_SM , ip, queueSm)).start();
+			
+			// Start the HTTP Worker threads
+			for (int i=0; i<Config.NumWorkersHttp; i++)
+				new Thread(new ServerTcpWorkerHttp(queueHttp)).start();
 			
 			// Start the HTTP server
-			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_HTTP , ip)).start();
+			new Thread(new ServerTcp(ServerTcp.SERVER_TYPE_HTTP, ip, queueHttp)).start();
 			
 			// Start statistics gathering thread
 			ServerStats.init();

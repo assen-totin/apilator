@@ -181,7 +181,7 @@ public class EndpointExample extends Endpoint {
 		
 		// We use ASM in the example, so session should be preloaded for us from a session cookie (if supplied). 
 		
-
+/*
 		// If this is a blank session...
 		if (session.getUpdated() == session.getCreated()) {
 			// Just store some key and return the value of the session ID
@@ -197,7 +197,30 @@ public class EndpointExample extends Endpoint {
 			else 
 				output.data = "Sorry, could nod find key some_key!".getBytes();
 		}
+*/
 		
+		JsonObject jsonObjectRet = new JsonObject();
+		
+		//"meta": {"count": 7, "summary": null, "limit": 10, "offset": 0, "pages": 1, "page": 1}
+		JsonObject jsonObjectMeta = new JsonObject().add("summary", 0).add("count", 149).add("limit", 50).add("offset",0).add("pages",3).add("page",1);
+		jsonObjectRet.add("meta", jsonObjectMeta);
+				
+		JsonArray jsonArray = new JsonArray();
+		for (int i=0; i<150; i++) {
+			JsonObject jsonObjectX = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", i ).add("invoice_type", "misc").add("document_path", "www.boza.com").add("trip_id", "321").add("status","completed");
+			jsonArray.add(jsonObjectX);
+		}
+		
+		jsonObjectRet.add("resources", jsonArray);
+		
+		//int randomNum = 1000 + (int)(Math.random() * 2000);
+		//String aaa = "" + randomNum;
+		//JsonObject jsonObject1 = new JsonObject().add( "invoice_date", "2013-07-23" ).add( "invoice_number", aaa ).add("invoice_type", "misc").add("document_path", "www.boza.com").add("trip_id", "321").add("status","completed");
+		//JsonObject jsonObject2 = new JsonObject().add( "invoice_date", "2013-07-24" ).add( "invoice_number", "123456789" ).add("invoice_type", "transport").add("trip_id", "123").add("status","completed");
+		//JsonArray jsonArray = new JsonArray().add(jsonObject1).add(jsonObject2);
+		
+		String json = jsonObjectRet.toString();
+		output.data = json.getBytes();
 	}
 	
 	/**

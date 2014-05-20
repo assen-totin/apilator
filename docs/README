@@ -29,7 +29,7 @@ By itself, Apilator does not require any system privileges, so it can be run fro
 
 By default, Apilator will bind to all available network interfaces, but you can specify a single IP address to use. You can specify in the configuration the TCP port used for serving requests (it has a default value of 8080). 
 
-If you run a cluster, the Apliatgor servers exchange messages to update their session storages in two ways: 
+If you run a cluster, the Apilator servers exchange messages to update their session storages in two ways: 
 - A multicast group is established between all servers. Your network equipment should support and allow multicast. The multicast address and port can be configured in Apilator's settings. This group is used for exchanging notices when a session is added, updated or deleted. 
 - Additional TCP port is used for unicast exchange of actual session data between servers. The TCP port used for this purpose is also configurable. Because session information is sensitive, do not forget to firewall off this port at the border of your network.  
 
@@ -76,7 +76,7 @@ Apilator will not serve directory listings. If the specified resource is a direc
 CREATING AN API
 ===============
 
-If the local part of the URL in a request does not begin with the static prefix it will be treared as an API call. The first string between two consicutive slashes will be extracted and treated as API endpoint name. Apilator will then try to instantiate a class from com.zavedil.apilator.app with the same name. From it, Apilator will run a method with the same name (but in lower case) as the HTTP method. This means that any following parts of the location (before GET parameters, if any) will be discarded. If you need to pass argumens to your endpoint, do so as a part of the GET or POST request, not as a part of the location.
+If the local part of the URL in a request does not begin with the static prefix it will be treated as an API call. The first string between two consicutive slashes will be extracted and treated as API endpoint name. Apilator will then try to instantiate a class from com.zavedil.apilator.app with the same name. From it, Apilator will run a method with the same name (but in lower case) as the HTTP method. This means that any following parts of the location (before GET parameters, if any) will be discarded. If you need to pass argumens to your endpoint, do so as a part of the GET or POST request, not as a part of the location.
 
 You should place your API endpoints in com.zavedil.apilator.app package, one class per endpoint. Each class should extend the Endpoint class. You need to override the 4 main methods: get(), post(), put() and delete(). In each override first call the parent method of the same name. Then you can continue with your own business logic. You are free to create as many additional helper classes as you need and use them in any way your application requires it. 
 
