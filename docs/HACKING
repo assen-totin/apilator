@@ -102,13 +102,13 @@ Session manager runs an instance of the ServerTcp similar to the one used for HT
 The AVAIL -> GET -> POST sequence allows any server in the cluster to receive a new or updated session from another server. 
 
 To allow a newly added server to obtain existing sessions which are misisng from its storage, the .get() method will not immediately return NULL, but will also perform the following actions: 
-- Create a new SessionMessage with a type of WHOHAS and place it in the queue of the ClientMulticast; from there it will be picked up and sent to all other servers. The .get() method will then sleep for 10 ms.
+- Create a new SessionMessage with a type of WHOHAS and place it in the queue of the ClientMulticast; from there it will be picked up and sent to all other servers. The .get() method will then wait for the session to arrive from another server (but no longer than the pre-configured timeout).
 - When ServerMulticast receives a WHOHAS message, it will check session ID availability in local storage and if found, will change messages type to ISAT and will send it back using multicast. 
 - When ServerMulticast receives a ISAT message, it will check if we still need this session (i.e. missing from lcoal storage or present, but with older value of updated field) and if needed will change messages type to GET and will handle it to the ClientTcp for retrieval.
 - When ClientTcp get the GET message from its queue, it will send the message to the server specified in it using TCP.
 - When ServerTcp receives the GET message, it will check if session ID availability in local storage and if found will attach it to the same message, change mesage type to POST and send it back the ClientTcp. 
 - When ClientTcp receives the POST message, it will check if we still need this session (i.e. missing from lcoal storage or present, but with older value of updated field) and if needed will store it in the local storage.
-- When the .get() method awakes from the sleep it will check whether the session ID is now available in the local storage. If it is missing, it is considered non-existent and NULL is returned. 
+- When the .get() method awakes from the wait() it will check whether the session ID is now available in the local storage. If it is missing, it will either continue to wait (if the pre-configured timeout has not expired), or will consider the session non-existent and will return NULL (leading to a blank session creation). 
 
 The following diagrams illustrate the three scnearios for storage update: 
 
