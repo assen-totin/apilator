@@ -36,7 +36,7 @@ public class Queue {
 	}
 	
 	/**
-	 * Enqueue function to be called when packet(s) arrive over a SocketChannel
+	 * Add event to the queue
 	 * @param server Server The server which originated the packets 
 	 * @param socketChannel SocketChannel The SocketChannel (NIO socket) which originated the packets
 	 * @param data byte[] The data from the packets
@@ -73,8 +73,8 @@ public class Queue {
 	
 	
 	/**
-	 * Return the size of the queue
-	 * @return int The size of the queue
+	 * Return whether the queue is empty or not
+	 * @return boolean TRUE if the queue is empty, FALSE otherwise
 	 */
 	
 	public boolean isEmpty() {
