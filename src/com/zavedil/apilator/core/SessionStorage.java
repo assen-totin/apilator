@@ -36,7 +36,7 @@ public class SessionStorage {
 	public ConcurrentHashMap<String, Session> storage = new ConcurrentHashMap<String, Session>(1000, 0.9f, 1);	
 	
 	// Object to use as a trigger for wait/notify when a new session is received by the TCP client.
-	public Object trigger;
+	public Object trigger = new Object();
 	
 	//public static final String className = "SessionStorage";
 	private final String className;
@@ -129,8 +129,10 @@ public class SessionStorage {
 			while (System.currentTimeMillis() < (now + Config.SessionManagerTimeout)) {
 				try {
 					Logger.debug(className, "GOING TO SLEEP...");
+					synchronized (trigger) {
+						trigger.wait(Config.SessionManagerTimeout);	
+					}
 					//Thread.sleep(Config.SessionManagerTimeout);
-					trigger.wait(Config.SessionManagerTimeout);
 				} 
 				catch (InterruptedException e) {
 					// There's little we can if our sleep was interrupted - just go on
