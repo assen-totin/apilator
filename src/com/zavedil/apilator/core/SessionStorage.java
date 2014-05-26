@@ -132,7 +132,6 @@ public class SessionStorage {
 					synchronized (trigger) {
 						trigger.wait(Config.SessionManagerTimeout);	
 					}
-					//Thread.sleep(Config.SessionManagerTimeout);
 				} 
 				catch (InterruptedException e) {
 					// There's little we can if our sleep was interrupted - just go on
