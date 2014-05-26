@@ -94,6 +94,8 @@ public class ClientTcp implements Runnable {
 						sessionStorage.trigger.notifyAll();	
 					}
 				}
+				
+				socket.close();
 			}
 			catch (IOException e) {
 				Logger.warning(className, "Unable to receive TCP packet");
