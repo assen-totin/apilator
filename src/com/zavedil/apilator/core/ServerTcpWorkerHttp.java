@@ -123,6 +123,10 @@ public class ServerTcpWorkerHttp implements Runnable {
 		// Prepare headers
 		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
 		headers += "Content-Length: " + output.data.length + "\n";
+
+		// 'Connection:' header
+		String connection_header = 	http_parser.getHttpConnectionHeader();
+		headers += "Connection: " + connection_header + "\n";
 		
 		// Additional headers if supplied by the TaskOutput
 		for (Map.Entry<String, String> entry: output.headers.entrySet())

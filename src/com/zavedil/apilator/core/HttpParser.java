@@ -638,6 +638,26 @@ public class HttpParser {
 		return HttpReplies.get(http_status).toString();
 	}
 	
+	
+	/**
+	 * Helper method to get the 'Connection' header for the response
+	 * @return String Descriptive text for the specified status code
+	 */
+	public String getHttpConnectionHeader() {
+		// For HTTP 1.0 we always reply with 'Connection: close'
+		String resp = "close"; 
+
+		if (ver[1] == 1) {
+			// For HTTP 1.1, check if Keep-Alive or Close was specified, abide; make Keep-Alive default
+			if ((headers.containsKey("Connection")) && (headers.get("Connection").toLowerCase() == "keep-alive"))
+				resp = "Keep-Alive";
+		}
+		
+		return resp;
+	}
+	
+	
+	
 	/**
 	 * Helped method to remove surrounding single or double quotes and trailing semicolon from the end of a parameter value
 	 * @param input String The value which needs cleaning
