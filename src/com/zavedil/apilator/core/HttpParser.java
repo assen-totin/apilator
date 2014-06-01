@@ -238,21 +238,35 @@ public class HttpParser {
 	 */
 	private void parseHeaders() throws IOException {
 		Logger.debug(className, "Entering function parseHeaders");
-		String line=null;
+		String line = null;
+		Hashtable<String,String> tmp_headers = new Hashtable<String,String>();
 		int idx;
+		boolean headers_complete = false;
 		
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
-	    while (!(line = reader.readLine()).equals("")) {
-	    	// Init headers only if we have at least one header
-	    	if (headers == null)
-	    		headers = new Hashtable<String,String>();
+		while (true) {		
+			line = reader.readLine();
+			Logger.debug(className, "LINE: " + line);
+			
+			if (line == null)
+				break;
+			
+			// A blank line means end of headers - time to go away
+			if (line.equals("")) {
+				headers_complete = true;
+				break;
+			}
 	    	
 	    	header_bytes += line.length() + 2;	// Don't forget the CRLF which was stripped by Java
 			if ((idx = line.indexOf(':')) > 0)
-				headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
+				tmp_headers.put(line.substring(0, idx).toLowerCase(), line.substring(idx + 1).trim());
 			// else we don't care about this line
 	    }
-	    header_bytes += 2; // Account for the last line of the header - the separator
+	    
+		header_bytes += 2; // Account for the last line of the header - the separator
+	    
+	    if (headers_complete)
+	    	headers = tmp_headers;
 	}
 	
 	/**
