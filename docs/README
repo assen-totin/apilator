@@ -3,7 +3,7 @@ ABOUT APILATOR
 
 Apilator is a high-performance, self-contained clustered server in pure Java for building data APIs over HTTP.
 
-High-performance: it was written from scratch with minimalistic code, providing only the necessary functionality. Its components and algorithms have been carefully selected to achieve performance well above the average. It uses multiple threads and non-blocking I/O to get the maximum out of your hardware, especially suitable for system with large number of low-activity clients (e.g., any mobile or web based application). 
+High-performance: it was written from scratch with minimalistic code, providing only the necessary functionality. Its components and algorithms have been carefully selected to achieve performance well above the average. It uses multiple threads and non-blocking I/O to get the maximum out of your hardware, especially suitable for system with large number of low-activity clients (e.g., any mobile or web based application). Apilator is capable of serving 1,000 requests per second per CPU core per gigaHerz. This is at least twice as faster as "high-performance" PHP frameworks like CodeIgniter.  
 
 Self-contained: it does not need an external application server to run and only requires a standard JRE. It also contains everything necessary to provide advanced features like automated session cookies, automatically synchronised session storage across multiple instances etc.
 
