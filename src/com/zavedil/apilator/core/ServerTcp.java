@@ -64,6 +64,9 @@ public class ServerTcp implements Runnable {
 	// Maps a SocketChannel to a list of ByteBuffer instances
 	private Map pendingData = new HashMap();
 	
+	// Maps a SocketChannel to a boolean value (flag whether to close the channel after write)
+	private Map<SocketChannel, Boolean> pendingClose = new HashMap<SocketChannel, Boolean>();
+	
 	/**
 	 * Constructor for the server
 	 * @param hostAddress InetAddress Network address to bind to.
@@ -80,12 +83,13 @@ public class ServerTcp implements Runnable {
 		this.queue = queue;
 	}
 
+	
 	/**
 	 * Method to get the response from the worker thread
 	 * @param socket SocketChannel The SocketChannel (NIO socket) to write to 
 	 * @param data byte[] The data to send
 	 */
-	public void send(SocketChannel socket, byte[] data) {
+	public void send(SocketChannel socket, byte[] data, boolean close) {
 		Logger.debug(className, "Entering function send");
 		
 		synchronized (this.pendingChanges) {
@@ -101,12 +105,28 @@ public class ServerTcp implements Runnable {
 				}
 				queue.add(ByteBuffer.wrap(data));
 			}
+			
+			// If we should close the channel after writing to it, mark so: 
+			if(close) {
+				synchronized (pendingClose) {
+					pendingClose.put(socket, true);
+				}
+			}
 		}
 
 		// Finally, wake up our selecting thread so it can make the required changes
 		this.selector.wakeup();
 	}
+	
+	
+	/**
+	 * Overload send() with default value 'false' for SocketChannel close.
+	 */
+	public void send(SocketChannel socket, byte[] data) {
+		send(socket, data, false);
+	}
 
+		
 	/**
 	 * The main loop for the server
 	 */
@@ -196,7 +216,6 @@ public class ServerTcp implements Runnable {
 		// Attempt to read off the channel
 		int numRead;
 		try {
-			//numRead = socketChannel.read(this.readBuffer);
 			numRead = socketChannel.read(newBuffer);
 		} 
 		catch (IOException e) {
@@ -267,15 +286,23 @@ public class ServerTcp implements Runnable {
 			}
 
 			if (queue.isEmpty()) {
-				// We wrote away all data, so we're no longer interested
-				// in writing on this socket. Switch back to waiting for
-				// data.
-				key.interestOps(SelectionKey.OP_READ);
+				// We wrote away all data, so we're no longer interested in writing on this socket. 
+				// Check if we need to close the socket			
+				if (pendingClose.containsKey(socketChannel)) {
+					synchronized (pendingClose) {
+						pendingClose.remove(socketChannel);
+						socketChannel.close();
+					}
+				}
 				
-				// Prepare a clean buffer
-				ByteBuffer tmpBuff = ByteBuffer.allocate(byteBufSize);
-				key.attach(tmpBuff);
-				
+				else {
+					// Switch back to waiting for data.
+					key.interestOps(SelectionKey.OP_READ);
+					
+					// Prepare a clean buffer
+					ByteBuffer tmpBuff = ByteBuffer.allocate(byteBufSize);
+					key.attach(tmpBuff);					
+				}
 			}
 		}
 	}

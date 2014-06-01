@@ -47,14 +47,22 @@ public class ServerTcpWorkerHttp implements Runnable {
 		this.sessionStorage = ss;
 	}
 		
-	private byte[] processData(byte[] data, String ip) {		
+	/**
+	 * Main TCP data processing function.
+	 * @param dataEvent ServerTcpDataEvent Input/output data object
+	 * @return byte[] Data buffer
+	 */
+	private byte[] processData(ServerTcpDataEvent dataEvent) {
 		long run_start_time = System.currentTimeMillis();
 		
 		Logger.debug(className, "Entering function processData.");
 		
-		HttpParser http_parser=null;
-		String headers=null;
-		int headers_len=0;
+		byte[] data = dataEvent.data;
+		String ip = dataEvent.socket.socket().getInetAddress().getHostAddress();
+		
+		HttpParser http_parser = null;
+		String headers = null;
+		int headers_len = 0;
 		byte[] response;
 		TaskOutput output = new TaskOutput();
 		TaskInput input = new TaskInput();		
@@ -125,8 +133,11 @@ public class ServerTcpWorkerHttp implements Runnable {
 		headers += "Content-Length: " + output.data.length + "\n";
 
 		// 'Connection:' header
+		// Pass back closing flag
 		String connection_header = 	http_parser.getHttpConnectionHeader();
 		headers += "Connection: " + connection_header + "\n";
+		if (connection_header.equals("close"))
+			dataEvent.close = true;
 		
 		// Additional headers if supplied by the TaskOutput
 		for (Map.Entry<String, String> entry: output.headers.entrySet())
@@ -180,9 +191,9 @@ public class ServerTcpWorkerHttp implements Runnable {
 			}
 			
 			// Process and return to sender
-			byte[] res = processData(dataEvent.data, dataEvent.socket.socket().getInetAddress().getHostAddress());
+			byte[] res = processData(dataEvent);
 			if (res != null)
-				dataEvent.server.send(dataEvent.socket, res);
+				dataEvent.server.send(dataEvent.socket, res, dataEvent.close);
 		}
 	}
 	

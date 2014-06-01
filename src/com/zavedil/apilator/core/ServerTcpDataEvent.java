@@ -29,16 +29,27 @@ class ServerTcpDataEvent {
 	public ServerTcp server;
 	public SocketChannel socket;
 	public byte[] data;
+	public boolean close;
 	
 	/**
 	 * Queue data to be sent back to the client
 	 * @param server Server The server for this event
 	 * @param socket SocketChannel The SocketChannel to use
 	 * @param data byte[] The data to write to the channel
+	 * @param boolean close Whether to close the channel after sending back the request
 	 */
-	public ServerTcpDataEvent(ServerTcp server, SocketChannel socket, byte[] data) {
+	public ServerTcpDataEvent(ServerTcp server, SocketChannel socket, byte[] data, boolean close) {
 		this.server = server;
 		this.socket = socket;
 		this.data = data;
+		this.close = close;
 	}
+
+	/**
+	 * Alternative constructor.
+	 */
+	public ServerTcpDataEvent(ServerTcp server, SocketChannel socket, byte[] data) {
+		this(server, socket, data, false);
+	}
+
 }
