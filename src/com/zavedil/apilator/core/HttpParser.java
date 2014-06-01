@@ -649,7 +649,7 @@ public class HttpParser {
 
 		if (ver[1] == 1) {
 			// For HTTP 1.1, check if Keep-Alive or Close was specified, abide; make Keep-Alive default
-			if ((headers.containsKey("Connection")) && (headers.get("Connection").toLowerCase() == "keep-alive"))
+			if ((headers.containsKey("connection")) && (headers.get("connection").toLowerCase().equals("keep-alive")))
 				resp = "Keep-Alive";
 		}
 		
