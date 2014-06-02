@@ -31,7 +31,7 @@ public class Config {
 	// They will be overridden at runtime by the values from /etc/apilator.ini, if such is present. 
 	
 	// System name
-	public static String SystemName = "Apilator";
+	public static String SystemName = "Apilator 1.0";
 	
 	// IP address to listen at. Leave empty for all
 	public static String IpAddress = "";

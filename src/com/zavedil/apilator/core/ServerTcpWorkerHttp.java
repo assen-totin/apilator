@@ -130,24 +130,24 @@ public class ServerTcpWorkerHttp implements Runnable {
 		
 		// Prepare headers
 		headers = http_parser.getHttpReplyHeaders(output.http_status, output.mime_type);
-		headers += "Content-Length: " + output.data.length + "\n";
+		headers += "Content-Length: " + output.data.length + "\r\n";
 
 		// 'Connection:' header
 		// Pass back closing flag
 		String connection_header = 	http_parser.getHttpConnectionHeader();
-		headers += "Connection: " + connection_header + "\n";
+		headers += "Connection: " + connection_header + "\r\n";
 		if (connection_header.equals("close"))
 			dataEvent.close = true;
 		
 		// Additional headers if supplied by the TaskOutput
 		for (Map.Entry<String, String> entry: output.headers.entrySet())
-			headers += entry.getKey() + ": " + entry.getValue() + "\n";
+			headers += entry.getKey() + ": " + entry.getValue() + "\r\n";
 		
 		output.buildCookies();
 		if (output.cookies != null)
 			headers += output.cookies;
 
-		headers += "\n";
+		headers += "\r\n";
 		headers_len = headers.length();
 			
 		// Combine headers and body

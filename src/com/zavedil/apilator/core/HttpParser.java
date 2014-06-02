@@ -246,7 +246,6 @@ public class HttpParser {
 	    // that fscking rfc822 allows multiple lines, we don't care for now	
 		while (true) {		
 			line = reader.readLine();
-			Logger.debug(className, "LINE: " + line);
 			
 			if (line == null)
 				break;
