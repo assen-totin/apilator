@@ -79,7 +79,6 @@ public class HttpParser {
 	};
 
 	private BufferedReader reader;
-	//private DataInputStream binary_reader;
 	private byte[] request=null;
 	private String first_line=null, method="", url="", location, post_data=null, boundary;
 	private Hashtable<String,String> headers = null;
@@ -103,7 +102,6 @@ public class HttpParser {
 		
 		request = new byte[data.length];
 		System.arraycopy(data, 0, request, 0, data.length);
-		//binary_reader= new DataInputStream(new ByteArrayInputStream(request));
 		
 		reader = new BufferedReader(new StringReader(new String(data, "UTF-8")));
 	}
@@ -321,33 +319,20 @@ public class HttpParser {
 		
 		// Loop through the body using text reader
     	while ((line = reader.readLine()) != null) {
-    		//Logger.debug(className, "Got line!");
     		
     		// Empty lines (CRLF or NULL bytes)
     		if (line.equals("")) {
-    			//Logger.debug(className, "Empty line!");
-        		if(count_body_bytes) {
+        		if(count_body_bytes)
         			body_bytes += line.length() + 2; // Don't forget the CRLF that Java stripped
-        			//Logger.debug(className, "body_bytes now is: " + body_bytes);
-        		}
 
     			// Next line will be data
     			if (filename == null) {
     				// Regular field: store plain as this should be unencoded, single-line
-    				//Logger.debug(className, "Reading text data next!");
-    				//Logger.debug(className, "Storing plain!");
     				value = reader.readLine();
-    				if(count_body_bytes) {
+    				if(count_body_bytes)
     					body_bytes += value.length() + 2;
-    					Logger.debug(className, "body_bytes now is: " + body_bytes);
-    				}
     			}
     			else if (read_data) {
-    				// Read binary data
-    				//Logger.debug(className, "Reading binary data next!");
-    				//Logger.debug(className, "header_bytes : " + header_bytes);
-    				//Logger.debug(className, "body_bytes : " + body_bytes);
-
         			// Get a binary decoder
     				HttpDecodeBinary decoder = new HttpDecodeBinary();
     				
@@ -357,7 +342,6 @@ public class HttpParser {
         				        				
         			// Seek the first occurrence of boundary and get it as offset
         			int offset = decoder.indexOf(binary_tmp, boundary.getBytes());
-        			//Logger.debug(className, "offset_bytes : " + offset);
         			if (offset > -1) {
         				// Copy the input data from same starting position to the offset in a new chunk
         				filedata_tmp = new byte[offset];
@@ -366,7 +350,6 @@ public class HttpParser {
         				// The offset may include a trailing CRLF plus part of the boundary prefix;
         				// to remove them, seek the last occurrence of CRLF in the same chunk
         				int offset2 = decoder.indexOfLast(filedata_tmp, "\r\n".getBytes());
-        				//Logger.debug(className, "offset2_bytes : " + offset2);
         				
         				if (offset2 > -1) {
         					// Copy the input data from the same starting position to the last CRLF (without it).
@@ -378,7 +361,6 @@ public class HttpParser {
         					filedata_encoded = filedata_tmp;
         					body_bytes += offset;
         				}        				
-        				//Logger.debug(className, "body_bytes now is: " + body_bytes);
         			}
         			else
         				Logger.warning(className, "Could not extract uploaded file with name: " + filename);
@@ -394,9 +376,7 @@ public class HttpParser {
     		// Lines which match the boundary
     		if (line.indexOf(boundary) != -1) {
     			body_bytes += line.length() + 2;
-    			//Logger.debug(className, "body_bytes now is: " + body_bytes);
-    			
-    			//Logger.debug(className, "Boundary line!");
+
     			// Re-enable reading binary data after next empty line
     			read_data = true;
     			
@@ -406,7 +386,6 @@ public class HttpParser {
     			// Reached end of section - flush what we have so far
     			if ((filename == null) && (name != null) && (value != null)) {
         			// Regular (text) attributes
-    				//Logger.debug(className, "Store regular! " + name + ":" + value);
     				params.put(name, value);
     				
     				// Reset temporary variables to defaults
@@ -415,8 +394,6 @@ public class HttpParser {
     			}
     			else if ((filename != null) && (name != null) && (filedata_encoded != null)) {
     				// Uploaded files - some data needs decoding
-    				//Logger.debug(className, "Store file!");
-    				//Logger.debug(className, "Encoding is: " + encoding);
     				switch (encoding) {
     					case "base64": 
     						HttpDecodeBase64 decoder_b64 = new HttpDecodeBase64();
@@ -449,37 +426,29 @@ public class HttpParser {
     		
     		// Lines which contain attributes
     		if ((idx = line.indexOf(":")) > 0) {
-    			//Logger.debug(className, "Attribute line!");
+
     			// Only count the lines if we have not just read some binary data 
     			// (which may give false positives until the text reader gets to the next boundary)
-    			if(count_body_bytes) {
+    			if(count_body_bytes)
     				body_bytes += line.length() + 2;
-    				//Logger.debug(className, "body_bytes now is: " + body_bytes);
-    			}
     			
     			// Retrieve and store the attributes we find interesting
     			temp = line.split(":");
-    			if (temp[0].toLowerCase().equals("content-transfer-encoding")) {
-    				//Logger.debug(className, "Encoding attribute!");
+    			if (temp[0].toLowerCase().equals("content-transfer-encoding"))
     				// Transfer encoding - used for files when not in default (binary) mode
     				encoding = line.substring(idx + 1).toLowerCase().trim();
-    			}
+
     			else if (temp[0].toLowerCase().equals("content-disposition")) {
-    				//Logger.debug(className, "Disposition attribute!");
     				// Content disposition - contains field name (and filename for files)
     				String right = line.substring(idx + 1).trim();
     				temp2 = right.split("\\s");
     				for (int i=0; i < temp2.length; i++) {
     					if (temp2[i].indexOf("=") > 0) {
     						temp3 = temp2[i].split("=");
-    						if (temp3[0].equals("name")) {
+    						if (temp3[0].equals("name")) 
     							name = cleanQuotes(temp3[1]);
-    							//Logger.debug(className, "Name element: " + name);
-    						}
-    						else if (temp3[0].equals("filename")) {
+    						else if (temp3[0].equals("filename"))
     							filename = cleanQuotes(temp3[1]);
-    							//Logger.debug(className, "Filename element: " + filename);
-    						}
     						// else we don't care about this attribute
     					}
     				}
@@ -487,7 +456,6 @@ public class HttpParser {
    				// else we don't care about this section header line
     		}
     	}
-    	//Logger.debug(className, "TOTAL! body_bytes: " + body_bytes);
     }
 	
 	/**

@@ -128,14 +128,12 @@ public class SessionStorage {
 			
 			while (System.currentTimeMillis() < (now + Config.SessionManagerTimeout)) {
 				try {
-					Logger.debug(className, "GOING TO SLEEP...");
 					synchronized (trigger) {
 						trigger.wait(Config.SessionManagerTimeout);	
 					}
 				} 
 				catch (InterruptedException e) {
 					// There's little we can if our sleep was interrupted - just go on
-					Logger.debug(className, "SLEEP INTERRUPTED!...");
 					;
 				}
 				
@@ -144,8 +142,6 @@ public class SessionStorage {
 				if(exists(session_id))
 					break;
 			}
-			
-			Logger.debug(className, "AWAIKENING...");
 			
 			// See if we received the object
 			session = storage.get(session_id);

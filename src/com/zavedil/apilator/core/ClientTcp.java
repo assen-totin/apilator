@@ -69,8 +69,6 @@ public class ClientTcp implements Runnable {
 				continue;
 			}
 			
-			Logger.debug(className, "SENDING TCP GET FOR SESSION_ID: " + sm_out.session_id); 
-			
 			try {
 				// Serialize and send
 		        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());			        
@@ -85,8 +83,6 @@ public class ClientTcp implements Runnable {
 			try {
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 				sm_in = (SessionMessage) ois.readObject();
-
-				Logger.debug(className, "RECEIVED TCP POST WITH SESSION_ID: " + sm_in.session_id);
 				
 				if (sm_in.type == SessionMessage.ACT_POST) {
 					sessionStorage.putFromNetwork(sm_in.session);
