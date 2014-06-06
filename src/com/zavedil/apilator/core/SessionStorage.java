@@ -125,7 +125,7 @@ public class SessionStorage {
 			ClientMulticast.queue.add(session_message);
 			
 			long now = System.currentTimeMillis();
-			
+
 			while (System.currentTimeMillis() < (now + Config.SessionManagerTimeout)) {
 				try {
 					synchronized (trigger) {
@@ -146,7 +146,8 @@ public class SessionStorage {
 			// See if we received the object
 			session = storage.get(session_id);
 		}
-
+		
+		Logger.debug(className, "LEAVING func ");
 		return session;
 	}
 	
@@ -170,7 +171,7 @@ public class SessionStorage {
 	 * @return boolean TRUE if key exists, FALSE otherwise. 
 	 */
 	public boolean exists(String session_id) {
-		Session session = get(session_id);
+		Session session = storage.get(session_id);
 		if (session == null)
 			return false;
 		return true;
