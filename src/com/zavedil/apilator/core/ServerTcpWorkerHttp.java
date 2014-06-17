@@ -94,6 +94,7 @@ public class ServerTcpWorkerHttp implements Runnable {
 			// Construct new task
 			input.data = http_parser.getParams();
 			input.cookies = http_parser.getCookies();
+			input.headers = http_parser.getHeaders();
 			input.location = http_parser.getLocation();
 			input.sessionStorage = sessionStorage;
 			

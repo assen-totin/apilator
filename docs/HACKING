@@ -135,7 +135,7 @@ Server A							Server B
 
 //  Session missing in local storage when.get() is called
 (Multicast client) WHOHAS	---> 	(Multicast server)
-													|
+												|
 (Multicast server)			<--- 	(Multicast client) ISAT
 |
 (TCP client) GET			---> 	(TCP server)	
