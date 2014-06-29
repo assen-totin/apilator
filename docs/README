@@ -55,7 +55,7 @@ HTTP INTERFACE
 ==============
 
 Apilator speaks HTTP and supports versions 1.0 and 1.1. However, there are certain limitations in the HTTP implementation raising from the nature of Apilator: 
-- Only the following HTTP methods are supported: GET, POST, PUT, DELETE. 
+- Only the following HTTP methods are supported: GET, POST, PUT, DELETE, OPTIONS. 
 - For POST, both x-www-url-encoded and multipart/form-data are supported (i.e. file upload is available), but multipart/mixed is not. 
 - File upload requries one of the following encodings: binary (default for most current browsers and HTTP libraries), 8bit, 7bit, base64, quoted-printable. 
 - Virtual hosts are not supported. If virtual hosts are required, it is expected that they will be off-loaded in a previous hop (e.g., load-balancer like HAProxy or a web server with reverse proxy).
@@ -137,3 +137,13 @@ Two types of notices are send over multicast:
 - A question for session availability. When a HTTP request with a session cookie arrives (and the automated sessions are turned on), if the session ID is not found in the local storage, a multicast request for this ID is sent over the network. If any other server has the object, it responds with the object version and its unicast IP address. When a response is received, the original requester retrieves the desired object from the first responding peer using unicast. If no response comes back in predefined amount of ime (by default, 5 ms), it is assumed that no one has the object is question (e.g., ithas expired and has been removed from the session storage on all servers) and a new, blank session is created. 
 
 The multicast group address, the multicast port and the TCP port to use for session objects exchange are specified in the Config.java class. 
+
+
+CROSS-ORIGIN RESOURCE SHATING (CORS)
+====================================
+
+Apilator can be used to serve CORS requests. Apilator supports the pre-flight OPTIONS request - like the rest of HTTP methods, it will be forwarded to appropriate API's endopint where the options() method will be invoked. It is up to this method to set appropriate response headers. The request headers will be available in the TaskInput, 'headers' field.
+
+Apilator will automatically add the 'Access-Control-Allow-Origin' header with a value '*'. If you want this header to have another value, set it in your endpoint (in particular, if you to disable CORS, set it's value to 'null').
+
+Usually CORS may require additional response headers to function properly (e.g., some browsers insist on having 'Access-Control-Allow-Headers' with a value to explicitly allow the 'Accept-Encoding' request header). You have to manually add all desired response headers in the options() method of your endpoint. 

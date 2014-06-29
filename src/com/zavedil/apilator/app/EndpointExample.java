@@ -216,4 +216,16 @@ public class EndpointExample extends Endpoint {
 		// Add your code below
 
 	}
+	
+	/**
+	 * Method invoked whenever an OPTIONS request is received.
+	 */
+	@Override
+	public void options() {
+		Logger.debug(className, "Entering function options.");
+		super.options();
+		
+		// Add your code below
+
+	}
 }

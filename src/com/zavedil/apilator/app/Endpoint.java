@@ -74,6 +74,13 @@ public abstract class Endpoint {
 	public void delete() {
 		onLoad();
 	}
+
+	/**
+	 * Method invoked whenever an OPTIONS request is received.
+	 */
+	public void options() {
+		onLoad();
+	}
 	
 	/**
 	 * Method run for each new request.
@@ -136,8 +143,9 @@ public abstract class Endpoint {
 			// Send the session to the SessionStorage
 			input.sessionStorage.put(session.getSessionId(), session);
 		
-		// Additional headers that we always want to have:
-		output.headers.put("Access-Control-Allow-Origin", "*");
+		// Add CORS header if not set by the endpoint:
+		if (! output.headers.containsKey("Access-Control-Allow-Origin"))
+			output.headers.put("Access-Control-Allow-Origin", "*");
 		
 		return output;
 	}

@@ -158,13 +158,13 @@ public class HttpParser {
 	    if (ver[0] == 1 && ver[1] >= 1 && getHeader("host") == null) 
 	    	return 400;
 
-	    // We don't implement certain HTTP/1.1 methods
+	    // We don't implement certain HTTP/1.1 methods	    
 	    if ((ver[0] == 1 && ver[1] >= 1) && 
-	    	(method.equals("OPTIONS") || method.equals("TRACE") || method.equals("CONNECT"))) 
+	    	(method.equals("TRACE") || method.equals("CONNECT"))) 
 	    		return 501; // not implemented
-	    
-	    // GET, HEAD, DELETE methods
-	    else if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE")) {
+	        
+	    // GET, HEAD, DELETE, OPTIONS methods
+	    else if (method.equals("GET") || method.equals("HEAD") || method.equals("DELETE") || method.equals("OPTIONS")) {
 	    	idx = cmd[1].indexOf('?');
 	          	
 	    	if (idx < 0) 
