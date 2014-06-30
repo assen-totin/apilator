@@ -124,6 +124,8 @@ When creating multiple cookies, or when adding a cookie with automated session t
 
 Sessions are automatically cleaned up from the session storage upon their expiration time (i.e. when the current time exceeds their 'ttl' property). This is not influenced by whether the ASM is on or off. 
 
+If you run a cluster of Apilator servers, you likely want a load-balancer in front of it to be able to automatically detect whether a particular API server is alive or not. To do this, use the /Health endpoint. It will respond with 200 OK to every request it receives. Because this request wil be served with the same priority as all other requests, you can also use the delay before the response arrives as a measure of Apilator's load. Using this endpoint as an example you can implement a more detailed system check which will first test other resources (e.g., database connections, SOAP peers etc.) before responding.    
+
 
 SESSION STORAGE SYNCHRONISATION
 ===============================
