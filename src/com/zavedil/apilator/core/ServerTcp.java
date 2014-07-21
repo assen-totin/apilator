@@ -143,7 +143,9 @@ public class ServerTcp implements Runnable {
 						switch (change.type) {
 						case ServerTcpChangeRequest.CHANGEOPS:
 							SelectionKey key = change.socket.keyFor(this.selector);
-							key.interestOps(change.ops);
+							// Check that the remote end has not closed the connection while we were working on its request
+							if (key != null)
+								key.interestOps(change.ops);
 						}
 					}
 					this.pendingChanges.clear();

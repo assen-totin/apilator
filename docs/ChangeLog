@@ -3,8 +3,10 @@
 * Made HTTP headers available to the endpoint.
 * Added handling of OPTINS method to support CORS requests.
 * Changed the behaviour of 'Access-Control-Allow-Origin' response header: it 
-will be added with a value of '*' only if not set by the endpoint.   
-* Added /Health endpoint for load balancer checks. 
+  will be added with a value of '*' only if not set by the endpoint.   
+* Added /Health endpoint for load balancer checks.
+* Improved handling of cases where the client closes the connection before
+  we begin to send our answer.
 
 June 4, 2014 - Version 1.0
 ==========================
