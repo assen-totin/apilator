@@ -46,6 +46,7 @@ package com.zavedil.apilator.core;
  */
 
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 public class HttpDecodeQuotedPrintable {
 	private byte HT = 0x09; // \t
@@ -60,6 +61,7 @@ public class HttpDecodeQuotedPrintable {
 	public byte[] decode(byte[] qp) {
 		final int qplen = qp.length;
 		int retlen = 0;
+		byte[] ret = new byte[qp.length];
 
 		for (int i = 0; i < qplen; i++) {
 			// Handle encoded chars
@@ -74,22 +76,26 @@ public class HttpDecodeQuotedPrintable {
 					else if (isHexDigit(qp[i + 1]) && isHexDigit(qp[i + 2])) {
 						// convert the number into an integer, taking
 						// the ascii digits stored in the array.
-						qp[retlen++] = (byte) (getHexValue(qp[i + 1]) * 16 + getHexValue(qp[i + 2]));
+						ret[retlen++] = (byte) (getHexValue(qp[i + 1]) * 16 + getHexValue(qp[i + 2]));
 						i += 2;
 						continue;
 					} 
 					//else 
-						//Log.error("decode: Invalid sequence = " + qp[i + 1] + qp[i + 2]);
+						//System.out.println("decode: Invalid sequence = " + qp[i + 1] + qp[i + 2]);
 
 					// RFC 2045 says to exclude control characters mistakenly
 					// present (unencoded) in the encoded stream.
 					// As an exception, we keep unencoded tabs (0x09)
 					if ((qp[i] >= 0x20 && qp[i] <= 0x7f) || qp[i] == HT || qp[i] == CR  || qp[i] == LF)
-					qp[retlen++] = qp[i];
+						ret[retlen++] = qp[i];
 				}
 			}
+			else {
+				// Write the byte as it is
+				ret[retlen++] = qp[i];
+			}
 		}
-		return qp;
+		return Arrays.copyOfRange(ret, 0, retlen);
 	}
 
 	/**
