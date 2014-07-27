@@ -121,12 +121,13 @@ public class HttpParser {
 	    // Parse first line and obtain method and protocol (URL will be retrieved later depending on method)
 	    first_line = reader.readLine();
 
+	    // Empty line - not enough info to parse, return 0 to keep reading from socket
 	    if (first_line == null || first_line.length() == 0) 
 	    	return 0;
-	    if (Character.isWhitespace(first_line.charAt(0))) {
-	      	//starting whitespace, return bad request
+	    
+	    // Starting whitespace, return bad request
+	    if (Character.isWhitespace(first_line.charAt(0))) 
 	    	return 400;
-	    }
 	    
 	    cmd = first_line.split("\\s");
 	    if (cmd.length != 3)
