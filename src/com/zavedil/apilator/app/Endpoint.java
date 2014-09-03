@@ -38,6 +38,9 @@ public abstract class Endpoint {
 	// Output data
 	protected TaskOutput output;
 	
+	// CSRF check status
+	protected boolean csrf = false;
+	
 	/**
 	 * Constructor method
 	 */
@@ -58,14 +61,16 @@ public abstract class Endpoint {
 	 * Method invoked whenever a POST request is received.
 	 */
 	public void post() {
-		onLoad();	
+		onLoad();
+		csrfCheck();
 	}
 	
 	/**
 	 * Method invoked whenever a PUT request is received.
 	 */
 	public void put() {
-		onLoad();		
+		onLoad();
+		csrfCheck();
 	}
 	
 	/**
@@ -149,6 +154,48 @@ public abstract class Endpoint {
 		
 		return output;
 	}
+	
+	/**
+	 * Method to be called when new doing a CSRF check
+	 */
+	private void csrfCheck() {
+		String session_id;
+		String csrf_token;
+		
+		// If CSRF is disabled, we have nothing to do here
+		if (Config.CsrfParameter.equals(""))
+			return;
+		
+		// CSRF needs the session cookie; if session cookies are disabled, we have nothing to do here
+		if (Config.SessionCookie.equals(""))
+			return;
+		
+		// Check flow for success:
+		// - We should have cookies in the input
+		// - We should have session cookie in the input
+		// - We should have CSRF parameter in input data
+		// - Value of CSRF parameter should equal the session ID
+		if (input.cookies != null) {
+			if (input.cookies.containsKey(Config.SessionCookie)) {
+				session_id = input.cookies.get(Config.SessionCookie);
+				
+				if (input.data.containsKey(Config.CsrfParameter)) {
+					csrf_token = input.data.get(Config.CsrfParameter).toString();
+					
+					if (csrf_token.equals(session_id)) {
+						csrf = true;
+						return;
+					}
+				}
+			}
+		}
+
+		// If we reach here, check has failed: reject the request
+		output.http_status = 406;
+		output.data = "CSRF check failed!".getBytes();
+	}
+	
+	
 	
 	/**
 	 * Placeholder method to conveniently populate a new session with data.

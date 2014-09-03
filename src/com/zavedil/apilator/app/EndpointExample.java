@@ -66,7 +66,6 @@ if ((session != null) && session.containsKey("key")) {
 session.del("key");
 
 
-
 // Example code to work with cookies
 ////////////////////////////////////////////
 
@@ -94,7 +93,6 @@ output.cookies_expire.put("cookie_name", now);
 
 // Copy all input cookies as output cookies
 output.cookies_data = input.cookies;
-
 
 
 // Example code to deal with JSON:
@@ -126,7 +124,6 @@ String json = jsonArray.toString();
 String json = jsonObject.toString();
 
 
-
 // Example code to save an uploaded file
 ////////////////////////////////////////////
 
@@ -141,18 +138,19 @@ if (input.data.containsKey("myfile") && input.data.containsKey("myfile_fn")) {
 		fout.close();
 	} 
 	catch (IOException e) {
-		output_http_status = 500;
+		output.http_status = 500;
 	}
 }
 else
-	output_http_status = 404;
+	output.http_status = 404;
 	
 
 // Example code to send back some data
 ////////////////////////////////////////////
 
 output.data = "Keep walking, dude!".getBytes();
-	
+
+
 */
 
 
@@ -177,8 +175,7 @@ public class EndpointExample extends Endpoint {
 		Logger.debug(className, "Entering function get.");
 		super.get();
 		
-		// Add your code below
-		
+		// Add your code here		
 	}
 	
 	/**
@@ -188,9 +185,12 @@ public class EndpointExample extends Endpoint {
 	public void post() {
 		Logger.debug(className, "Entering function get.");
 		super.post();
+
+		// Return if the CSRF check has failed
+		if (!csrf)
+			return;
 		
-		// Add your code below
-		
+		// Add your code here
 	}
 	
 	/**
@@ -201,8 +201,12 @@ public class EndpointExample extends Endpoint {
 		Logger.debug(className, "Entering function get.");
 		super.put();
 		
-		// Add your code below
+		// Return if the CSRF check has failed
+		if (!csrf)
+			return;
 
+		
+		// Add your code here
 	}
 	
 	/**
@@ -213,8 +217,12 @@ public class EndpointExample extends Endpoint {
 		Logger.debug(className, "Entering function get.");
 		super.delete();
 		
-		// Add your code below
+		// Return if the CSRF check has failed
+		if (!csrf)
+			return;
 
+		
+		// Add your code here
 	}
 	
 	/**
@@ -225,7 +233,6 @@ public class EndpointExample extends Endpoint {
 		Logger.debug(className, "Entering function options.");
 		super.options();
 		
-		// Add your code below
-
+		// Add your code here
 	}
 }

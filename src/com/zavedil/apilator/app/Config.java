@@ -83,6 +83,10 @@ public class Config {
 	
 	// File to periodically dump the session storage for faster restore on server restart
 	public static String SessionManagerDiskCache = "/tmp/apilator.cache";
+	
+	// CSRF protection parameter name; set to empty to disable CSRF protection
+	// Note that for CSRF to work you need to enable session cookies above
+	public static String CsrfParameter = "csrf";
 
 	static {
 	    try {
@@ -140,6 +144,9 @@ public class Config {
 	        
 	        if (p.containsKey("SessionManagerDiskCache"))
 	        	SessionManagerDiskCache = p.getProperty("SessionManagerDiskCache");
+
+	        if (p.containsKey("CsrfParameter"))
+	        	CsrfParameter = p.getProperty("CsrfParameter");
 	        
 	        Logger.notice("Config", "Loaded external config file: /etc/apilator.ini");
         }

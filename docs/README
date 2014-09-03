@@ -148,4 +148,21 @@ Apilator can be used to serve CORS requests. Apilator supports the pre-flight OP
 
 Apilator will automatically add the 'Access-Control-Allow-Origin' header with a value '*'. If you want this header to have another value, set it in your endpoint (in particular, if you to disable CORS, set it's value to 'null').
 
-Usually CORS may require additional response headers to function properly (e.g., some browsers insist on having 'Access-Control-Allow-Headers' with a value to explicitly allow the 'Accept-Encoding' request header). You have to manually add all desired response headers in the options() method of your endpoint. 
+Usually CORS may require additional response headers to function properly (e.g., some browsers insist on having 'Access-Control-Allow-Headers' with a value to explicitly allow the 'Accept-Encoding' request header). You have to manually add all desired response headers in the options() method of your endpoint.
+
+
+CROSS-SITE REQUEST FORGERY (CSRF) PROTECTION
+=============================================
+
+CSRF is a common technique to make a client send an unwanted background request to a site that trusts it. 
+
+Apilator has built-in CSRF protection which requires each POST or PUT request to contain a parameter with the same value as the sessin ID. Since the session ID stored in a cookie that matches the domain name of your sire, only your front-end application will be able to read the cookie and get its value. Thus a POST or PUT request that contains the parameter with the same session ID as the session cooike will be trusted to originate from your front-end application and hence processed further; any request without the CSRF parameter or with a value that does not match the current session ID will be treated as illegal and will be rejected.    
+
+To enable CSRF protection: 
+- Enable the ASM.
+- Configure a name for the CSRF parameter.
+- In your front-end, read the session cookie.
+- In your front-end, add a name/value pair when sending a POST or PUT request. The name should be the CSRF parameter and the value should be the value of the session cookie. 
+
+When a CSRF protection is enabled, for each POST or PUT request Apilator will check the presence of the CSRF parameter in the input data. If it is missing or does not match the session ID, the output object will be populated with HTTP code 406 and a test string, while the internal 'csrf' variable will be set to FALSE. In your method right after the cal to super() you should examine the value of 'csrf' internal parameter and return if it is FALSE. 
+  
